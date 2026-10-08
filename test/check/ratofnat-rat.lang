@@ -1,0 +1,1 @@
+def wrong : Rat := ratOfNat 1/2

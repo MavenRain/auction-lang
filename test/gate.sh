@@ -48,7 +48,7 @@ fi
 
 # Each line of test/eval/expect.txt is `FILE NAME [ARGS] => OUTPUT`. `langc eval`
 # must exit 0 and print OUTPUT. A trap also prints `langc: EVAL_OVERFLOW: NAME: ...`
-# on stderr.
+# on stderr. `=> trap CODE` expects `trap` and `langc: CODE: NAME: ...` instead.
 evals=0
 while IFS= read -r line; do
   want=${line#* => }
@@ -60,7 +60,10 @@ while IFS= read -r line; do
   got=$(build/langc eval "examples/$file.lang" "$name" "$@" 2>"$tmp/err") || status=$?
   first=$(head -n 1 "$tmp/err")
   want_err=""
-  [ "$want" = "trap" ] && want_err="langc: EVAL_OVERFLOW: $name: "
+  case "$want" in
+    trap) want_err="langc: EVAL_OVERFLOW: $name: " ;;
+    "trap "*) want_err="langc: ${want#trap }: $name: "; want=trap ;;
+  esac
   evals=$((evals + 1))
   case "$status|$got|$first" in
     "0|$want|$want_err"*) ;;
@@ -128,6 +131,13 @@ build/langc build examples/formers.lang -o "$tmp/o.json" && cmp -s "$tmp/o.json"
   || { echo "FAIL build -o: the file differs"; fail=$((fail + 1)); }
 build/langc build test/emit/trap.lang -o "$tmp/no.json" 2>/dev/null || true
 [ ! -e "$tmp/no.json" ] || { echo "FAIL build -o: a refused build wrote a file"; fail=$((fail + 1)); }
+# A Fin argument of `langc eval` must be below its size.
+status=0
+build/langc eval examples/fin.lang valueOf 3 3 >/dev/null 2>"$tmp/err" || status=$?
+case "$status:$(head -n 1 "$tmp/err")" in
+"2:langc: EVAL_ARGS: valueOf: "*) ;;
+*) echo "FAIL eval: a Fin argument out of range"; fail=$((fail + 1)) ;;
+esac
 status=0
 build/langc build examples/formers.lang -x 2>/dev/null >/dev/null || status=$?
 [ "$status" -eq 2 ] || { echo "FAIL build usage: want exit 2, got $status"; fail=$((fail + 1)); }

@@ -1,0 +1,15 @@
+-- Arith: natDiv, natMod, natMax, natLt, flagAnd and flagNot.
+def quot : (a b : Nat) -> Nat := fun (a b : Nat) => natDiv a b
+def rem : (a b : Nat) -> Nat := fun (a b : Nat) => natMod a b
+def larger : (a b : Nat) -> Nat := fun (a b : Nat) => natMax a b
+def less : (a b : Nat) -> Flag := fun (a b : Nat) => natLt a b
+def atLeast : (a b : Nat) -> Flag := fun (a b : Nat) => natLe b a
+def both : (x y : Flag) -> Flag := fun (x y : Flag) => flagAnd x y
+def negate : (x : Flag) -> Flag := fun (x : Flag) => flagNot x
+def andDiv : (x : Flag) -> (d : Nat) -> Flag := fun (x : Flag) (d : Nat) => flagAnd x (natEq (natDiv 1 d) 0)
+def half : Nat := natDiv 17 2
+def odd : Nat := natMod 17 2
+def tie : Nat := natMax 4 4
+def under : Flag := natLt 3 4
+def guarded : Flag := flagAnd flagNo (natEq (natDiv 1 0) 0)
+def notYes : Flag := flagNot flagYes

@@ -1,0 +1,1 @@
+def wrong : Fin 6 := finPair 2 3 1

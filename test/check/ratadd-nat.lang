@@ -1,0 +1,1 @@
+def wrong : Rat := ratAdd 1/2 3

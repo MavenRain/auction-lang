@@ -1,0 +1,1 @@
+{"auction-lang":1,"instances":[{"name":"half","type":"Nat","value":8},{"name":"odd","type":"Nat","value":1},{"name":"tie","type":"Nat","value":4},{"name":"under","type":"Flag","value":true},{"name":"guarded","type":"Flag","value":false},{"name":"notYes","type":"Flag","value":false}]}

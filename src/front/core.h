@@ -2,9 +2,10 @@
 
    The checker (front/check.c) writes core terms. Evaluation is normalization
    by evaluation: each value is a normal form. A neutral value (VAL_VAR,
-   VAL_APP, VAL_STUCK) is stuck on a variable. A trap (a Nat overflow) is a
-   value too. It goes up through each strict position (a Nat operation, the
-   scrutinee of an eliminator, the function of an application) and nowhere
+   VAL_APP, VAL_STUCK) is stuck on a variable. A trap (a Nat overflow or a
+   division by zero) is a value too. It goes up through each strict position
+   (a Nat operation, the scrutinee of an eliminator, the function of an
+   application) and nowhere
    else. So the evaluator and the residual program agree: a trap that no
    strict position reads does not stop the program. */
 #ifndef LANG_FRONT_CORE_H
@@ -64,6 +65,24 @@ typedef enum {
   OP_NAT_EQ,
   OP_NAT_LE,
   OP_FLAG_IF,
+  OP_NAT_DIV,
+  OP_NAT_MOD,
+  OP_NAT_MAX,
+  OP_NAT_LT,
+  OP_FLAG_AND,
+  OP_FLAG_NOT,
+  OP_FIN,
+  OP_ALL_FIN,
+  OP_RAT,
+  OP_RAT_ADD,
+  OP_RAT_SUB,
+  OP_RAT_MUL,
+  OP_RAT_DIV,
+  OP_RAT_OF_NAT,
+  OP_RAT_EQ,
+  OP_RAT_LE,
+  OP_RAT_LT,
+  OP_SUM_RAT,
   OP_PROJ
 } Op;
 
@@ -74,11 +93,18 @@ typedef enum {
   CARRIER_SUM
 } Carrier;
 
+/* Why a trap stops the program (VAL_TRAP and CORE_TRAP keep it in nat). */
+typedef enum {
+  TRAP_OVERFLOW,
+  TRAP_DIV_ZERO
+} TrapReason;
+
 typedef enum {
   CORE_VAR,    /* index: de Bruijn index */
   CORE_GLOBAL, /* index: definition number */
   CORE_NAT,    /* nat */
-  CORE_TRAP,   /* an overflow; only quote writes it */
+  CORE_RAT,    /* num over nat, in lowest terms */
+  CORE_TRAP,   /* nat: the TrapReason; only quote writes it */
   CORE_UNIV,   /* Type nat */
   CORE_LAM,    /* fun name => b */
   CORE_PI,     /* (name : a) -> b */
@@ -92,6 +118,7 @@ struct Core {
   CoreKind kind;
   uint32_t index;
   uint64_t nat;
+  int64_t num; /* CORE_RAT: the numerator; nat is the denominator */
   Op op;
   /* OP_FAMILY, OP_FOLD_FAMILY: the family. OP_CTOR, OP_PROJ: the
      constructor. OP_PURE, OP_MAP, OP_BIND, OP_FILTER: the Carrier. */
@@ -106,6 +133,7 @@ struct Core {
 
 typedef enum {
   VAL_NAT,
+  VAL_RAT,  /* num over nat, in lowest terms */
   VAL_TRAP,
   VAL_UNIV,
   VAL_LAM,
@@ -128,7 +156,8 @@ struct Env {
 
 struct Value {
   ValKind kind;
-  uint64_t nat; /* NAT: the number. UNIV: the level. VAR: the level. */
+  uint64_t nat; /* NAT: the number. RAT: the denominator. TRAP: the TrapReason. UNIV, VAR: the level. */
+  int64_t num;  /* RAT: the numerator */
   Op op;        /* OP, STUCK */
   uint32_t inst;
   uint32_t field;
@@ -195,6 +224,7 @@ typedef struct {
 /* Each function returns NULL (or 0) after a diagnostic. A NULL input gives a
    NULL result, so a caller can test once at the end. */
 const Value *val_nat(Machine *m, uint64_t n);
+uint64_t gcd_u64(uint64_t a, uint64_t b);
 const Value *val_var(Machine *m, uint32_t level);
 const Value *val_univ(Machine *m, uint64_t level);
 const Value *val_op(Machine *m, ValKind kind, Op op, uint32_t inst, uint32_t field, const Value *const *args, uint32_t argc);
@@ -216,5 +246,8 @@ const Core *quote_value(Machine *m, uint32_t level, const Value *v);
    NAME_COUNT. */
 void value_print(Machine *m, const char *const *names, uint32_t name_count, const Value *v, char *buf, size_t cap);
 const char *op_name(const Machine *m, Op op, uint32_t inst, uint32_t field);
+/* The build code and the message of the trap V. */
+const char *trap_code(const Value *v);
+const char *trap_text(const Value *v);
 
 #endif

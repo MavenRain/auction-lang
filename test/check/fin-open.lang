@@ -1,0 +1,1 @@
+def wrong : (n : Nat) -> Fin (natAdd n 1) := fun (n : Nat) => 0

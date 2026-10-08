@@ -1,0 +1,1 @@
+def wrong : Nat := ratCeil 1/2

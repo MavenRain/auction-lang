@@ -1,0 +1,1 @@
+def wrong : Fin 3 := finMin 1 2

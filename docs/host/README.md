@@ -25,7 +25,7 @@ No network access or package installation is needed.
 | Command | Result |
 |---|---|
 | `langc check PROG` | Checks the program. Prints `ok`. |
-| `langc eval PROG NAME [ARGS...]` | Applies the definition `NAME` to the literal arguments and prints the normal form. A Nat overflow prints `trap`. |
+| `langc eval PROG NAME [ARGS...]` | Applies the definition `NAME` to the literal arguments and prints the normal form. An overflow or a division by zero prints `trap`. |
 | `langc build PROG [-o OUT]` | Checks the program, evaluates each instance and writes one JSON document to stdout, or to `OUT` |
 
 Exit 0 is success. Exit 1 is a refused program. Exit 2 is a usage or IO
@@ -58,6 +58,7 @@ starts again for each instance.
 | Type | JSON value |
 |---|---|
 | `Nat` | A number: the full unsigned 64-bit value in decimal |
+| `Rat` | `{"num": n, "den": d}`, the fraction in lowest terms: `n` is a signed 64-bit value above -2^63 and `d` is above 0. Zero is `{"num": 0, "den": 1}`. |
 | `Flag` | `true` or `false` |
 | `Unit` | `{}` |
 | `Prod A B` | `{"first": a, "second": b}` |
@@ -79,11 +80,28 @@ example `Lot 3`), not in `value`.
 |---|---|
 | `JSON_VALUE` | An instance holds a function, a type or a stuck term |
 | `JSON_DEPTH` | An instance nests deeper than 2000 levels. A list spine does not count. |
-| `EVAL_OVERFLOW` | A Nat operation in an instance overflows |
+| `EVAL_OVERFLOW` | A Nat or Rat operation in an instance overflows |
+| `EVAL_DIV_ZERO` | A natDiv, natMod or ratDiv in an instance divides by zero |
 
 The check and evaluation codes are the same as in `langc check` and
 `langc eval`. `test/parse`, `test/check` and `test/emit` hold a program
 for each refusal.
+
+`langc check` refuses Fin n terms, Rat literals and names outside the allow-list with
+these codes:
+
+| Code | Cause |
+|---|---|
+| `TYPE_FIN_RANGE` | A literal at the type `Fin n` is not below `n` |
+| `TYPE_FIN_OPEN` | A literal at the type `Fin n` where `n` is not a number |
+| `TYPE_FIN_SIZE` | The size `natMul m n` of a finPair, finFirst or finSecond is not below 2^64 |
+| `TYPE_RAT_ZERO` | A Rat literal `N/D` with `D` = 0 |
+| `TYPE_RAT_RANGE` | The numerator of a Rat literal, after the reduction to lowest terms, is above 2^63 - 1 |
+| `REFUSE_ALLOW` | A name outside the allow-list, for example `natMin`, `flagOr`, `finMin` or `ratNeg` |
+
+`langc eval` refuses a Fin argument that is not below its size with
+`EVAL_ARGS`. `langc eval` does not take a Rat argument. A Rat result
+prints as `N/D`, for example `-1/6`.
 
 ## The domain
 
@@ -108,8 +126,8 @@ executable at build time. `domain/README.md` tells how to replace it.
 This kit is a fork of the tcc-wasm kit front end. It does not have the
 Wasm writer (`wasm.c`), the IR (`ir.h`) or the target interface
 (`target.h`). It adds `src/json.c` and `src/json.h`, and `src/main.c` has
-the verbs `check`, `eval` and `build`. The files in `src/front/` are the
-same bytes as in the snapshot below. To find the changes after the fork,
+the verbs `check`, `eval` and `build`. At the fork, the files in `src/front/`
+were the same bytes as in the snapshot below. Slice A1 changed some of them. To find the changes after the fork,
 compare the hashes with `shasum -a 256 src/front/*` in the tcc-wasm kit.
 
 SHA-256 of the tcc-wasm kit sources at the fork (paths relative to that

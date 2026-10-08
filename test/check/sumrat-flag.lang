@@ -1,0 +1,1 @@
+def wrong : Rat := sumRat 2 (fun (i : Fin 2) => flagYes)

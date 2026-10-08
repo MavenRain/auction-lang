@@ -8,6 +8,7 @@ typedef enum {
   TOK_EOF,
   TOK_IDENT,
   TOK_NAT,
+  TOK_RAT,      /* N/D */
   TOK_LPAREN,
   TOK_RPAREN,
   TOK_COLON,
@@ -30,6 +31,7 @@ typedef struct {
   const char *text;
   size_t len;
   uint64_t nat;
+  uint64_t den; /* TOK_RAT: the digits after the slash */
   int line;
   int col;
 } Token;

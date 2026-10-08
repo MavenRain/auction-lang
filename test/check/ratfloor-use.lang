@@ -1,0 +1,1 @@
+def wrong : Nat := ratFloor 1/2

@@ -22,7 +22,13 @@ static const char *const OP_NAMES[] = {
   [OP_SYMM] = "symm", [OP_TRANS] = "trans", [OP_TRANSPORT] = "transport",
   [OP_CONG] = "cong", [OP_NAT_ADD] = "natAdd", [OP_NAT_SUB] = "natSub",
   [OP_NAT_MUL] = "natMul", [OP_NAT_EQ] = "natEq", [OP_NAT_LE] = "natLe",
-  [OP_FLAG_IF] = "flagIf", [OP_PROJ] = "?"
+  [OP_FLAG_IF] = "flagIf", [OP_NAT_DIV] = "natDiv", [OP_NAT_MOD] = "natMod",
+  [OP_NAT_MAX] = "natMax", [OP_NAT_LT] = "natLt", [OP_FLAG_AND] = "flagAnd",
+  [OP_FLAG_NOT] = "flagNot", [OP_FIN] = "Fin", [OP_ALL_FIN] = "allFin",
+  [OP_RAT] = "Rat", [OP_RAT_ADD] = "ratAdd", [OP_RAT_SUB] = "ratSub",
+  [OP_RAT_MUL] = "ratMul", [OP_RAT_DIV] = "ratDiv", [OP_RAT_OF_NAT] = "ratOfNat",
+  [OP_RAT_EQ] = "ratEq", [OP_RAT_LE] = "ratLe", [OP_RAT_LT] = "ratLt",
+  [OP_SUM_RAT] = "sumRat", [OP_PROJ] = "?"
 };
 
 /* The number of arguments of each operation. VARIES: it comes from the
@@ -38,7 +44,12 @@ static const unsigned char OP_ARITY[] = {
   [OP_FOLD_FAMILY] = VARIES, [OP_UNFOLD] = 3, [OP_FILTER] = 2, [OP_WITNESS] = 1,
   [OP_PAYLOAD] = 1, [OP_SYMM] = 1, [OP_TRANS] = 2, [OP_TRANSPORT] = 3,
   [OP_CONG] = 2, [OP_NAT_ADD] = 2, [OP_NAT_SUB] = 2, [OP_NAT_MUL] = 2,
-  [OP_NAT_EQ] = 2, [OP_NAT_LE] = 2, [OP_FLAG_IF] = 3, [OP_PROJ] = 1
+  [OP_NAT_EQ] = 2, [OP_NAT_LE] = 2, [OP_FLAG_IF] = 3, [OP_NAT_DIV] = 2,
+  [OP_NAT_MOD] = 2, [OP_NAT_MAX] = 2, [OP_NAT_LT] = 2, [OP_FLAG_AND] = 2,
+  [OP_FLAG_NOT] = 1, [OP_FIN] = 1, [OP_ALL_FIN] = 2, [OP_RAT] = 0,
+  [OP_RAT_ADD] = 2, [OP_RAT_SUB] = 2, [OP_RAT_MUL] = 2, [OP_RAT_DIV] = 2,
+  [OP_RAT_OF_NAT] = 1, [OP_RAT_EQ] = 2, [OP_RAT_LE] = 2, [OP_RAT_LT] = 2,
+  [OP_SUM_RAT] = 2, [OP_PROJ] = 1
 };
 
 typedef enum {
@@ -104,13 +115,37 @@ const Value *val_nat(Machine *m, uint64_t n) {
   return v;
 }
 
-static const Value *val_trap(Machine *m) {
-  return new_value(m, VAL_TRAP);
+static const Value *val_rat(Machine *m, int64_t num, uint64_t den) {
+  Value *v = new_value(m, VAL_RAT);
+  if (v != NULL) {
+    v->num = num;
+    v->nat = den;
+  }
+  return v;
+}
+
+static const Value *val_trap(Machine *m, uint64_t reason) {
+  Value *v = new_value(m, VAL_TRAP);
+  if (v != NULL)
+    v->nat = reason;
+  return v;
 }
 
 static const Value *overflow(Machine *m) {
   m->overflowed = 1;
-  return val_trap(m);
+  return val_trap(m, TRAP_OVERFLOW);
+}
+
+static const Value *div_zero(Machine *m) {
+  return val_trap(m, TRAP_DIV_ZERO);
+}
+
+const char *trap_code(const Value *v) {
+  return v->nat == (uint64_t)TRAP_DIV_ZERO ? "EVAL_DIV_ZERO" : "EVAL_OVERFLOW";
+}
+
+const char *trap_text(const Value *v) {
+  return v->nat == (uint64_t)TRAP_DIV_ZERO ? "a division or modulo by zero" : "an operation overflowed (a Nat past 2^64-1, a Rat numerator past 2^63-1 or denominator past 2^64-1)";
 }
 
 const Value *val_var(Machine *m, uint32_t level) {
@@ -242,6 +277,7 @@ static Scrut scrut_of(const Value *v) {
   case VAL_STUCK:
     return SCRUT_NEUTRAL;
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_UNIV:
   case VAL_LAM:
   case VAL_PI:
@@ -353,6 +389,7 @@ const Value *apply_value(Machine *m, const Value *fn, const Value *arg) {
     v->arg = arg;
     return v;
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_UNIV:
   case VAL_PI:
   case VAL_SIGMA:
@@ -733,13 +770,257 @@ static const Value *nat_mul(Machine *m, const Value *const *a, uint32_t n) {
   return y != 0 && x > UINT64_MAX / y ? overflow(m) : val_nat(m, x * y);
 }
 
+/* natDiv, natMod. A division by zero traps (Lean gives 0). */
+static const Value *nat_div(Machine *m, Op op, const Value *const *a, uint32_t n) {
+  const Value *out;
+  uint64_t x = 0;
+  uint64_t y = 0;
+  if (!nat_args(m, op, a, n, &x, &y, &out))
+    return out;
+  if (y == 0)
+    return div_zero(m);
+  return val_nat(m, op == OP_NAT_DIV ? x / y : x % y);
+}
+
+static const Value *nat_max(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  uint64_t x = 0;
+  uint64_t y = 0;
+  if (!nat_args(m, OP_NAT_MAX, a, n, &x, &y, &out))
+    return out;
+  return val_nat(m, x < y ? y : x);
+}
+
 static const Value *nat_test(Machine *m, Op op, const Value *const *a, uint32_t n) {
   const Value *out;
   uint64_t x = 0;
   uint64_t y = 0;
   if (!nat_args(m, op, a, n, &x, &y, &out))
     return out;
-  return flag(m, op == OP_NAT_EQ ? x == y : x <= y);
+  return flag(m, op == OP_NAT_EQ ? x == y : op == OP_NAT_LT ? x < y : x <= y);
+}
+
+/* Rat arithmetic. A Rat value is num (int64) over nat (uint64) in lowest
+   terms: nat > 0, gcd(|num|, nat) = 1, zero is 0/1, and num is never
+   INT64_MIN, so a negation never overflows. Products are exact in two
+   uint64 halves (no __int128 under tcc). The gcds come out before the
+   products, so only a result that does not fit traps (EVAL_OVERFLOW). */
+typedef struct {
+  uint64_t hi;
+  uint64_t lo;
+} Wide;
+
+uint64_t gcd_u64(uint64_t a, uint64_t b) {
+  while (b != 0) {
+    uint64_t r = a % b;
+    a = b;
+    b = r;
+  }
+  return a;
+}
+
+static uint64_t magnitude(int64_t x) {
+  return x < 0 ? 0u - (uint64_t)x : (uint64_t)x;
+}
+
+static Wide wide(uint64_t x) {
+  Wide w;
+  w.hi = 0;
+  w.lo = x;
+  return w;
+}
+
+static Wide wide_mul(uint64_t a, uint64_t b) {
+  uint64_t a0 = a & 0xffffffffu;
+  uint64_t a1 = a >> 32;
+  uint64_t b0 = b & 0xffffffffu;
+  uint64_t b1 = b >> 32;
+  uint64_t p00 = a0 * b0;
+  uint64_t p01 = a0 * b1;
+  uint64_t p10 = a1 * b0;
+  uint64_t mid = (p00 >> 32) + (p01 & 0xffffffffu) + (p10 & 0xffffffffu);
+  Wide w;
+  w.lo = (mid << 32) | (p00 & 0xffffffffu);
+  w.hi = a1 * b1 + (p01 >> 32) + (p10 >> 32) + (mid >> 32);
+  return w;
+}
+
+/* A + B; the callers keep the sum below 2^128. */
+static Wide wide_add(Wide a, Wide b) {
+  Wide w;
+  w.lo = a.lo + b.lo;
+  w.hi = a.hi + b.hi + (w.lo < a.lo);
+  return w;
+}
+
+/* A - B for A >= B. */
+static Wide wide_sub(Wide a, Wide b) {
+  Wide w;
+  w.lo = a.lo - b.lo;
+  w.hi = a.hi - b.hi - (a.lo < b.lo);
+  return w;
+}
+
+static int wide_cmp(Wide a, Wide b) {
+  if (a.hi != b.hi)
+    return a.hi < b.hi ? -1 : 1;
+  return (a.lo > b.lo) - (a.lo < b.lo);
+}
+
+/* A / D by shift and subtract (D > 0); *REM gets A mod D. When the top bit
+   of r is set, 2r + bit is at least 2^64 > D, and the wrapped r - D is the
+   true remainder. */
+static Wide wide_div(Wide a, uint64_t d, uint64_t *rem) {
+  Wide q = wide(0);
+  uint64_t r = 0;
+  int i;
+  for (i = 127; i >= 0; i--) {
+    uint64_t bit = i >= 64 ? (a.hi >> (i - 64)) & 1u : (a.lo >> i) & 1u;
+    uint64_t top = r >> 63;
+    r = (r << 1) | bit;
+    if (top != 0 || r >= d) {
+      r -= d;
+      q.hi |= i >= 64 ? (uint64_t)1 << (i - 64) : 0u;
+      q.lo |= i >= 64 ? 0u : (uint64_t)1 << i;
+    }
+  }
+  *rem = r;
+  return q;
+}
+
+/* -MAG/DEN when NEG, else MAG/DEN, already in lowest terms. Zero is 0/1. A
+   numerator above INT64_MAX or a denominator above UINT64_MAX traps. */
+static const Value *rat_make(Machine *m, int neg, Wide mag, Wide den) {
+  if (mag.hi == 0 && mag.lo == 0)
+    return val_rat(m, 0, 1);
+  if (mag.hi != 0 || mag.lo > (uint64_t)INT64_MAX || den.hi != 0)
+    return overflow(m);
+  return val_rat(m, neg ? -(int64_t)mag.lo : (int64_t)mag.lo, den.lo);
+}
+
+/* X + Y, or X - Y when NEGATE. Knuth 4.5.1: d1 = gcd(b, d), t = a (d / d1)
+   + c (b / d1), d2 = gcd(t mod d1, d1), result (t / d2) / ((b / d1) (d / d2)). */
+static const Value *rat_add(Machine *m, const Value *x, const Value *y, int negate) {
+  uint64_t b = x->nat;
+  uint64_t d = y->nat;
+  uint64_t d1 = gcd_u64(b, d);
+  int nx = x->num < 0;
+  int ny = (y->num < 0) != (negate != 0);
+  Wide p = wide_mul(magnitude(x->num), d / d1);
+  Wide q = wide_mul(magnitude(y->num), b / d1);
+  int swap = nx != ny && wide_cmp(p, q) < 0;
+  Wide t = nx == ny ? wide_add(p, q) : swap ? wide_sub(q, p) : wide_sub(p, q);
+  uint64_t r = 0;
+  uint64_t d2;
+  if (t.hi == 0 && t.lo == 0)
+    return val_rat(m, 0, 1);
+  wide_div(t, d1, &r);
+  d2 = gcd_u64(r, d1);
+  return rat_make(m, swap ? ny : nx, wide_div(t, d2, &r), wide_mul(b / d1, d / d2));
+}
+
+/* X * Y: (a / g1) (c / g2) over (b / g2) (d / g1), g1 = gcd(|a|, d) and
+   g2 = gcd(|c|, b). */
+static const Value *rat_mul(Machine *m, const Value *x, const Value *y) {
+  uint64_t a = magnitude(x->num);
+  uint64_t c = magnitude(y->num);
+  uint64_t g1 = gcd_u64(a, y->nat);
+  uint64_t g2 = gcd_u64(c, x->nat);
+  return rat_make(m, (x->num < 0) != (y->num < 0), wide_mul(a / g1, c / g2), wide_mul(x->nat / g2, y->nat / g1));
+}
+
+/* X / Y on the magnitudes, with no reciprocal: (a / g1) (d / g2) over
+   (b / g2) (c / g1), g1 = gcd(|a|, |c|) and g2 = gcd(b, d). Y = 0 traps
+   (EVAL_DIV_ZERO). */
+static const Value *rat_div(Machine *m, const Value *x, const Value *y) {
+  uint64_t a = magnitude(x->num);
+  uint64_t c = magnitude(y->num);
+  uint64_t g2 = gcd_u64(x->nat, y->nat);
+  uint64_t g1;
+  if (c == 0)
+    return div_zero(m);
+  g1 = gcd_u64(a, c);
+  return rat_make(m, (x->num < 0) != (y->num < 0), wide_mul(a / g1, y->nat / g2), wide_mul(x->nat / g2, c / g1));
+}
+
+/* -1, 0 or 1 as X <, = or > Y: by the signs, then |a| d against |c| b. */
+static int rat_cmp(const Value *x, const Value *y) {
+  int nx = x->num < 0;
+  int ny = y->num < 0;
+  int mag = wide_cmp(wide_mul(magnitude(x->num), y->nat), wide_mul(magnitude(y->num), x->nat));
+  if (nx != ny)
+    return nx ? -1 : 1;
+  return nx ? -mag : mag;
+}
+
+/* Strict in both arguments, as nat_args. */
+static int rat_args(Machine *m, Op op, const Value *const *a, uint32_t n, const Value **out) {
+  *out = a[0]->kind == VAL_TRAP ? a[0] : a[1];
+  if (a[0]->kind == VAL_TRAP || a[1]->kind == VAL_TRAP)
+    return 0;
+  if (blocked(m, a[0], op, 0, 0, a, n, out) || blocked(m, a[1], op, 0, 0, a, n, out))
+    return 0;
+  if (a[0]->kind != VAL_RAT || a[1]->kind != VAL_RAT) {
+    *out = internal(m, "a Rat operation on a value that is not a Rat");
+    return 0;
+  }
+  return 1;
+}
+
+/* ratAdd, ratSub, ratMul, ratDiv. */
+static const Value *rat_arith(Machine *m, Op op, const Value *const *a, uint32_t n) {
+  const Value *out;
+  if (!rat_args(m, op, a, n, &out))
+    return out;
+  if (op == OP_RAT_MUL)
+    return rat_mul(m, a[0], a[1]);
+  if (op == OP_RAT_DIV)
+    return rat_div(m, a[0], a[1]);
+  return rat_add(m, a[0], a[1], op == OP_RAT_SUB);
+}
+
+/* ratEq, ratLe, ratLt. */
+static const Value *rat_test(Machine *m, Op op, const Value *const *a, uint32_t n) {
+  const Value *out;
+  int order;
+  if (!rat_args(m, op, a, n, &out))
+    return out;
+  order = rat_cmp(a[0], a[1]);
+  return flag(m, op == OP_RAT_EQ ? order == 0 : op == OP_RAT_LT ? order < 0 : order <= 0);
+}
+
+/* ratOfNat x = x / 1; x above INT64_MAX traps (EVAL_OVERFLOW). */
+static const Value *rat_of_nat(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  if (blocked(m, a[0], OP_RAT_OF_NAT, 0, 0, a, n, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT)
+    return internal(m, "a ratOfNat of a value that is not a Nat");
+  return a[0]->nat > (uint64_t)INT64_MAX ? overflow(m) : val_rat(m, (int64_t)a[0]->nat, 1);
+}
+
+/* sumRat n f = f 0 + (f 1 + (... + (f (n - 1) + 0))) as FinStoch.lean:122-124,
+   in a C loop from i = n - 1 down to 0. Exact, so only the trap point
+   depends on the order. The first trap stops it; a neutral f i gives the
+   stuck sumRat. sumRat 0 f = 0/1. */
+static const Value *reduce_sum_rat(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  const Value *acc;
+  uint64_t i;
+  if (blocked(m, a[0], OP_SUM_RAT, 0, 0, a, n, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT)
+    return internal(m, "a sumRat with a size that is not a Nat");
+  acc = val_rat(m, 0, 1);
+  for (i = a[0]->nat; i > 0 && acc != NULL && acc->kind == VAL_RAT; i--) {
+    const Value *r = apply_value(m, a[1], val_nat(m, i - 1u));
+    if (r == NULL || r->kind == VAL_TRAP)
+      return r;
+    if (r->kind != VAL_RAT)
+      return scrut_of(r) == SCRUT_NEUTRAL ? val_op(m, VAL_STUCK, OP_SUM_RAT, 0, 0, a, n) : internal(m, "a sumRat term that is not a Rat");
+    acc = rat_add(m, r, acc, 0);
+  }
+  return acc;
 }
 
 static const Value *reduce_flag_if(Machine *m, const Value *const *a, uint32_t n) {
@@ -751,6 +1032,46 @@ static const Value *reduce_flag_if(Machine *m, const Value *const *a, uint32_t n
   if (val_is(a[0], OP_FLAG_NO))
     return a[2];
   return internal(m, "a flagIf of a value that is not a Flag");
+}
+
+/* flagAnd x y = flagIf x y flagNo: only x is strict, as Lean `&&`. */
+static const Value *reduce_flag_and(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  if (blocked(m, a[0], OP_FLAG_AND, 0, 0, a, n, &out))
+    return out;
+  if (val_is(a[0], OP_FLAG_YES))
+    return a[1];
+  if (val_is(a[0], OP_FLAG_NO))
+    return a[0];
+  return internal(m, "a flagAnd of a value that is not a Flag");
+}
+
+static const Value *reduce_flag_not(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  if (blocked(m, a[0], OP_FLAG_NOT, 0, 0, a, n, &out))
+    return out;
+  if (val_is(a[0], OP_FLAG_YES) || val_is(a[0], OP_FLAG_NO))
+    return flag(m, val_is(a[0], OP_FLAG_NO));
+  return internal(m, "a flagNot of a value that is not a Flag");
+}
+
+/* allFin n f: f at 0, 1, ..., n - 1 in a C loop. The first flagNo or trap
+   stops it; a neutral result gives the stuck allFin. allFin 0 f = flagYes. */
+static const Value *reduce_all_fin(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  uint64_t i;
+  if (blocked(m, a[0], OP_ALL_FIN, 0, 0, a, n, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT)
+    return internal(m, "an allFin with a size that is not a Nat");
+  for (i = 0; i < a[0]->nat; i++) {
+    const Value *r = apply_value(m, a[1], val_nat(m, i));
+    if (r == NULL || r->kind == VAL_TRAP || val_is(r, OP_FLAG_NO))
+      return r;
+    if (!val_is(r, OP_FLAG_YES))
+      return scrut_of(r) == SCRUT_NEUTRAL ? val_op(m, VAL_STUCK, OP_ALL_FIN, 0, 0, a, n) : internal(m, "an allFin test that is not a Flag");
+  }
+  return flag(m, 1);
 }
 
 static const Value *reduce_proj(Machine *m, uint32_t inst, uint32_t field, const Value *const *a, uint32_t n) {
@@ -811,6 +1132,8 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
   case OP_PACK:
   case OP_REFL:
   case OP_CTOR:
+  case OP_FIN:
+  case OP_RAT:
     return val_op(m, VAL_OP, op, inst, field, a, n);
   case OP_FIRST:
     return reduce_part(m, op, a, n, OP_PAIR, 0);
@@ -856,9 +1179,34 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
     return nat_mul(m, a, n);
   case OP_NAT_EQ:
   case OP_NAT_LE:
+  case OP_NAT_LT:
     return nat_test(m, op, a, n);
   case OP_FLAG_IF:
     return reduce_flag_if(m, a, n);
+  case OP_NAT_DIV:
+  case OP_NAT_MOD:
+    return nat_div(m, op, a, n);
+  case OP_NAT_MAX:
+    return nat_max(m, a, n);
+  case OP_FLAG_AND:
+    return reduce_flag_and(m, a, n);
+  case OP_FLAG_NOT:
+    return reduce_flag_not(m, a, n);
+  case OP_ALL_FIN:
+    return reduce_all_fin(m, a, n);
+  case OP_RAT_ADD:
+  case OP_RAT_SUB:
+  case OP_RAT_MUL:
+  case OP_RAT_DIV:
+    return rat_arith(m, op, a, n);
+  case OP_RAT_OF_NAT:
+    return rat_of_nat(m, a, n);
+  case OP_RAT_EQ:
+  case OP_RAT_LE:
+  case OP_RAT_LT:
+    return rat_test(m, op, a, n);
+  case OP_SUM_RAT:
+    return reduce_sum_rat(m, a, n);
   case OP_PROJ:
     return reduce_proj(m, inst, field, a, n);
   }
@@ -886,8 +1234,10 @@ static const Value *eval_inner(Machine *m, const Env *env, const Core *c) {
     return def_value(m, c->index);
   case CORE_NAT:
     return val_nat(m, c->nat);
+  case CORE_RAT:
+    return val_rat(m, c->num, c->nat);
   case CORE_TRAP:
-    return val_trap(m);
+    return val_trap(m, c->nat);
   case CORE_UNIV:
     return val_univ(m, c->nat);
   case CORE_LAM:
@@ -942,6 +1292,8 @@ static int conv_loop(Machine *m, uint32_t level, const Value *a, const Value *b)
     case VAL_UNIV:
     case VAL_VAR:
       return a->nat == b->nat;
+    case VAL_RAT:
+      return a->num == b->num && a->nat == b->nat;
     case VAL_TRAP:
       return 1;
     case VAL_LAM:
@@ -995,6 +1347,15 @@ static const Core *core_leaf(Machine *m, CoreKind kind, uint64_t nat) {
   Core *c = new_core(m, kind);
   if (c != NULL)
     c->nat = nat;
+  return c;
+}
+
+static const Core *core_rat(Machine *m, int64_t num, uint64_t den) {
+  Core *c = new_core(m, CORE_RAT);
+  if (c != NULL) {
+    c->num = num;
+    c->nat = den;
+  }
   return c;
 }
 
@@ -1067,8 +1428,10 @@ static const Core *quote_inner(Machine *m, uint32_t level, const Value *v) {
   switch (v->kind) {
   case VAL_NAT:
     return core_leaf(m, CORE_NAT, v->nat);
+  case VAL_RAT:
+    return core_rat(m, v->num, v->nat);
   case VAL_TRAP:
-    return core_leaf(m, CORE_TRAP, 0);
+    return core_leaf(m, CORE_TRAP, v->nat);
   case VAL_UNIV:
     return core_leaf(m, CORE_UNIV, v->nat);
   case VAL_VAR:
@@ -1181,6 +1544,7 @@ static void print_binder(Printer *p, const Value *v) {
     put(p, ") ");
     break;
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_TRAP:
   case VAL_UNIV:
   case VAL_OP:
@@ -1197,7 +1561,7 @@ static void print_binder(Printer *p, const Value *v) {
 }
 
 static void print_other(Printer *p, const Value *v, int atom) {
-  char num[32];
+  char num[48];
   if (v == NULL) {
     put(p, "?");
     return;
@@ -1205,6 +1569,10 @@ static void print_other(Printer *p, const Value *v, int atom) {
   switch (v->kind) {
   case VAL_NAT:
     snprintf(num, sizeof num, "%llu", (unsigned long long)v->nat);
+    put(p, num);
+    return;
+  case VAL_RAT:
+    snprintf(num, sizeof num, "%lld/%llu", (long long)v->num, (unsigned long long)v->nat);
     put(p, num);
     return;
   case VAL_TRAP:
@@ -1242,6 +1610,7 @@ static void print_other(Printer *p, const Value *v, int atom) {
     print_binder(p, v);
     break;
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_TRAP:
   case VAL_VAR:
   case VAL_OP:

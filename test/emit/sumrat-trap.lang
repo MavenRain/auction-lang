@@ -1,0 +1,1 @@
+def s : Rat := sumRat 2 (fun (i : Fin 2) => ratDiv 1/1 (ratOfNat (finVal i)))

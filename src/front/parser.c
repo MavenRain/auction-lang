@@ -127,6 +127,7 @@ static int starts_atom(TokKind kind) {
   switch (kind) {
     case TOK_IDENT:
     case TOK_NAT:
+    case TOK_RAT:
     case TOK_LPAREN:
     case TOK_KW_TYPE:
     case TOK_KW_SIGMA:
@@ -277,6 +278,7 @@ static const Term *parse_leaf(Parser *p, TermKind kind) {
   Term *term = make_term(p, kind, tok->line, tok->col);
   if (term == NULL) return NULL;
   term->nat = tok->nat;
+  term->den = tok->den;
   term->name = kind == TERM_VAR ? token_text(p, tok) : NULL;
   bump(p);
   return kind == TERM_VAR && term->name == NULL ? NULL : term;
@@ -287,6 +289,7 @@ static const Term *parse_atom(Parser *p) {
   switch (tok->kind) {
     case TOK_IDENT: return parse_leaf(p, TERM_VAR);
     case TOK_NAT: return parse_leaf(p, TERM_NAT);
+    case TOK_RAT: return parse_leaf(p, TERM_RAT);
     case TOK_LPAREN: return parse_paren(p);
     case TOK_KW_TYPE: return parse_universe(p);
     case TOK_KW_SIGMA: return parse_sigma(p);
@@ -429,6 +432,7 @@ static int parse_decl(Parser *p, Decl *d) {
     case TOK_EOF:
     case TOK_IDENT:
     case TOK_NAT:
+    case TOK_RAT:
     case TOK_LPAREN:
     case TOK_RPAREN:
     case TOK_COLON:

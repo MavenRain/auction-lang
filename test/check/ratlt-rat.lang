@@ -1,0 +1,1 @@
+def wrong : Rat := ratLt 1/2 1/3

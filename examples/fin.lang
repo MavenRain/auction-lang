@@ -1,0 +1,31 @@
+-- Fin: Fin n, its literals, finVal, finPair, finFirst, finSecond, finSub,
+-- finMax, finEq, finLt, finLe and allFin. A value of Fin n is a Nat below n.
+def onlyIndex : Fin 1 := 0
+def lastIndex : Fin 3 := 2
+def code : Fin 6 := finPair 2 3 1 2
+def low : Fin 2 := finFirst 2 3 code
+def high : Fin 3 := finSecond 2 3 code
+def index : Nat := finVal code
+def sameSize : Fin (natMul 2 3) := code
+def floor : Fin 5 := finSub 4 7
+def bigger : Fin 5 := finMax 1 3
+def same : Flag := finEq low 1
+def everyBelow : Flag := allFin 2 (fun (r : Fin 2) => natLe (finVal r) 1)
+def noneBelow : Flag := allFin 0 (fun (r : Fin 0) => flagNo)
+def pairUp : (a : Fin 2) -> (b : Fin 3) -> Fin 6 := fun (a : Fin 2) (b : Fin 3) => finPair 2 3 a b
+def firstOf : (x : Fin 6) -> Fin 2 := fun (x : Fin 6) => finFirst 2 3 x
+def secondOf : (x : Fin 6) -> Fin 3 := fun (x : Fin 6) => finSecond 2 3 x
+def valueOf : (n : Nat) -> (x : Fin n) -> Nat := fun (n : Nat) (x : Fin n) => finVal x
+def down : (x : Fin 4) -> (d : Nat) -> Fin 4 := fun (x : Fin 4) (d : Nat) => finSub x d
+def zeroOf : (n : Nat) -> (v : Fin n) -> Fin n := fun (n : Nat) (v : Fin n) => finSub v (finVal v)
+def maxOf : (x y : Fin 4) -> Fin 4 := fun (x y : Fin 4) => finMax x y
+def eqOf : (x y : Fin 4) -> Flag := fun (x y : Fin 4) => finEq x y
+def ltOf : (x y : Fin 4) -> Flag := fun (x y : Fin 4) => finLt x y
+def leOf : (x y : Fin 4) -> Flag := fun (x y : Fin 4) => finLe x y
+def square : (n : Nat) -> (a b : Fin n) -> Fin (natMul n n) := fun (n : Nat) (a b : Fin n) => finPair n n a b
+def squareLow : (n : Nat) -> (a b : Fin n) -> Fin n := fun (n : Nat) (a b : Fin n) => finFirst n n (square n a b)
+def squareHigh : (n : Nat) -> (a b : Fin n) -> Fin n := fun (n : Nat) (a b : Fin n) => finSecond n n (square n a b)
+def allBelow : (n k : Nat) -> Flag := fun (n k : Nat) => allFin n (fun (i : Fin n) => natLt (finVal i) k)
+def stopsEarly : (k : Nat) -> Flag := fun (k : Nat) => allFin 3 (fun (i : Fin 3) => flagIf (natLe (finVal i) k) (natLt (finVal i) k) (natEq (natDiv 1 0) 0))
+def trapsAt : (n : Nat) -> Flag := fun (n : Nat) => allFin n (fun (i : Fin n) => natEq (natDiv 1 (finVal i)) 0)
+def pick : (x : Flag) -> (a b : Fin 3) -> Fin 3 := fun (x : Flag) (a b : Fin 3) => flagIf x a b

@@ -1,0 +1,1 @@
+def wrong : Nat := natDiv 7

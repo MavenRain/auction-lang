@@ -1,2 +1,7 @@
 trap.lang EVAL_OVERFLOW
 function.lang JSON_VALUE
+divzero.lang EVAL_DIV_ZERO
+allfin-trap.lang EVAL_DIV_ZERO
+rat-overflow.lang EVAL_OVERFLOW
+rat-divzero.lang EVAL_DIV_ZERO
+sumrat-trap.lang EVAL_DIV_ZERO

@@ -1,0 +1,2 @@
+def code : Fin 6 := 5
+def wrong : Fin 4 := code

@@ -1,0 +1,35 @@
+-- Rat: the literal N/D, ratAdd, ratSub, ratMul, ratDiv, ratOfNat, ratEq,
+-- ratLe, ratLt and sumRat. A value is a fraction in lowest terms.
+def third : Rat := 2/6
+def zeroFifths : Rat := 0/5
+def reduced : Rat := 18446744073709551614/2
+def five : Rat := ratOfNat 5
+def negSixth : Rat := ratSub 1/3 1/2
+def cancel : Rat := ratMul 9223372036854775807/3 3/9223372036854775807
+def backToZero : Rat := ratAdd 2/7 (ratSub 0/1 2/7)
+def wideDen : Rat := ratAdd 1/18446744073709551615 1/18446744073709551615
+def halfIsHalf : Flag := ratEq 1/2 2/4
+def sameLe : Flag := ratLe 3/6 1/2
+def negBelow : Flag := ratLt (ratSub 0/1 1/2) 1/3
+def wideLt : Flag := ratLt 9223372036854775807/9223372036854775806 9223372036854775806/9223372036854775805
+def wideLe : Flag := ratLe 9223372036854775806/9223372036854775805 9223372036854775807/9223372036854775806
+def harmonic : Rat := sumRat 3 (fun (i : Fin 3) => ratDiv 1/1 (ratOfNat (natAdd (finVal i) 1)))
+def empty : Rat := sumRat 0 (fun (i : Fin 0) => 1/1)
+def single : Rat := sumRat 1 (fun (i : Fin 1) => 2/3)
+def ofNat : (n : Nat) -> Rat := fun (n : Nat) => ratOfNat n
+def addTo : (k : Nat) -> Rat := fun (k : Nat) => ratAdd 9223372036854775807/1 (ratOfNat k)
+def lowEdge : (k : Nat) -> Rat := fun (k : Nat) => ratSub (ratSub 0/1 9223372036854775807/1) (ratOfNat k)
+def capDen : (k : Nat) -> Rat := fun (k : Nat) => ratMul 1/18446744073709551615 (ratDiv 1/1 (ratOfNat k))
+def divBy : (k : Nat) -> Rat := fun (k : Nat) => ratDiv 1/3 (ratOfNat k)
+def twice : (k : Nat) -> Rat := fun (k : Nat) => sumRat 2 (fun (i : Fin 2) => ratOfNat k)
+def uniform : (n : Nat) -> Rat := fun (n : Nat) => sumRat n (fun (i : Fin n) => ratDiv 1/1 (ratOfNat n))
+def sumTraps : (k : Nat) -> Rat := fun (k : Nat) => sumRat 3 (fun (i : Fin 3) => ratDiv 1/1 (ratOfNat (natAdd (finVal i) k)))
+-- Ports of auction-cat: uniformPrior (Revenue.lean:240), kron (FinStoch.lean:273),
+-- vickreyAllocation, vickreyEqUtility and vickreyEnvelopeIntegral at n = 4 with
+-- the prior 1/4 (Envelope.lean:53-80, the decided example at Envelope.lean:84-88).
+def uniformPrior : (n : Nat) -> Rat := fun (n : Nat) => ratDiv 1/1 (ratOfNat (natMul n n))
+def kron : (i j : Fin 3) -> Rat := fun (i j : Fin 3) => flagIf (finEq i j) 1/1 0/1
+def allocation : (v1 : Fin 4) -> Rat := fun (v1 : Fin 4) => sumRat 4 (fun (v2 : Fin 4) => flagIf (finLe v2 v1) 1/4 0/1)
+def eqUtility : (v1 : Fin 4) -> Rat := fun (v1 : Fin 4) => sumRat 4 (fun (v2 : Fin 4) => ratMul 1/4 (ratOfNat (finVal (finSub v1 (finVal v2)))))
+def envelope : (v1 : Fin 4) -> Rat := fun (v1 : Fin 4) => sumRat 4 (fun (t : Fin 4) => flagIf (finLt t v1) (allocation t) 0/1)
+def envelopeHolds : Flag := ratEq (eqUtility 3) (envelope 3)

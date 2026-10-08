@@ -1,0 +1,1 @@
+def wrong : Flag := allFin 2 (fun (i : Nat) => flagYes)

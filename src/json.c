@@ -72,10 +72,11 @@ static int internal(Out *o, const char *what) {
 static int ready(Out *o, const Value *v) {
   switch (v->kind) {
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_OP:
     return 1;
   case VAL_TRAP:
-    return diag_fail(o->m->diag, "EVAL_OVERFLOW", o->def, "the instance value traps (a Nat overflow)");
+    return diag_fail(o->m->diag, trap_code(v), o->def, "the instance value traps (%s)", trap_text(v));
   case VAL_UNIV:
   case VAL_PI:
   case VAL_SIGMA:
@@ -167,12 +168,18 @@ static int family_json(Out *o, const Value *type, const Value *v) {
 }
 
 static int op_json(Out *o, const Value *type, const Value *v) {
-  char num[24];
+  char num[64];
   switch (type->op) {
   case OP_NAT:
+  case OP_FIN:
     if (v->kind != VAL_NAT)
       return internal(o, "a Nat value that is not a number");
     snprintf(num, sizeof num, "%llu", (unsigned long long)v->nat);
+    return put_text(o, num);
+  case OP_RAT:
+    if (v->kind != VAL_RAT)
+      return internal(o, "a Rat value that is not a fraction");
+    snprintf(num, sizeof num, "{\"num\":%lld,\"den\":%llu}", (long long)v->num, (unsigned long long)v->nat);
     return put_text(o, num);
   case OP_FLAG:
     if (val_is(v, OP_FLAG_YES))
@@ -232,6 +239,22 @@ static int op_json(Out *o, const Value *type, const Value *v) {
   case OP_NAT_EQ:
   case OP_NAT_LE:
   case OP_FLAG_IF:
+  case OP_NAT_DIV:
+  case OP_NAT_MOD:
+  case OP_NAT_MAX:
+  case OP_NAT_LT:
+  case OP_FLAG_AND:
+  case OP_FLAG_NOT:
+  case OP_ALL_FIN:
+  case OP_RAT_ADD:
+  case OP_RAT_SUB:
+  case OP_RAT_MUL:
+  case OP_RAT_DIV:
+  case OP_RAT_OF_NAT:
+  case OP_RAT_EQ:
+  case OP_RAT_LE:
+  case OP_RAT_LT:
+  case OP_SUM_RAT:
   case OP_PROJ:
     return internal(o, "a type that is not a type former");
   }
@@ -260,6 +283,7 @@ static int typed_json(Out *o, const Value *type, const Value *v) {
   case VAL_UNIV:
     return refuse(o, "a type");
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_TRAP:
   case VAL_LAM:
   case VAL_VAR:
@@ -294,6 +318,7 @@ static int is_instance(const DefInfo *d) {
     return !val_is(d->type, OP_EQ);
   case VAL_SIGMA:
   case VAL_NAT:
+  case VAL_RAT:
   case VAL_TRAP:
   case VAL_LAM:
   case VAL_VAR:

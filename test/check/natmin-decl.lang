@@ -1,0 +1,1 @@
+def natMin : (a b : Nat) -> Nat := fun (a b : Nat) => flagIf (natLe a b) a b

@@ -67,7 +67,17 @@ typedef enum {
   RULE_CONG,
   RULE_TRANSPORT,
   RULE_NAT2,
-  RULE_FLAG_IF
+  RULE_FLAG_IF,
+  RULE_FLAGS,
+  RULE_FIN_TYPE,
+  RULE_FIN_VAL,
+  RULE_FIN_PAIR,
+  RULE_FIN_PART,
+  RULE_FIN_SUB,
+  RULE_FIN2,
+  RULE_ALL_FIN,
+  RULE_RAT2,
+  RULE_RAT_OF_NAT
 } Rule;
 
 typedef struct {
@@ -75,8 +85,8 @@ typedef struct {
   uint32_t arity; /* fold: the least number of arguments */
   Rule rule;
   Op op;
-  Op result;     /* VALUE0, NAT2: the result type. EMPTY, INJ: the type former. */
-  uint32_t part; /* INJ, PART, SIGMA_PART: 0 or 1 */
+  Op result;     /* VALUE0, NAT2, FIN2: the result type. EMPTY, INJ: the type former. */
+  uint32_t part; /* INJ, PART, SIGMA_PART, FIN_PART: 0 or 1 */
 } Builtin;
 
 static const Builtin BUILTINS[] = {
@@ -121,13 +131,64 @@ static const Builtin BUILTINS[] = {
   {"natMul", 2, RULE_NAT2, OP_NAT_MUL, OP_NAT, 0},
   {"natEq", 2, RULE_NAT2, OP_NAT_EQ, OP_FLAG, 0},
   {"natLe", 2, RULE_NAT2, OP_NAT_LE, OP_FLAG, 0},
-  {"flagIf", 3, RULE_FLAG_IF, OP_FLAG_IF, OP_FLAG, 0}
+  {"natLt", 2, RULE_NAT2, OP_NAT_LT, OP_FLAG, 0},
+  {"natDiv", 2, RULE_NAT2, OP_NAT_DIV, OP_NAT, 0},
+  {"natMod", 2, RULE_NAT2, OP_NAT_MOD, OP_NAT, 0},
+  {"natMax", 2, RULE_NAT2, OP_NAT_MAX, OP_NAT, 0},
+  {"flagIf", 3, RULE_FLAG_IF, OP_FLAG_IF, OP_FLAG, 0},
+  {"flagAnd", 2, RULE_FLAGS, OP_FLAG_AND, OP_FLAG, 0},
+  {"flagNot", 1, RULE_FLAGS, OP_FLAG_NOT, OP_FLAG, 0},
+  {"Fin", 1, RULE_FIN_TYPE, OP_FIN, OP_NAT, 0},
+  {"finVal", 1, RULE_FIN_VAL, OP_NAT, OP_NAT, 0},
+  {"finPair", 4, RULE_FIN_PAIR, OP_NAT_ADD, OP_FIN, 0},
+  {"finFirst", 3, RULE_FIN_PART, OP_NAT_MOD, OP_FIN, 0},
+  {"finSecond", 3, RULE_FIN_PART, OP_NAT_DIV, OP_FIN, 1},
+  {"finSub", 2, RULE_FIN_SUB, OP_NAT_SUB, OP_FIN, 0},
+  {"finMax", 2, RULE_FIN2, OP_NAT_MAX, OP_FIN, 0},
+  {"finEq", 2, RULE_FIN2, OP_NAT_EQ, OP_FLAG, 0},
+  {"finLt", 2, RULE_FIN2, OP_NAT_LT, OP_FLAG, 0},
+  {"finLe", 2, RULE_FIN2, OP_NAT_LE, OP_FLAG, 0},
+  {"allFin", 2, RULE_ALL_FIN, OP_ALL_FIN, OP_FLAG, 0},
+  {"Rat", 0, RULE_TYPE0, OP_RAT, OP_NAT, 0},
+  {"ratAdd", 2, RULE_RAT2, OP_RAT_ADD, OP_RAT, 0},
+  {"ratSub", 2, RULE_RAT2, OP_RAT_SUB, OP_RAT, 0},
+  {"ratMul", 2, RULE_RAT2, OP_RAT_MUL, OP_RAT, 0},
+  {"ratDiv", 2, RULE_RAT2, OP_RAT_DIV, OP_RAT, 0},
+  {"ratOfNat", 1, RULE_RAT_OF_NAT, OP_RAT_OF_NAT, OP_RAT, 0},
+  {"ratEq", 2, RULE_RAT2, OP_RAT_EQ, OP_FLAG, 0},
+  {"ratLe", 2, RULE_RAT2, OP_RAT_LE, OP_FLAG, 0},
+  {"ratLt", 2, RULE_RAT2, OP_RAT_LT, OP_FLAG, 0},
+  {"sumRat", 2, RULE_ALL_FIN, OP_SUM_RAT, OP_RAT, 0}
 };
 
 #define BUILTIN_COUNT ((uint32_t)(sizeof BUILTINS / sizeof BUILTINS[0]))
 
 /* Names that no declaration can take (rule R4). */
 static const char *const RESERVED[] = {"Bool", "Text"};
+
+/* Names that a porter reaches for and that are outside the allow-list, each
+   with the allowed form. A use or a declaration of one is REFUSE_ALLOW. The
+   lexer refuses text (test/parse/string.lang). */
+static const char *const REFUSED[][2] = {
+  {"natMin", "flagIf (natLe x y) x y"},
+  {"natGe", "natLe y x"},
+  {"natGt", "natLt y x"},
+  {"flagOr", "flagIf x flagYes y"},
+  {"finMin", "flagIf (finLe x y) x y"},
+  {"finGe", "finLe y x"},
+  {"finGt", "finLt y x"},
+  {"finAdd", "natAdd (finVal x) (finVal y)"},
+  {"finMul", "natMul (finVal x) (finVal y)"},
+  {"ratMin", "flagIf (ratLe x y) x y"},
+  {"ratMax", "flagIf (ratLe x y) y x"},
+  {"ratAbs", "flagIf (ratLe 0/1 x) x (ratSub 0/1 x)"},
+  {"ratNeg", "ratSub 0/1 x"},
+  {"ratInv", "ratDiv 1/1 x"},
+  {"ratGe", "ratLe y x"},
+  {"ratGt", "ratLt y x"},
+  {"ratFloor", "no Rat to Nat form in slice A1"},
+  {"ratCeil", "no Rat to Nat form in slice A1"}
+};
 
 typedef enum {
   HEAD_TERM, /* a local, a definition or another term: plain application */
@@ -250,6 +311,10 @@ static const Value *nat_type(Checker *c) {
 
 static const Value *flag_type(Checker *c) {
   return tyop(c, OP_FLAG, 0, NULL, NULL, NULL);
+}
+
+static const Value *rat_type(Checker *c) {
+  return tyop(c, OP_RAT, 0, NULL, NULL, NULL);
 }
 
 /* The value of the core term K in the current context. */
@@ -859,6 +924,135 @@ static const Core *rule_flag_if(Call *k) {
   return op3(c, OP_FLAG_IF, 0, 3, b, yes, no);
 }
 
+/* flagAnd x y, flagNot x */
+static const Core *rule_flags(Call *k) {
+  Checker *c = k->c;
+  uint32_t n = k->b->arity;
+  const Core *x = check(c, k->args[0], flag_type(c));
+  const Core *y = x == NULL || n < 2u ? NULL : check(c, k->args[1], flag_type(c));
+  k->type = flag_type(c);
+  return op3(c, k->b->op, 0, n, x, y, NULL);
+}
+
+/* Fin n: n is a Nat. A value of Fin n is a Nat below n. */
+static const Core *rule_fin_type(Call *k) {
+  const Core *n = check(k->c, k->args[0], nat_type(k->c));
+  k->type = val_univ(k->c->m, 0);
+  return op3(k->c, OP_FIN, 0, 1, n, NULL, NULL);
+}
+
+static const Value *fin_type(Checker *c, const Value *size) {
+  return tyop(c, OP_FIN, 1, size, NULL, NULL);
+}
+
+/* Fin (natMul m n), the type of a finPair. A size past 2^64-1 is refused. */
+static const Value *fin_product(Call *k, const Core *m, const Core *n) {
+  Checker *c = k->c;
+  const Value *size = here(c, op3(c, OP_NAT_MUL, 0, 2, m, n, NULL));
+  if (size != NULL && size->kind == VAL_TRAP) {
+    (void)FAIL(c, "TYPE_FIN_SIZE", "%s needs a size natMul m n below 2^64", k->b->name);
+    return NULL;
+  }
+  return fin_type(c, size);
+}
+
+/* The first argument of a Fin operation: checked at HINT when it is a Fin,
+   else inferred, and then it must be a Fin. */
+static const Core *fin_arg(Call *k, const Value *hint, const Value **type) {
+  Checker *c = k->c;
+  const Core *x;
+  *type = val_is(hint, OP_FIN) ? hint : NULL;
+  if (*type != NULL)
+    return check(c, k->args[0], *type);
+  x = infer(c, k->args[0], type);
+  if (x == NULL)
+    return NULL;
+  return val_is(*type, OP_FIN) ? x : nul(FAIL(c, "TYPE_MISMATCH", "%s needs a value of type Fin n, found a term of type %s", k->b->name, show(c, *type)));
+}
+
+/* finVal x: the Nat itself, since values carry no types. */
+static const Core *rule_fin_val(Call *k) {
+  const Value *xt = NULL;
+  const Core *x = fin_arg(k, NULL, &xt);
+  k->type = nat_type(k->c);
+  return x;
+}
+
+/* finMax x y : Fin n; finEq, finLt, finLe x y : Flag. They are the Nat
+   operations at the type Fin n. */
+static const Core *rule_fin2(Call *k) {
+  Checker *c = k->c;
+  const Value *xt = NULL;
+  const Core *x = fin_arg(k, k->b->result == OP_FIN ? k->hint : NULL, &xt);
+  const Core *y = x == NULL ? NULL : check(c, k->args[1], xt);
+  k->type = k->b->result == OP_FIN ? xt : flag_type(c);
+  return op3(c, k->b->op, 0, 2, x, y, NULL);
+}
+
+/* finSub x d = natSub x d : Fin n. The subtraction is truncated, and d is a
+   Nat, as `<v.val - e, _>` in auction-cat (FirstPrice3.lean:70). */
+static const Core *rule_fin_sub(Call *k) {
+  Checker *c = k->c;
+  const Value *xt = NULL;
+  const Core *x = fin_arg(k, k->hint, &xt);
+  const Core *d = x == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  k->type = xt;
+  return op3(c, OP_NAT_SUB, 0, 2, x, d, NULL);
+}
+
+/* finPair m n a b = natAdd (natMul m b) a : Fin (natMul m n). The sizes are
+   explicit, since the value needs m. The first component is the low digit
+   (FinStoch.lean:46). */
+static const Core *rule_fin_pair(Call *k) {
+  Checker *c = k->c;
+  const Core *m = check(c, k->args[0], nat_type(c));
+  const Core *n = m == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  const Core *a = n == NULL ? NULL : check(c, k->args[2], fin_type(c, here(c, m)));
+  const Core *b = a == NULL ? NULL : check(c, k->args[3], fin_type(c, here(c, n)));
+  k->type = b == NULL ? NULL : fin_product(k, m, n);
+  return k->type == NULL ? NULL : op3(c, OP_NAT_ADD, 0, 2, op3(c, OP_NAT_MUL, 0, 2, m, b, NULL), a, NULL);
+}
+
+/* finFirst m n x = natMod x m : Fin m and finSecond m n x = natDiv x m :
+   Fin n (FinStoch.lean:63, :74). */
+static const Core *rule_fin_part(Call *k) {
+  Checker *c = k->c;
+  const Core *m = check(c, k->args[0], nat_type(c));
+  const Core *n = m == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  const Value *xt = n == NULL ? NULL : fin_product(k, m, n);
+  const Core *x = xt == NULL ? NULL : check(c, k->args[2], xt);
+  k->type = x == NULL ? NULL : fin_type(c, here(c, k->b->part == 0u ? m : n));
+  return op3(c, k->b->op, 0, 2, x, m, NULL);
+}
+
+/* allFin n f: f is a Flag test on Fin n. */
+/* sumRat n f shares the rule: the row gives the operation and the result
+   (Flag for allFin, Rat for sumRat). */
+static const Core *rule_all_fin(Call *k) {
+  Checker *c = k->c;
+  const Value *res = tyop(c, k->b->result, 0, NULL, NULL, NULL);
+  const Core *n = check(c, k->args[0], nat_type(c));
+  const Core *f = n == NULL ? NULL : check(c, k->args[1], val_arrow(c->m, fin_type(c, here(c, n)), res));
+  k->type = res;
+  return op3(c, k->b->op, 0, 2, n, f, NULL);
+}
+
+/* ratAdd .. ratLt x y: x and y are Rats; the row gives the result type. */
+static const Core *rule_rat2(Call *k) {
+  Checker *c = k->c;
+  const Core *x = check(c, k->args[0], rat_type(c));
+  const Core *y = x == NULL ? NULL : check(c, k->args[1], rat_type(c));
+  k->type = tyop(c, k->b->result, 0, NULL, NULL, NULL);
+  return op3(c, k->b->op, 0, 2, x, y, NULL);
+}
+
+/* ratOfNat x: x is a Nat. */
+static const Core *rule_rat_of_nat(Call *k) {
+  const Core *x = check(k->c, k->args[0], nat_type(k->c));
+  k->type = rat_type(k->c);
+  return op3(k->c, OP_RAT_OF_NAT, 0, 1, x, NULL, NULL);
+}
+
 static const Core *rule(Call *k) {
   switch (k->b->rule) {
   case RULE_TYPE0:
@@ -919,6 +1113,26 @@ static const Core *rule(Call *k) {
     return rule_nat2(k);
   case RULE_FLAG_IF:
     return rule_flag_if(k);
+  case RULE_FLAGS:
+    return rule_flags(k);
+  case RULE_FIN_TYPE:
+    return rule_fin_type(k);
+  case RULE_FIN_VAL:
+    return rule_fin_val(k);
+  case RULE_FIN_PAIR:
+    return rule_fin_pair(k);
+  case RULE_FIN_PART:
+    return rule_fin_part(k);
+  case RULE_FIN_SUB:
+    return rule_fin_sub(k);
+  case RULE_FIN2:
+    return rule_fin2(k);
+  case RULE_ALL_FIN:
+    return rule_all_fin(k);
+  case RULE_RAT2:
+    return rule_rat2(k);
+  case RULE_RAT_OF_NAT:
+    return rule_rat_of_nat(k);
   }
   return NULL;
 }
@@ -1026,10 +1240,24 @@ static int find_known(Checker *c, const char *name, Head *h) {
   return 0;
 }
 
+/* 1 after a REFUSE_ALLOW diagnostic when NAME is outside the allow-list. */
+static int refused_name(Checker *c, const char *name) {
+  size_t i;
+  for (i = 0; i < sizeof REFUSED / sizeof REFUSED[0]; i++) {
+    if (strcmp(REFUSED[i][0], name) == 0) {
+      (void)FAIL(c, "REFUSE_ALLOW", "%s is outside the allow-list; write %s", name, REFUSED[i][1]);
+      return 1;
+    }
+  }
+  return 0;
+}
+
 /* An unknown name. When it names this declaration or a later one, the use
    is recursion (rule R3). */
 static int unknown_name(Checker *c, const char *name) {
   size_t i;
+  if (refused_name(c, name))
+    return 0;
   for (i = c->decl_index; i < c->decls->count; i++) {
     if (strcmp(c->decls->items[i].name, name) == 0)
       return FAIL(c, "REFUSE_REC", "%s is this definition or a later one; a definition can use only earlier ones (rule R3)", name);
@@ -1144,7 +1372,7 @@ static const Core *var_core(Checker *c, const char *name, const Value **type) {
     *type = c->m->defs[d].type;
     return core_index(c, CORE_GLOBAL, d);
   }
-  return nul(FAIL(c, "NAME_UNKNOWN", "unknown name %s", name));
+  return nul(refused_name(c, name) ? 0 : FAIL(c, "NAME_UNKNOWN", "unknown name %s", name));
 }
 
 static const Core *apply_term(Checker *c, const Term *head, const Term *const *args, uint32_t argc, const Value *hint, const Value **type) {
@@ -1249,14 +1477,48 @@ static const Core *elab_binder(Checker *c, const Term *t, CoreKind kind, const V
   return finish(c, core_bind(c, kind, t->name, a, b), hint, type);
 }
 
+/* A Nat literal K at the type Fin n: n must be a number above K. */
+static const Core *fin_literal(Checker *c, uint64_t k, const Value *hint, const Value **type) {
+  const Value *size = hint->args[0];
+  if (size->kind != VAL_NAT)
+    return nul(FAIL(c, "TYPE_FIN_OPEN", "the literal %llu needs a Fin whose size is a number, found %s", (unsigned long long)k, show(c, hint)));
+  if (k >= size->nat)
+    return nul(FAIL(c, "TYPE_FIN_RANGE", "the literal %llu is not below the size of %s", (unsigned long long)k, show(c, hint)));
+  *type = hint;
+  return core_leaf(c, CORE_NAT, k);
+}
+
+/* N/D: D = 0 is TYPE_RAT_ZERO; the literal is reduced (2/6 is 1/3, as
+   Lean); a numerator above INT64_MAX after the reduction is TYPE_RAT_RANGE. */
+static const Core *rat_literal(Checker *c, const Term *t, const Value *hint, const Value **type) {
+  uint64_t g;
+  Core *k;
+  if (t->den == 0)
+    return nul(FAIL(c, "TYPE_RAT_ZERO", "the Rat literal %llu/0 has a zero denominator", (unsigned long long)t->nat));
+  g = gcd_u64(t->nat, t->den);
+  if (t->nat / g > (uint64_t)INT64_MAX)
+    return nul(FAIL(c, "TYPE_RAT_RANGE", "the Rat literal %llu/%llu has a numerator above 2^63 - 1", (unsigned long long)t->nat, (unsigned long long)t->den));
+  k = new_core(c, CORE_RAT);
+  if (k == NULL)
+    return NULL;
+  k->num = (int64_t)(t->nat / g);
+  k->nat = t->den / g;
+  *type = rat_type(c);
+  return finish(c, k, hint, type);
+}
+
 static const Core *elab_inner(Checker *c, const Term *t, const Value *hint, const Value **type) {
   switch (t->kind) {
   case TERM_VAR:
   case TERM_APP:
     return elab_spine(c, t, hint, type);
   case TERM_NAT:
+    if (val_is(hint, OP_FIN))
+      return fin_literal(c, t->nat, hint, type);
     *type = nat_type(c);
     return finish(c, core_leaf(c, CORE_NAT, t->nat), hint, type);
+  case TERM_RAT:
+    return rat_literal(c, t, hint, type);
   case TERM_LAM:
     return hint != NULL ? check_lam(c, t, hint, type) : infer_lam(c, t, type);
   case TERM_PI:
@@ -1315,6 +1577,8 @@ static const char *name_owner(const Checker *c, const char *name) {
 
 static int name_free(Checker *c, const char *name) {
   const char *why = name_owner(c, name);
+  if (refused_name(c, name))
+    return 0;
   return why == NULL ? 1 : FAIL(c, "REFUSE_NAME", "%s is %s (rule R4)", name, why);
 }
 
@@ -1459,14 +1723,14 @@ int entry_of(Machine *m, const Value *type, Entry *out) {
   const Value *t = type;
   memset(out, 0, sizeof *out);
   while (t != NULL && t->kind == VAL_PI && out->param_count < ENTRY_PARAMS_MAX) {
-    if (!val_is(t->dom, OP_NAT) && !val_is(t->dom, OP_FLAG))
+    if (!val_is(t->dom, OP_NAT) && !val_is(t->dom, OP_FLAG) && !val_is(t->dom, OP_FIN))
       return 0;
     out->param_flag[out->param_count] = val_is(t->dom, OP_FLAG);
     t = closure_apply(m, t, val_var(m, out->param_count));
     out->param_count++;
   }
   out->result_flag = val_is(t, OP_FLAG);
-  return val_is(t, OP_NAT) || val_is(t, OP_FLAG);
+  return val_is(t, OP_NAT) || val_is(t, OP_FLAG) || val_is(t, OP_FIN) || val_is(t, OP_RAT);
 }
 
 static int parse_u64(const char *s, uint64_t *out) {
@@ -1484,9 +1748,21 @@ static int parse_u64(const char *s, uint64_t *out) {
   return 1;
 }
 
-/* An entry argument: a Nat in decimal, or a Flag as 0 or 1. */
-static const Value *entry_arg(Machine *m, const char *text, int is_flag) {
+/* An entry argument: a Nat in decimal, a Flag as 0 or 1, or an index of a
+   Fin whose size is a number. */
+static const Value *entry_arg(Machine *m, const char *text, const Value *dom) {
   uint64_t n = 0;
+  int is_flag = val_is(dom, OP_FLAG);
+  char *buf;
+  if (val_is(dom, OP_FIN)) {
+    if (dom->args[0]->kind == VAL_NAT && parse_u64(text, &n) && n < dom->args[0]->nat)
+      return val_nat(m, n);
+    buf = arena_alloc(m->arena, PRINT_MAX);
+    if (buf != NULL)
+      value_print(m, NULL, 0, dom, buf, PRINT_MAX);
+    diag_fail(m->diag, "EVAL_ARGS", m->def, "'%s' is not an index of %s", text, buf != NULL ? buf : "Fin");
+    return NULL;
+  }
   if (!parse_u64(text, &n) || (is_flag && n > 1u)) {
     diag_fail(m->diag, "EVAL_ARGS", m->def, "'%s' is not a %s", text, is_flag ? "Flag (0 or 1)" : "Nat (0 to 2^64-1)");
     return NULL;
@@ -1499,9 +1775,12 @@ static int print_result(Machine *m, const char *name, const Value *v, FILE *out,
   case VAL_NAT:
     fprintf(out, "%llu\n", (unsigned long long)v->nat);
     return 0;
+  case VAL_RAT:
+    fprintf(out, "%lld/%llu\n", (long long)v->num, (unsigned long long)v->nat);
+    return 0;
   case VAL_TRAP:
     fputs("trap\n", out);
-    fprintf(err, "langc: EVAL_OVERFLOW: %s: a Nat operation overflowed past 2^64-1\n", name);
+    fprintf(err, "langc: %s: %s: %s\n", trap_code(v), name, trap_text(v));
     return 0;
   case VAL_OP:
     if (val_is(v, OP_FLAG_YES) || val_is(v, OP_FLAG_NO)) {
@@ -1526,6 +1805,7 @@ int eval_command(Machine *m, const char *name, char *const *args, int arg_count,
   uint32_t d = find_def(m, name);
   Entry entry;
   const Value *v;
+  const Value *t;
   char *buf;
   uint32_t i;
   m->def = name;
@@ -1552,9 +1832,12 @@ int eval_command(Machine *m, const char *name, char *const *args, int arg_count,
     diag_fail(m->diag, "EVAL_ARGS", name, "the entry takes %u arguments, found %d", entry.param_count, arg_count);
     return 2;
   }
+  t = m->defs[d].type;
   for (i = 0; i < entry.param_count && v != NULL; i++) {
-    const Value *arg = entry_arg(m, args[i], entry.param_flag[i]);
+    const Value *arg = entry_arg(m, args[i], t->dom);
     v = arg == NULL ? NULL : apply_value(m, v, arg);
+    t = v == NULL ? t : closure_apply(m, t, arg);
+    v = t == NULL ? NULL : v;
   }
   if (v == NULL)
     return strcmp(m->diag->code != NULL ? m->diag->code : "", "EVAL_ARGS") == 0 ? 2 : 1;

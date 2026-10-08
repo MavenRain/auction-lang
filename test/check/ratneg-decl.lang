@@ -1,0 +1,1 @@
+def ratNeg : (x : Rat) -> Rat := fun (x : Rat) => ratSub 0/1 x

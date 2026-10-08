@@ -8,6 +8,7 @@
 typedef enum {
   TERM_VAR,   /* name */
   TERM_NAT,   /* nat */
+  TERM_RAT,   /* nat over den */
   TERM_APP,   /* left applied to right */
   TERM_LAM,   /* fun (name : left) => right; left is NULL for a bare binder */
   TERM_PI,    /* (name : left) -> right; name is NULL for left -> right */
@@ -22,6 +23,7 @@ struct Term {
   int col;
   const char *name;
   uint64_t nat;
+  uint64_t den; /* TERM_RAT */
   const Term *left;
   const Term *right;
 };

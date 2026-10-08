@@ -32,6 +32,7 @@ const char *tok_kind_name(TokKind kind) {
     case TOK_EOF: return "end of input";
     case TOK_IDENT: return "a name";
     case TOK_NAT: return "a Nat literal";
+    case TOK_RAT: return "a Rat literal";
     case TOK_LPAREN: return "'('";
     case TOK_RPAREN: return "')'";
     case TOK_COLON: return "':'";
@@ -83,6 +84,7 @@ static Token *push(Lexer *lx, TokKind kind, size_t start, int line, int col) {
   tok->text = lx->text + start;
   tok->len = lx->pos - start;
   tok->nat = 0;
+  tok->den = 0;
   tok->line = line;
   tok->col = col;
   return tok;
@@ -119,25 +121,41 @@ static int lex_ident(Lexer *lx) {
   return 1;
 }
 
+static int lex_digits(Lexer *lx, uint64_t *value) {
+  int overflow = 0;
+  *value = 0;
+  while (is_digit(peek(lx, 0))) {
+    uint64_t digit = (uint64_t)(peek(lx, 0) - '0');
+    overflow |= *value > (UINT64_MAX - digit) / 10u;
+    *value = *value * 10u + digit;
+    advance(lx, 1);
+  }
+  return overflow;
+}
+
+/* N, or the Rat literal N/D (no spaces; D = 0 is refused at check). */
 static int lex_nat(Lexer *lx) {
   size_t start = lx->pos;
   int line = lx->line;
   int col = lx->col;
   uint64_t value = 0;
-  int overflow = 0;
-  while (is_digit(peek(lx, 0))) {
-    uint64_t digit = (uint64_t)(peek(lx, 0) - '0');
-    overflow |= value > (UINT64_MAX - digit) / 10u;
-    value = value * 10u + digit;
+  uint64_t den = 0;
+  int overflow = lex_digits(lx, &value);
+  int rat = peek(lx, 0) == '/' && is_digit(peek(lx, 1));
+  Token *tok;
+  if (rat) {
     advance(lx, 1);
+    overflow |= lex_digits(lx, &den);
   }
   if (overflow) {
-    return diag_fail(lx->diag, "LEX_NAT_RANGE", NULL, "%s:%d:%d: a Nat literal is larger than 2^64 - 1", lx->source, line, col);
+    return diag_fail(lx->diag, "LEX_NAT_RANGE", NULL, "%s:%d:%d: %s is larger than 2^64 - 1", lx->source, line, col, rat ? "a part of a Rat literal" : "a Nat literal");
   }
   if (is_ident_start(peek(lx, 0))) {
     return diag_fail(lx->diag, "LEX_CHAR", NULL, "%s:%d:%d: a letter follows a Nat literal", lx->source, lx->line, lx->col);
   }
-  push(lx, TOK_NAT, start, line, col)->nat = value;
+  tok = push(lx, rat ? TOK_RAT : TOK_NAT, start, line, col);
+  tok->nat = value;
+  tok->den = den;
   return 1;
 }
 
