@@ -12,9 +12,9 @@ HEADERS = $(wildcard src/*.h src/front/*.h)
 
 build: build/langc
 
-build/domain.c: domain/domain.lang domain/finstoch.lang domain/auction.lang gen/embed.c
+build/domain.c: domain/domain.lang domain/finstoch.lang domain/auction.lang domain/opengame.lang gen/embed.c
 	mkdir -p build
-	cat domain/domain.lang domain/finstoch.lang domain/auction.lang > build/domain-all.lang
+	cat domain/domain.lang domain/finstoch.lang domain/auction.lang domain/opengame.lang > build/domain-all.lang
 	$(TCC) -run gen/embed.c build/domain-all.lang build/domain.c
 
 build/langc: $(SRC) $(HEADERS) build/domain.c

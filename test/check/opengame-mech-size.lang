@@ -1,0 +1,1 @@
+def badScore : Matrix (natMul 2 2) (natMul 2 2) := auctionScore 2 (secondPriceSealedBid 3)

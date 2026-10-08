@@ -1,0 +1,24 @@
+-- Slice A4: the BayesNashPipeline expectations and the dominance of the second price auction (auction-cat Examples.lean).
+-- A dom Flag says that truthful bids in the second price auction give the bidder at least the expected utility of truthful bids in the first price auction.
+-- A pipe Flag says that the expected utility of the auction kernel equals the Vickrey expected utility.
+-- Two bidders at n = 3 (prior 1/3, v = 2). Three bidders at n = 2 (prior 1/4, v = 1): at n = 3 a matrix is over the 2^24 cap (D99).
+def domSpsb1 : Flag := ratLe (auctionExpectedBidder1Util 3 (fpsbAuction 3) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder1Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2)
+def domRes1 : Flag := ratLe (auctionExpectedBidder1Util 3 (fpsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder1Util 3 (spsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2)
+def domSpsb2 : Flag := ratLe (auctionExpectedBidder2Util 3 (fpsbAuction 3) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder2Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2)
+def dom3Spsb1 : Flag := ratLe (auctionExpectedBidder1Util3 2 (fpsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (auctionExpectedBidder1Util3 2 (spsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1)
+def dom3Res1 : Flag := ratLe (auctionExpectedBidder1Util3 2 (fpsb3ReserveAuction 2 1) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (auctionExpectedBidder1Util3 2 (spsb3ReserveAuction 2 1) (fun (v : Fin (natMul 2 2)) => 1/4) 1)
+def dom3Spsb3 : Flag := ratLe (auctionExpectedBidder3Util3 2 (fpsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (auctionExpectedBidder3Util3 2 (spsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1)
+def eu1Spsb3 : Rat := auctionExpectedBidder1Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2
+def eu1Res3 : Rat := auctionExpectedBidder1Util 3 (spsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2
+def eu2Spsb3 : Rat := auctionExpectedBidder2Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2
+def pipeVick1 : Flag := ratEq (auctionExpectedBidder1Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2) (vickreyEqUtility 3 (fun (v : Fin 3) => 1/3) 2)
+def pipeRes1 : Flag := ratEq (auctionExpectedBidder1Util 3 (spsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2) (vickreyReserveEqUtility 3 1 (fun (v : Fin 3) => 1/3) 2)
+def pipeRes1b : Flag := ratEq (vickreyReserveEqUtility 3 1 (fun (v : Fin 3) => 1/3) 2) (vickreyReserveExpectedUtility 3 1 (fun (v : Fin 3) => v) (fun (v : Fin 3) => v) 2 (fun (v : Fin 3) => 1/3))
+def pipeVick2 : Flag := ratEq (auctionExpectedBidder2Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2) (vickreyBidder2ExpectedUtility 3 (fun (v : Fin 3) => v) (fun (v : Fin 3) => v) 2 (fun (v : Fin 3) => 1/3))
+def pipeRes2 : Flag := ratEq (auctionExpectedBidder2Util 3 (spsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2) (vickreyReserveBidder2ExpectedUtility 3 1 (fun (v : Fin 3) => v) (fun (v : Fin 3) => v) 2 (fun (v : Fin 3) => 1/3))
+def pipe3Vick1 : Flag := ratEq (auctionExpectedBidder1Util3 2 (spsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (vickreyExpectedUtility3 2 (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) 1 (fun (v : Fin (natMul 2 2)) => 1/4))
+def pipe3Vick2 : Flag := ratEq (auctionExpectedBidder2Util3 2 (spsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (vickreyBidder2ExpectedUtility3 2 (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) 1 (fun (v : Fin (natMul 2 2)) => 1/4))
+def pipe3Vick3 : Flag := ratEq (auctionExpectedBidder3Util3 2 (spsb3Auction 2) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (vickreyBidder3ExpectedUtility3 2 (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) 1 (fun (v : Fin (natMul 2 2)) => 1/4))
+def pipe3Res1 : Flag := ratEq (auctionExpectedBidder1Util3 2 (spsb3ReserveAuction 2 1) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (vickreyReserveExpectedUtility3 2 1 (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) 1 (fun (v : Fin (natMul 2 2)) => 1/4))
+def pipe3Res2 : Flag := ratEq (auctionExpectedBidder2Util3 2 (spsb3ReserveAuction 2 1) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (vickreyReserveBidder2ExpectedUtility3 2 1 (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) 1 (fun (v : Fin (natMul 2 2)) => 1/4))
+def pipe3Res3 : Flag := ratEq (auctionExpectedBidder3Util3 2 (spsb3ReserveAuction 2 1) (fun (v : Fin (natMul 2 2)) => 1/4) 1) (vickreyReserveBidder3ExpectedUtility3 2 1 (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) (fun (v : Fin 2) => v) 1 (fun (v : Fin (natMul 2 2)) => 1/4))

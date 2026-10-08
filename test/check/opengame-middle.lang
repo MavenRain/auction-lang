@@ -1,0 +1,1 @@
+def badId : OpenGame 2 2 2 2 2 := gameId 2 2

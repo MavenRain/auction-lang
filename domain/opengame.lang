@@ -1,0 +1,206 @@
+-- Open games over FinStoch (auction-cat OpenGamesCat/Basic.lean, the Optic
+-- of comp-cat-theory Collapse/Optic.lean) and the bidders and auctions of
+-- AuctionCat/Bidder.lean and Auction.lean (slice A4, D86-D94). The Makefile
+-- joins this file after auction.lang, so each name here is a core name too
+-- (rule R4). The Lean middle object M is the fifth family parameter m: each
+-- combinator gives the m of its result in its type (D87). The open-game
+-- layer has a game prefix (Lean id, comp, score, kron, make: D91).
+family OpenGame (x : Nat) (s : Nat) (y : Nat) (r : Nat) (m : Nat) := makeGame (gameView : Matrix x (natMul m y)) (gameUpdate : Matrix (natMul m r) s)
+-- The game layer: Basic.lean:50 id, :55 comp (Optic.lean:88), :68 score.
+def gameId : (x : Nat) -> (s : Nat) -> OpenGame x s x s 1 :=
+  fun (x : Nat) (s : Nat) => makeGame x s x s 1 (matLeftUnitorInv x) (matLeftUnitor s)
+def gameComp : (x : Nat) -> (s : Nat) -> (y : Nat) -> (r : Nat) -> (z : Nat) -> (q : Nat) -> (m1 : Nat) -> (m2 : Nat) -> (f : OpenGame x s y r m1) -> (g : OpenGame y r z q m2) -> OpenGame x s z q (natMul m1 m2) :=
+  fun (x : Nat) (s : Nat) (y : Nat) (r : Nat) (z : Nat) (q : Nat) (m1 : Nat) (m2 : Nat) (f : OpenGame x s y r m1) (g : OpenGame y r z q m2) => makeGame x s z q (natMul m1 m2) (matComp x (natMul m1 y) (natMul (natMul m1 m2) z) (gameView f) (matComp (natMul m1 y) (natMul m1 (natMul m2 z)) (natMul (natMul m1 m2) z) (matKron m1 m1 y (natMul m2 z) (matId m1) (gameView g)) (matAssociatorInv m1 m2 z))) (matComp (natMul (natMul m1 m2) q) (natMul m1 (natMul m2 q)) s (matAssociator m1 m2 q) (matComp (natMul m1 (natMul m2 q)) (natMul m1 r) s (matKron m1 m1 (natMul m2 q) r (matId m1) (gameUpdate g)) (gameUpdate f)))
+def gameScore : (x : Nat) -> (s : Nat) -> (y : Nat) -> (r : Nat) -> (m : Nat) -> (g : OpenGame x s y r m) -> (k : Matrix y r) -> Matrix x s :=
+  fun (x : Nat) (s : Nat) (y : Nat) (r : Nat) (m : Nat) (g : OpenGame x s y r m) (k : Matrix y r) => matComp x (natMul m y) s (gameView g) (matComp (natMul m y) (natMul m r) s (matKron m m y r (matId m) k) (gameUpdate g))
+-- The middle interchange (Basic.lean:80) as one matOfFn of its Fin form
+-- (KernelTruth.lean:155), not the 5-matrix chain (D88), and kron (:104).
+def middleInterchangeFn : (a : Nat) -> (b : Nat) -> (d : Nat) -> (e : Nat) -> (x : Fin (natMul (natMul a b) (natMul d e))) -> Fin (natMul (natMul a d) (natMul b e)) :=
+  fun (a : Nat) (b : Nat) (d : Nat) (e : Nat) (x : Fin (natMul (natMul a b) (natMul d e))) => finPair (natMul a d) (natMul b e) (finPair a d (finFirst a b (finFirst (natMul a b) (natMul d e) x)) (finFirst d e (finSecond (natMul a b) (natMul d e) x))) (finPair b e (finSecond a b (finFirst (natMul a b) (natMul d e) x)) (finSecond d e (finSecond (natMul a b) (natMul d e) x)))
+def matMiddleInterchange : (a : Nat) -> (b : Nat) -> (d : Nat) -> (e : Nat) -> Matrix (natMul (natMul a b) (natMul d e)) (natMul (natMul a d) (natMul b e)) :=
+  fun (a : Nat) (b : Nat) (d : Nat) (e : Nat) => matOfFn (natMul (natMul a b) (natMul d e)) (natMul (natMul a d) (natMul b e)) (fun (i : Fin (natMul (natMul a b) (natMul d e))) => middleInterchangeFn a b d e i)
+def gameKron : (x : Nat) -> (s : Nat) -> (y : Nat) -> (r : Nat) -> (x2 : Nat) -> (s2 : Nat) -> (y2 : Nat) -> (r2 : Nat) -> (m : Nat) -> (m2 : Nat) -> (f : OpenGame x s y r m) -> (g : OpenGame x2 s2 y2 r2 m2) -> OpenGame (natMul x x2) (natMul s s2) (natMul y y2) (natMul r r2) (natMul m m2) :=
+  fun (x : Nat) (s : Nat) (y : Nat) (r : Nat) (x2 : Nat) (s2 : Nat) (y2 : Nat) (r2 : Nat) (m : Nat) (m2 : Nat) (f : OpenGame x s y r m) (g : OpenGame x2 s2 y2 r2 m2) => makeGame (natMul x x2) (natMul s s2) (natMul y y2) (natMul r r2) (natMul m m2) (matComp (natMul x x2) (natMul (natMul m y) (natMul m2 y2)) (natMul (natMul m m2) (natMul y y2)) (matKron x (natMul m y) x2 (natMul m2 y2) (gameView f) (gameView g)) (matMiddleInterchange m y m2 y2)) (matComp (natMul (natMul m m2) (natMul r r2)) (natMul (natMul m r) (natMul m2 r2)) (natMul s s2) (matMiddleInterchange m m2 r r2) (matKron (natMul m r) s (natMul m2 r2) s2 (gameUpdate f) (gameUpdate g)))
+-- Bidders (Bidder.lean:49 make, :84, :97, :119): a bidder is an open game
+-- with m = v (the Lean alias Bidder is not a def).
+def makeBidder : (v : Nat) -> (u : Nat) -> (b : Nat) -> (a : Nat) -> (strategy : Matrix v (natMul v b)) -> (utility : Matrix (natMul v a) u) -> OpenGame v u b a v :=
+  fun (v : Nat) (u : Nat) (b : Nat) (a : Nat) (strategy : Matrix v (natMul v b)) (utility : Matrix (natMul v a) u) => makeGame v u b a v strategy utility
+def truthfulBidder : (n : Nat) -> OpenGame n n n (natMul 2 n) n :=
+  fun (n : Nat) => makeBidder n n n (natMul 2 n) (matCopy n) (matOfFn (natMul n (natMul 2 n)) n (truthfulUtilityFn n))
+def deviatorBidder : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> OpenGame n n n (natMul 2 n) n :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => makeBidder n n n (natMul 2 n) (matOfFn n (natMul n n) (fun (v : Fin n) => finPair n n v (bid v))) (matOfFn (natMul n (natMul 2 n)) n (truthfulUtilityFn n))
+def halfShadeBidder : (n : Nat) -> OpenGame n n n (natMul 2 n) n :=
+  fun (n : Nat) => deviatorBidder n (fun (v : Fin n) => halfShading n v)
+-- Two-bidder auctions (Auction.lean:38-160): the score of a game against
+-- an A3 mechanism. Bidder 1 is the low digit.
+def auctionGame : (n : Nat) -> OpenGame (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (natMul n n) :=
+  fun (n : Nat) => gameKron n n n (natMul 2 n) n n n (natMul 2 n) n n (truthfulBidder n) (truthfulBidder n)
+def auctionScore : (n : Nat) -> (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) => gameScore (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (natMul n n) (auctionGame n) mech
+def fpsbAuction : (n : Nat) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) => auctionScore n (firstPriceSealedBid n)
+def spsbAuction : (n : Nat) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) => auctionScore n (secondPriceSealedBid n)
+def auctionGameDeviator1 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> OpenGame (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => gameKron n n n (natMul 2 n) n n n (natMul 2 n) n n (deviatorBidder n bid) (truthfulBidder n)
+def auctionScoreDeviator1 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) => gameScore (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (natMul n n) (auctionGameDeviator1 n bid) mech
+def spsbAuctionDeviator1 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator1 n bid (secondPriceSealedBid n)
+def auctionGameDeviator2 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> OpenGame (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => gameKron n n n (natMul 2 n) n n n (natMul 2 n) n n (truthfulBidder n) (deviatorBidder n bid)
+def auctionScoreDeviator2 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) => gameScore (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (natMul n n) (auctionGameDeviator2 n bid) mech
+def spsbAuctionDeviator2 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator2 n bid (secondPriceSealedBid n)
+def fpsbAuctionDeviator1 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator1 n bid (firstPriceSealedBid n)
+def fpsbAuctionDeviator2 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator2 n bid (firstPriceSealedBid n)
+def fpsbReserveAuctionDeviator1 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator1 n bid (fpsbReserve n r)
+def fpsbReserveAuctionDeviator2 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator2 n bid (fpsbReserve n r)
+def spsbReserveAuction : (n : Nat) -> (r : Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (r : Fin n) => auctionScore n (spsbReserve n r)
+def spsbReserveAuctionDeviator1 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator1 n bid (spsbReserve n r)
+def spsbReserveAuctionDeviator2 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator2 n bid (spsbReserve n r)
+def fpsbReserveAuction : (n : Nat) -> (r : Fin n) -> Matrix (natMul n n) (natMul n n) :=
+  fun (n : Nat) (r : Fin n) => auctionScore n (fpsbReserve n r)
+-- Three-bidder auctions (Auction.lean:201-318): auctionGame3 = kron of
+-- auctionGame and a third bidder (Lean kron (kron b b) b, the same value).
+def auctionGame3 : (n : Nat) -> OpenGame (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) :=
+  fun (n : Nat) => gameKron (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) n n n (natMul 2 n) (natMul n n) n (auctionGame n) (truthfulBidder n)
+def auctionScore3 : (n : Nat) -> (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) => gameScore (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) (auctionGame3 n) mech
+def fpsb3Auction : (n : Nat) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) => auctionScore3 n (firstPriceSealedBid3 n)
+def spsb3Auction : (n : Nat) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) => auctionScore3 n (secondPriceSealedBid3 n)
+def spsb3ReserveAuction : (n : Nat) -> (r : Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) => auctionScore3 n (spsb3Reserve n r)
+def auctionGame3Deviator1 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> OpenGame (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => gameKron (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) n n n (natMul 2 n) (natMul n n) n (auctionGameDeviator1 n bid) (truthfulBidder n)
+def auctionScoreDeviator1_3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) => gameScore (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) (auctionGame3Deviator1 n bid) mech
+def spsb3AuctionDeviator1 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator1_3 n bid (secondPriceSealedBid3 n)
+def spsb3ReserveAuctionDeviator1 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator1_3 n bid (spsb3Reserve n r)
+def auctionGame3Deviator2 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> OpenGame (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => gameKron (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) n n n (natMul 2 n) (natMul n n) n (auctionGameDeviator2 n bid) (truthfulBidder n)
+def auctionScoreDeviator2_3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) => gameScore (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) (auctionGame3Deviator2 n bid) mech
+def spsb3AuctionDeviator2 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator2_3 n bid (secondPriceSealedBid3 n)
+def auctionGame3Deviator3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> OpenGame (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => gameKron (natMul n n) (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) n n n (natMul 2 n) (natMul n n) n (auctionGame n) (deviatorBidder n bid)
+def auctionScoreDeviator3_3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) => gameScore (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (natMul (natMul n n) n) (auctionGame3Deviator3 n bid) mech
+def spsb3AuctionDeviator3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator3_3 n bid (secondPriceSealedBid3 n)
+def fpsb3ReserveAuction : (n : Nat) -> (r : Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) => auctionScore3 n (fpsb3Reserve n r)
+def spsb3ReserveAuctionDeviator2 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator2_3 n bid (spsb3Reserve n r)
+def spsb3ReserveAuctionDeviator3 : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) => auctionScoreDeviator3_3 n bid (spsb3Reserve n r)
+-- Kernel Fns: the deterministic function of each auction score and game
+-- view or update (KernelTruth.lean, FirstPrice.lean:118, KernelFirstPrice3.lean,
+-- ReserveTruth.lean, Reserve3Truth.lean, Vickrey3.lean). The Lean theorems
+-- say spsbAuction n = detMatrix (spsbAuctionFn n), so here matEq of the score
+-- and matOfFn of the Fn is 1. The let bindings of Lean are inlined (D67), and
+-- the zero of Fin n is finSub v (finVal v) (an open n has no literal, D9).
+def auctionBidder1Util : (n : Nat) -> (auction : Matrix (natMul n n) (natMul n n)) -> (v : Fin (natMul n n)) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul n n) (natMul n n)) (v : Fin (natMul n n)) => sumRat (natMul n n) (fun (u : Fin (natMul n n)) => (ratMul (matEntry auction v u) (ratOfNat (finVal (finFirst n n u)))))
+def spsbAuctionFn : (n : Nat) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (v : Fin (natMul n n)) => finPair n n (vickreyUtility n (finFirst n n v) (finFirst n n v) (finSecond n n v)) (vickreyUtility n (finSecond n n v) (finSecond n n v) (finFirst n n v))
+def spsbAuctionDeviator1Fn : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul n n)) => finPair n n (vickreyUtility n (finFirst n n v) (bid (finFirst n n v)) (finSecond n n v)) (vickreyUtility n (finSecond n n v) (finSecond n n v) (bid (finFirst n n v)))
+def auctionViewFn : (n : Nat) -> (v : Fin (natMul n n)) -> Fin (natMul (natMul n n) (natMul n n)) :=
+  fun (n : Nat) (v : Fin (natMul n n)) => finPair (natMul n n) (natMul n n) v v
+def auctionUpdateFn : (n : Nat) -> (x : Fin (natMul (natMul n n) (natMul (natMul 2 n) (natMul 2 n)))) -> Fin (natMul n n) :=
+  fun (n : Nat) (x : Fin (natMul (natMul n n) (natMul (natMul 2 n) (natMul 2 n)))) => finPair n n (truthfulUtilityFn n (finPair n (natMul 2 n) (finFirst n n (finFirst (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) x)) (finFirst (natMul 2 n) (natMul 2 n) (finSecond (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) x)))) (truthfulUtilityFn n (finPair n (natMul 2 n) (finSecond n n (finFirst (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) x)) (finSecond (natMul 2 n) (natMul 2 n) (finSecond (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) x))))
+def auctionViewDeviator1Fn : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul (natMul n n) (natMul n n)) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul n n)) => finPair (natMul n n) (natMul n n) v (finPair n n (bid (finFirst n n v)) (finSecond n n v))
+def auctionViewDeviator2Fn : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul (natMul n n) (natMul n n)) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul n n)) => finPair (natMul n n) (natMul n n) v (finPair n n (finFirst n n v) (bid (finSecond n n v)))
+def spsbAuctionDeviator2Fn : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul n n)) => finPair n n (vickreyUtility n (finFirst n n v) (finFirst n n v) (bid (finSecond n n v))) (vickreyBidder2Util n (finSecond n n v) (finFirst n n v) (bid (finSecond n n v)))
+def auctionBidder2Util : (n : Nat) -> (auction : Matrix (natMul n n) (natMul n n)) -> (v : Fin (natMul n n)) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul n n) (natMul n n)) (v : Fin (natMul n n)) => sumRat (natMul n n) (fun (u : Fin (natMul n n)) => (ratMul (matEntry auction v u) (ratOfNat (finVal (finSecond n n u)))))
+def fpsbAuctionFn : (n : Nat) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (v : Fin (natMul n n)) => finPair n n (finSub (finFirst n n v) (finVal (finFirst n n v))) (finSub (finFirst n n v) (finVal (finFirst n n v)))
+def fpsbAuctionFn3 : (n : Nat) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (finSub (finSecond (natMul n n) n v) (finVal (finSecond (natMul n n) n v))) (finSub (finSecond (natMul n n) n v) (finVal (finSecond (natMul n n) n v)))) (finSub (finSecond (natMul n n) n v) (finVal (finSecond (natMul n n) n v)))
+def spsbReserveAuctionFn : (n : Nat) -> (r : Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (v : Fin (natMul n n)) => finPair n n (vickreyReserveUtility n (finFirst n n v) (finFirst n n v) (finSecond n n v) r) (vickreyReserveUtility n (finSecond n n v) (finSecond n n v) (finFirst n n v) r)
+def spsbReserveAuctionDeviator1Fn : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul n n)) => finPair n n (vickreyReserveUtility n (finFirst n n v) (bid (finFirst n n v)) (finSecond n n v) r) (vickreyReserveUtility n (finSecond n n v) (finSecond n n v) (bid (finFirst n n v)) r)
+def spsbReserveAuctionDeviator2Fn : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul n n)) -> Fin (natMul n n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul n n)) => finPair n n (vickreyReserveUtility n (finFirst n n v) (finFirst n n v) (bid (finSecond n n v)) r) (vickreyReserveBidder2Util n (finSecond n n v) (finFirst n n v) (bid (finSecond n n v)) r)
+def spsb3ReserveAuctionFn : (n : Nat) -> (r : Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyReserveUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (finSecond (natMul n n) n v) r) (vickreyReserveUtility3 n (finSecond n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (finSecond (natMul n n) n v) r)) (vickreyReserveUtility3 n (finSecond (natMul n n) n v) (finSecond (natMul n n) n v) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) r)
+def spsb3ReserveAuctionDeviator1Fn : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyReserveUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond n n (finFirst (natMul n n) n v)) (finSecond (natMul n n) n v) r) (vickreyReserveUtility3 n (finSecond n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v) r)) (vickreyReserveUtility3 n (finSecond (natMul n n) n v) (finSecond (natMul n n) n v) (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond n n (finFirst (natMul n n) n v)) r)
+def spsb3ReserveAuctionDeviator2Fn : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyReserveUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v) r) (vickreyReserveBidder2Util3 n (finSecond n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v) r)) (vickreyReserveUtility3 n (finSecond (natMul n n) n v) (finSecond (natMul n n) n v) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v))) r)
+def spsb3ReserveAuctionDeviator3Fn : (n : Nat) -> (r : Fin n) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (r : Fin n) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyReserveUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (bid (finSecond (natMul n n) n v)) r) (vickreyReserveUtility3 n (finSecond n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond (natMul n n) n v)) r)) (vickreyReserveBidder3Util3 n (finSecond (natMul n n) n v) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (bid (finSecond (natMul n n) n v)) r)
+def auctionBidder1Util3 : (n : Nat) -> (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) -> (v : Fin (natMul (natMul n n) n)) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) (v : Fin (natMul (natMul n n) n)) => sumRat (natMul (natMul n n) n) (fun (u : Fin (natMul (natMul n n) n)) => (ratMul (matEntry auction v u) (ratOfNat (finVal (finFirst n n (finFirst (natMul n n) n u))))))
+def spsbAuctionFn3 : (n : Nat) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (finSecond (natMul n n) n v)) (vickreyUtility3 n (finSecond n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (finSecond (natMul n n) n v))) (vickreyUtility3 n (finSecond (natMul n n) n v) (finSecond (natMul n n) n v) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)))
+def spsbAuctionDeviator1Fn3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond n n (finFirst (natMul n n) n v)) (finSecond (natMul n n) n v)) (vickreyUtility3 n (finSecond n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v))) (vickreyUtility3 n (finSecond (natMul n n) n v) (finSecond (natMul n n) n v) (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond n n (finFirst (natMul n n) n v)))
+def auctionViewFn3 : (n : Nat) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) :=
+  fun (n : Nat) (v : Fin (natMul (natMul n n) n)) => finPair (natMul (natMul n n) n) (natMul (natMul n n) n) v v
+def auctionUpdateFn3 : (n : Nat) -> (x : Fin (natMul (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)))) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (x : Fin (natMul (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)))) => finPair (natMul n n) n (auctionUpdateFn n (finPair (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (finFirst (natMul n n) n (finFirst (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) x)) (finFirst (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) (finSecond (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) x)))) (truthfulUtilityFn n (finPair n (natMul 2 n) (finSecond (natMul n n) n (finFirst (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) x)) (finSecond (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) (finSecond (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) x))))
+def auctionViewDeviator1Fn3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul (natMul n n) n) (natMul (natMul n n) n) v (finPair (natMul n n) n (finPair n n (bid (finFirst n n (finFirst (natMul n n) n v))) (finSecond n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v))
+def auctionViewDeviator2Fn3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul (natMul n n) n) (natMul (natMul n n) n) v (finPair (natMul n n) n (finPair n n (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v)))) (finSecond (natMul n n) n v))
+def spsb3AuctionDeviator2Fn : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v)) (vickreyBidder2Util3 n (finSecond n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v))) (finSecond (natMul n n) n v))) (vickreyUtility3 n (finSecond (natMul n n) n v) (finSecond (natMul n n) n v) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond n n (finFirst (natMul n n) n v))))
+def auctionBidder2Util3 : (n : Nat) -> (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) -> (v : Fin (natMul (natMul n n) n)) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) (v : Fin (natMul (natMul n n) n)) => sumRat (natMul (natMul n n) n) (fun (u : Fin (natMul (natMul n n) n)) => (ratMul (matEntry auction v u) (ratOfNat (finVal (finSecond n n (finFirst (natMul n n) n u))))))
+def auctionViewDeviator3Fn3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul (natMul n n) n) (natMul (natMul n n) n) v (finPair (natMul n n) n (finFirst (natMul n n) n v) (bid (finSecond (natMul n n) n v)))
+def spsb3AuctionDeviator3Fn : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul n n) n) :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v : Fin (natMul (natMul n n) n)) => finPair (natMul n n) n (finPair n n (vickreyUtility3 n (finFirst n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (bid (finSecond (natMul n n) n v))) (vickreyUtility3 n (finSecond n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (finFirst n n (finFirst (natMul n n) n v)) (bid (finSecond (natMul n n) n v)))) (vickreyBidder3Util3 n (finSecond (natMul n n) n v) (finFirst n n (finFirst (natMul n n) n v)) (finSecond n n (finFirst (natMul n n) n v)) (bid (finSecond (natMul n n) n v)))
+def auctionBidder3Util3 : (n : Nat) -> (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) -> (v : Fin (natMul (natMul n n) n)) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) (v : Fin (natMul (natMul n n) n)) => sumRat (natMul (natMul n n) n) (fun (u : Fin (natMul (natMul n n) n)) => (ratMul (matEntry auction v u) (ratOfNat (finVal (finSecond (natMul n n) n u)))))
+-- Bayes-Nash pipeline expectations (BayesNashPipeline.lean, D94): the sum
+-- over the opponents of the prior times the cast utility. The auction* forms
+-- read the utility from the score matrix of an auction (auctionBidder*Util).
+def auctionExpectedBidder1Util : (n : Nat) -> (auction : Matrix (natMul n n) (natMul n n)) -> (prior : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul n n) (natMul n n)) (prior : (v : Fin n) -> Rat) (v1 : Fin n) => sumRat n (fun (v2 : Fin n) => (ratMul (prior v2) (auctionBidder1Util n auction (finPair n n v1 v2))))
+def vickreyReserveExpectedUtility : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v1 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v2 : Fin n) => (ratMul (p v2) (ratOfNat (finVal (vickreyReserveUtility n v1 (s1 v1) (s2 v2) r)))))
+def auctionExpectedBidder1Util3 : (n : Nat) -> (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) -> (prior23 : (v : Fin (natMul n n)) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) (prior23 : (v : Fin (natMul n n)) -> Rat) (v1 : Fin n) => sumRat (natMul n n) (fun (v23 : Fin (natMul n n)) => (ratMul (prior23 v23) (auctionBidder1Util3 n auction (finPair (natMul n n) n (finPair n n v1 (finFirst n n v23)) (finSecond n n v23)))))
+def vickreyReserveExpectedUtility3 : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p23 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v1 : Fin n) (p23 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v23 : Fin (natMul n n)) => (ratMul (p23 v23) (ratOfNat (finVal (vickreyReserveUtility3 n v1 (s1 v1) (s2 (finFirst n n v23)) (s3 (finSecond n n v23)) r)))))
+def vickreyReserveEqUtility : (n : Nat) -> (r : Fin n) -> (prior : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (r : Fin n) (prior : (v : Fin n) -> Rat) (v1 : Fin n) => sumRat n (fun (v2 : Fin n) => (ratMul (prior v2) (ratOfNat (finVal (vickreyReserveUtility n v1 v1 v2 r)))))
+def vickreyBidder2ExpectedUtility : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v2 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v1 : Fin n) => (ratMul (p v1) (ratOfNat (finVal (vickreyBidder2Util n v2 (s1 v1) (s2 v2))))))
+def auctionExpectedBidder2Util : (n : Nat) -> (auction : Matrix (natMul n n) (natMul n n)) -> (prior : (v : Fin n) -> Rat) -> (v2 : Fin n) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul n n) (natMul n n)) (prior : (v : Fin n) -> Rat) (v2 : Fin n) => sumRat n (fun (v1 : Fin n) => (ratMul (prior v1) (auctionBidder2Util n auction (finPair n n v1 v2))))
+def vickreyReserveBidder2ExpectedUtility : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v2 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v1 : Fin n) => (ratMul (p v1) (ratOfNat (finVal (vickreyReserveBidder2Util n v2 (s1 v1) (s2 v2) r)))))
+def vickreyBidder2ExpectedUtility3 : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p13 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v2 : Fin n) (p13 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v13 : Fin (natMul n n)) => (ratMul (p13 v13) (ratOfNat (finVal (vickreyBidder2Util3 n v2 (s1 (finFirst n n v13)) (s2 v2) (s3 (finSecond n n v13)))))))
+def vickreyBidder3ExpectedUtility3 : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v3 : Fin n) -> (p12 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v3 : Fin n) (p12 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v12 : Fin (natMul n n)) => (ratMul (p12 v12) (ratOfNat (finVal (vickreyBidder3Util3 n v3 (s1 (finFirst n n v12)) (s2 (finSecond n n v12)) (s3 v3))))))
+def auctionExpectedBidder2Util3 : (n : Nat) -> (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) -> (prior13 : (v : Fin (natMul n n)) -> Rat) -> (v2 : Fin n) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) (prior13 : (v : Fin (natMul n n)) -> Rat) (v2 : Fin n) => sumRat (natMul n n) (fun (v13 : Fin (natMul n n)) => (ratMul (prior13 v13) (auctionBidder2Util3 n auction (finPair (natMul n n) n (finPair n n (finFirst n n v13) v2) (finSecond n n v13)))))
+def auctionExpectedBidder3Util3 : (n : Nat) -> (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) -> (prior12 : (v : Fin (natMul n n)) -> Rat) -> (v3 : Fin n) -> Rat :=
+  fun (n : Nat) (auction : Matrix (natMul (natMul n n) n) (natMul (natMul n n) n)) (prior12 : (v : Fin (natMul n n)) -> Rat) (v3 : Fin n) => sumRat (natMul n n) (fun (v12 : Fin (natMul n n)) => (ratMul (prior12 v12) (auctionBidder3Util3 n auction (finPair (natMul n n) n v12 v3))))
+def vickreyReserveBidder2ExpectedUtility3 : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p13 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v2 : Fin n) (p13 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v13 : Fin (natMul n n)) => (ratMul (p13 v13) (ratOfNat (finVal (vickreyReserveBidder2Util3 n v2 (s1 (finFirst n n v13)) (s2 v2) (s3 (finSecond n n v13)) r)))))
+def vickreyReserveBidder3ExpectedUtility3 : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v3 : Fin n) -> (p12 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v3 : Fin n) (p12 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v12 : Fin (natMul n n)) => (ratMul (p12 v12) (ratOfNat (finVal (vickreyReserveBidder3Util3 n v3 (s1 (finFirst n n v12)) (s2 (finSecond n n v12)) (s3 v3) r)))))

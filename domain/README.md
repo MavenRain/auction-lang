@@ -5,11 +5,13 @@ language. `finstoch.lang` holds the matrix definitions of slice A2
 (matId, matCopy, matDiscard, matBraiding, the unitors and the
 associators). `auction.lang` holds the auction library of slice A3
 (strategies, utilities, mechanisms, expected revenue and the Vickrey
-envelope). The Makefile joins `domain.lang`, `finstoch.lang` and
-`auction.lang` into `build/domain-all.lang`, and `gen/embed.c` embeds
-that file in `build/langc` at build time. The definitions of the three
+envelope). `opengame.lang` holds the open games
+of slice A4: the OpenGame family, the bidders, the auction games and
+their kernel functions. The Makefile joins `domain.lang`,
+`finstoch.lang`, `auction.lang` and `opengame.lang` into `build/domain-all.lang`, and `gen/embed.c` embeds
+that file in `build/langc` at build time. The definitions of the four
 files have DOMAIN origin. Program files cannot redefine them. A message
-about a domain definition names `domain/domain.lang` for all three files
+about a domain definition names `domain/domain.lang` for all four files
 (`src/front/front.c:13`), and its line is a line of
 `build/domain-all.lang`.
 

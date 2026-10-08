@@ -1,0 +1,47 @@
+-- Slice A4: the open-game kernels of auction-cat (KernelTruth, FirstPrice, ReserveTruth, Reserve3Truth, Vickrey3).
+-- Each Flag says that a kernel matrix of the domain equals the matOfFn of its entry function (D98).
+-- Two bidders at n = 2 and 3. Three bidders at n = 2 only: at n = 3 a matrix is over the 2^24 cap (D97).
+def spsbFnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsbAuction n) (matOfFn (natMul n n) (natMul n n) (fun (v : Fin (natMul n n)) => spsbAuctionFn n v))
+def fpsbFnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (fpsbAuction n) (matOfFn (natMul n n) (natMul n n) (fun (v : Fin (natMul n n)) => fpsbAuctionFn n v))
+def spsbDev1FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsbAuctionDeviator1 n (fun (v : Fin n) => halfShading n v)) (matOfFn (natMul n n) (natMul n n) (fun (v : Fin (natMul n n)) => spsbAuctionDeviator1Fn n (fun (w : Fin n) => halfShading n w) v))
+def spsbDev2FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsbAuctionDeviator2 n (fun (v : Fin n) => halfShading n v)) (matOfFn (natMul n n) (natMul n n) (fun (v : Fin (natMul n n)) => spsbAuctionDeviator2Fn n (fun (w : Fin n) => halfShading n w) v))
+def viewFnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGame n)) (matOfFn (natMul n n) (natMul (natMul n n) (natMul n n)) (fun (v : Fin (natMul n n)) => auctionViewFn n v))
+def updateFnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameUpdate (auctionGame n)) (matOfFn (natMul (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) (natMul n n) (fun (x : Fin (natMul (natMul n n) (natMul (natMul 2 n) (natMul 2 n)))) => auctionUpdateFn n x))
+def viewDev1FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGameDeviator1 n (fun (v : Fin n) => halfShading n v))) (matOfFn (natMul n n) (natMul (natMul n n) (natMul n n)) (fun (v : Fin (natMul n n)) => auctionViewDeviator1Fn n (fun (w : Fin n) => halfShading n w) v))
+def viewDev2FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGameDeviator2 n (fun (v : Fin n) => halfShading n v))) (matOfFn (natMul n n) (natMul (natMul n n) (natMul n n)) (fun (v : Fin (natMul n n)) => auctionViewDeviator2Fn n (fun (w : Fin n) => halfShading n w) v))
+def resFnEq2 : Flag := matEq (spsbReserveAuction 2 1) (matOfFn (natMul 2 2) (natMul 2 2) (fun (v : Fin (natMul 2 2)) => spsbReserveAuctionFn 2 1 v))
+def resFnEq3 : Flag := matEq (spsbReserveAuction 3 1) (matOfFn (natMul 3 3) (natMul 3 3) (fun (v : Fin (natMul 3 3)) => spsbReserveAuctionFn 3 1 v))
+def resDev1FnEq3 : Flag := matEq (spsbReserveAuctionDeviator1 3 1 (fun (v : Fin 3) => halfShading 3 v)) (matOfFn (natMul 3 3) (natMul 3 3) (fun (v : Fin (natMul 3 3)) => spsbReserveAuctionDeviator1Fn 3 1 (fun (w : Fin 3) => halfShading 3 w) v))
+def resDev2FnEq3 : Flag := matEq (spsbReserveAuctionDeviator2 3 1 (fun (v : Fin 3) => halfShading 3 v)) (matOfFn (natMul 3 3) (natMul 3 3) (fun (v : Fin (natMul 3 3)) => spsbReserveAuctionDeviator2Fn 3 1 (fun (w : Fin 3) => halfShading 3 w) v))
+def spsb3FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsb3Auction n) (matOfFn (natMul (natMul n n) n) (natMul (natMul n n) n) (fun (v : Fin (natMul (natMul n n) n)) => spsbAuctionFn3 n v))
+def fpsb3FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (fpsb3Auction n) (matOfFn (natMul (natMul n n) n) (natMul (natMul n n) n) (fun (v : Fin (natMul (natMul n n) n)) => fpsbAuctionFn3 n v))
+def spsb3Dev1FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsb3AuctionDeviator1 n (fun (v : Fin n) => halfShading n v)) (matOfFn (natMul (natMul n n) n) (natMul (natMul n n) n) (fun (v : Fin (natMul (natMul n n) n)) => spsbAuctionDeviator1Fn3 n (fun (w : Fin n) => halfShading n w) v))
+def spsb3Dev2FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsb3AuctionDeviator2 n (fun (v : Fin n) => halfShading n v)) (matOfFn (natMul (natMul n n) n) (natMul (natMul n n) n) (fun (v : Fin (natMul (natMul n n) n)) => spsb3AuctionDeviator2Fn n (fun (w : Fin n) => halfShading n w) v))
+def spsb3Dev3FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (spsb3AuctionDeviator3 n (fun (v : Fin n) => halfShading n v)) (matOfFn (natMul (natMul n n) n) (natMul (natMul n n) n) (fun (v : Fin (natMul (natMul n n) n)) => spsb3AuctionDeviator3Fn n (fun (w : Fin n) => halfShading n w) v))
+def view3FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGame3 n)) (matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) (fun (v : Fin (natMul (natMul n n) n)) => auctionViewFn3 n v))
+def update3FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameUpdate (auctionGame3 n)) (matOfFn (natMul (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) (natMul (natMul n n) n) (fun (x : Fin (natMul (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)))) => auctionUpdateFn3 n x))
+def view3Dev1FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGame3Deviator1 n (fun (v : Fin n) => halfShading n v))) (matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) (fun (v : Fin (natMul (natMul n n) n)) => auctionViewDeviator1Fn3 n (fun (w : Fin n) => halfShading n w) v))
+def view3Dev2FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGame3Deviator2 n (fun (v : Fin n) => halfShading n v))) (matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) (fun (v : Fin (natMul (natMul n n) n)) => auctionViewDeviator2Fn3 n (fun (w : Fin n) => halfShading n w) v))
+def view3Dev3FnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => matEq (gameView (auctionGame3Deviator3 n (fun (v : Fin n) => halfShading n v))) (matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul n n) n) (natMul (natMul n n) n)) (fun (v : Fin (natMul (natMul n n) n)) => auctionViewDeviator3Fn3 n (fun (w : Fin n) => halfShading n w) v))
+def res3FnEq2 : Flag := matEq (spsb3ReserveAuction 2 1) (matOfFn (natMul (natMul 2 2) 2) (natMul (natMul 2 2) 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => spsb3ReserveAuctionFn 2 1 v))
+def res3Dev1FnEq2 : Flag := matEq (spsb3ReserveAuctionDeviator1 2 1 (fun (v : Fin 2) => halfShading 2 v)) (matOfFn (natMul (natMul 2 2) 2) (natMul (natMul 2 2) 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => spsb3ReserveAuctionDeviator1Fn 2 1 (fun (w : Fin 2) => halfShading 2 w) v))
+def res3Dev2FnEq2 : Flag := matEq (spsb3ReserveAuctionDeviator2 2 1 (fun (v : Fin 2) => halfShading 2 v)) (matOfFn (natMul (natMul 2 2) 2) (natMul (natMul 2 2) 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => spsb3ReserveAuctionDeviator2Fn 2 1 (fun (w : Fin 2) => halfShading 2 w) v))
+def res3Dev3FnEq2 : Flag := matEq (spsb3ReserveAuctionDeviator3 2 1 (fun (v : Fin 2) => halfShading 2 v)) (matOfFn (natMul (natMul 2 2) 2) (natMul (natMul 2 2) 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => spsb3ReserveAuctionDeviator3Fn 2 1 (fun (w : Fin 2) => halfShading 2 w) v))

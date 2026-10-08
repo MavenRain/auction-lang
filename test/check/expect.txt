@@ -79,3 +79,8 @@ matscale-use.lang REFUSE_ALLOW
 auction-name.lang REFUSE_NAME
 auction-helper-name.lang REFUSE_NAME
 auction-mech-size.lang TYPE_MISMATCH
+opengame-name.lang REFUSE_NAME
+opengame-helper-name.lang REFUSE_NAME
+opengame-family-name.lang REFUSE_NAME
+opengame-middle.lang TYPE_MISMATCH
+opengame-mech-size.lang TYPE_MISMATCH

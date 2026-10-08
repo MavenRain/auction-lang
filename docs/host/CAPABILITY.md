@@ -11,11 +11,12 @@ kit, or to the root of a generated language.
 - `cc -Wall -Wextra -Wswitch-enum -Werror -fsyntax-only` checks the same
   sources (`make check-clang`). Each switch on an enum names every case
   and has no default arm.
-- The Makefile joins `domain/domain.lang`, `domain/finstoch.lang` and
-  `domain/auction.lang` into `build/domain-all.lang`. `tcc -run
+- The Makefile joins `domain/domain.lang`, `domain/finstoch.lang`,
+  `domain/auction.lang` and `domain/opengame.lang` into
+  `build/domain-all.lang`. `tcc -run
   gen/embed.c` turns that file into `build/domain.c` at build time. The
   domain is part of the executable. A message about a domain definition
-  names `domain/domain.lang` for all three files
+  names `domain/domain.lang` for all four files
   (`src/front/front.c:13`), and its line is a line of
   `build/domain-all.lang`.
 
@@ -80,6 +81,23 @@ kit, or to the root of a generated language.
   `(fun (v : Fin 3) => halfShading 3 v)` (`examples/auction.lang`).
   secondPriceSealedBid 46 has more than 2^24 cells, a trap
   (`EVAL_MATRIX_SIZE`, `test/emit/auction-size.lang`).
+- `domain/opengame.lang` holds the open games (slice A4). The family
+  `OpenGame x s y r m` has the constructor makeGame and the fields
+  gameView (Matrix x (natMul m y)) and gameUpdate (Matrix (natMul m r)
+  s). The fifth parameter m is the middle object: the type of each
+  combinator gives the m of its result. The file defines gameId,
+  gameComp, gameScore, gameKron and middleInterchangeFn, the bidders
+  makeBidder, truthfulBidder, deviatorBidder and halfShadeBidder, the
+  auction games and scores for 2 and 3 bidders (with a deviator and a
+  reserve), the kernel functions (for example spsbAuction n is matOfFn
+  of spsbAuctionFn n) and the expected utilities. All 90 definitions
+  are core names (`test/check/opengame-name.lang`,
+  `test/check/opengame-helper-name.lang`). The family name is a core name too
+  (`test/check/opengame-family-name.lang`).  The m of a game is part of its type
+  (`test/check/opengame-middle.lang`).
+  `langc build` writes a game as an object of its two fields.
+  spsb3Auction 3 has a middle matrix of 5832 rows and columns, a trap
+  (`EVAL_MATRIX_SIZE`, `test/emit/opengame-size.lang`).
 - `flagIf x a b` is the if-then-else at any result type.
 - `langc check` refuses these names with `REFUSE_ALLOW`, and the message
   gives the allowed form: natMin, natGe, natGt, flagOr, finMin, finGe,

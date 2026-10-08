@@ -11,3 +11,5 @@ mat-overflow.lang EVAL_OVERFLOW
 auction-size.lang EVAL_MATRIX_SIZE
 auction-overflow.lang EVAL_OVERFLOW
 auction3-size.lang EVAL_MATRIX_SIZE
+opengame-size.lang EVAL_MATRIX_SIZE
+opengame-overflow.lang EVAL_OVERFLOW
