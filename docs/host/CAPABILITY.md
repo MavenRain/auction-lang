@@ -11,8 +11,10 @@ kit, or to the root of a generated language.
 - `cc -Wall -Wextra -Wswitch-enum -Werror -fsyntax-only` checks the same
   sources (`make check-clang`). Each switch on an enum names every case
   and has no default arm.
-- `tcc -run gen/embed.c` turns `domain/domain.lang` into `build/domain.c`
-  at build time. The domain is part of the executable.
+- The Makefile joins `domain/domain.lang` and `domain/finstoch.lang`
+  into `build/domain-all.lang`. `tcc -run gen/embed.c` turns that file
+  into `build/domain.c` at build time. The domain is part of the
+  executable.
 
 ## Values
 
@@ -21,7 +23,7 @@ kit, or to the root of a generated language.
 - `natAdd` and `natMul` trap on overflow. `natSub` is truncated at 0.
   A trap is a value: it stops a computation only when the computation
   needs it. `langc eval` prints `trap` (`test/eval/expect.txt`).
-  `langc build` refuses an instance that holds a trap (`EVAL_OVERFLOW`, or `EVAL_DIV_ZERO` for a division by zero).
+  `langc build` refuses an instance that holds a trap (`EVAL_OVERFLOW`, `EVAL_DIV_ZERO` for a division by zero, and `EVAL_STOCHASTIC` or `EVAL_MATRIX_SIZE` for a matrix).
 - `Fin n` is an index below `n`. Its value is a Nat. A literal at the
   type `Fin n` needs a number `n` above the literal. The operations are
   finVal, finPair, finFirst, finSecond, finSub (truncated at 0), finMax,
@@ -40,11 +42,31 @@ kit, or to the root of a generated language.
   (`EVAL_DIV_ZERO`). sumRat n f is f 0 + (f 1 + (... + (f (n - 1) +
   0/1))). It adds from f (n - 1) down to f 0 and stops at the first
   trap. sumRat 0 f is 0/1. `langc eval` prints a Rat as `N/D`.
+- `Matrix m n` is a stochastic matrix with m rows and n columns
+  (FinStoch.lean:433). Each cell is a Rat. In each row, each cell is
+  0/1 or more and the sum of the cells is exactly 1/1. The operations
+  are matTabulate, matOfFn, matEntry, matComp, matKron and matEq.
+  matTabulate m n f makes the cells f i j and checks each row: a cell
+  below 0/1 or a row sum other than 1/1 is a trap (`EVAL_STOCHASTIC`).
+  matOfFn m n f puts 1/1 in column f i of row i and 0/1 in the other
+  columns. matComp m k n M N is the matrix product. matKron m k m' k'
+  M N is the Kronecker product, with natMul m m' rows and natMul k k'
+  columns: cell (x, y) is M (x mod m) (y mod k) times N (x div m)
+  (y div k). The first component of a Fin (natMul x y) index is the
+  low digit. matEntry M i j is a cell, and matEq M N compares all the
+  cells. A matrix with more than 2^24 rows, columns or cells is a trap
+  (`EVAL_MATRIX_SIZE`). A cell that does not fit is a trap
+  (`EVAL_OVERFLOW`). `domain/finstoch.lang` defines matId, matCopy,
+  matDiscard, matBraiding, matLeftUnitor, matRightUnitor,
+  matLeftUnitorInv, matRightUnitorInv, matAssociator and
+  matAssociatorInv with matOfFn. `langc eval` prints a matrix as
+  `[[1/1, 0/1], [0/1, 1/1]]`, and a matrix with 0 rows as `[]`.
 - `flagIf x a b` is the if-then-else at any result type.
 - `langc check` refuses these names with `REFUSE_ALLOW`, and the message
   gives the allowed form: natMin, natGe, natGt, flagOr, finMin, finGe,
   finGt, finAdd, finMul, ratMin, ratMax, ratAbs, ratNeg, ratInv, ratGe,
-  ratGt, ratFloor and ratCeil. The lexer refuses text (`test/parse/string.lang`).
+  ratGt, ratFloor, ratCeil, matMul, matTensor, matDet, matTranspose,
+  matInv, matAdd and matScale. The lexer refuses text (`test/parse/string.lang`).
 - There is no text type. The lexer refuses `"` (`test/parse/string.lang`).
 - Values carry no types. The JSON writer gets each type from the
   definition type and from the family declarations.

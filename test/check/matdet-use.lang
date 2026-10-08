@@ -1,0 +1,1 @@
+def wrong : Matrix 2 2 := matDet 2 2 (fun (i : Fin 2) => i)

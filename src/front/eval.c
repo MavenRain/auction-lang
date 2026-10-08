@@ -28,7 +28,10 @@ static const char *const OP_NAMES[] = {
   [OP_RAT] = "Rat", [OP_RAT_ADD] = "ratAdd", [OP_RAT_SUB] = "ratSub",
   [OP_RAT_MUL] = "ratMul", [OP_RAT_DIV] = "ratDiv", [OP_RAT_OF_NAT] = "ratOfNat",
   [OP_RAT_EQ] = "ratEq", [OP_RAT_LE] = "ratLe", [OP_RAT_LT] = "ratLt",
-  [OP_SUM_RAT] = "sumRat", [OP_PROJ] = "?"
+  [OP_SUM_RAT] = "sumRat", [OP_MATRIX] = "Matrix",
+  [OP_MAT_TABULATE] = "matTabulate", [OP_MAT_OF_FN] = "matOfFn",
+  [OP_MAT_ENTRY] = "matEntry", [OP_MAT_COMP] = "matComp", [OP_MAT_KRON] = "matKron",
+  [OP_MAT_EQ] = "matEq", [OP_PROJ] = "?"
 };
 
 /* The number of arguments of each operation. VARIES: it comes from the
@@ -49,7 +52,9 @@ static const unsigned char OP_ARITY[] = {
   [OP_FLAG_NOT] = 1, [OP_FIN] = 1, [OP_ALL_FIN] = 2, [OP_RAT] = 0,
   [OP_RAT_ADD] = 2, [OP_RAT_SUB] = 2, [OP_RAT_MUL] = 2, [OP_RAT_DIV] = 2,
   [OP_RAT_OF_NAT] = 1, [OP_RAT_EQ] = 2, [OP_RAT_LE] = 2, [OP_RAT_LT] = 2,
-  [OP_SUM_RAT] = 2, [OP_PROJ] = 1
+  [OP_SUM_RAT] = 2, [OP_MATRIX] = 2, [OP_MAT_TABULATE] = 3,
+  [OP_MAT_OF_FN] = 3, [OP_MAT_ENTRY] = 3, [OP_MAT_COMP] = 5, [OP_MAT_KRON] = 6,
+  [OP_MAT_EQ] = 2, [OP_PROJ] = 1
 };
 
 typedef enum {
@@ -124,6 +129,16 @@ static const Value *val_rat(Machine *m, int64_t num, uint64_t den) {
   return v;
 }
 
+static const Value *val_matrix(Machine *m, uint32_t rows, uint32_t cols, const Cell *cells) {
+  Value *v = new_value(m, VAL_MATRIX);
+  if (v != NULL) {
+    v->rows = rows;
+    v->cols = cols;
+    v->cells = cells;
+  }
+  return v;
+}
+
 static const Value *val_trap(Machine *m, uint64_t reason) {
   Value *v = new_value(m, VAL_TRAP);
   if (v != NULL)
@@ -141,11 +156,31 @@ static const Value *div_zero(Machine *m) {
 }
 
 const char *trap_code(const Value *v) {
-  return v->nat == (uint64_t)TRAP_DIV_ZERO ? "EVAL_DIV_ZERO" : "EVAL_OVERFLOW";
+  switch ((TrapReason)v->nat) {
+  case TRAP_OVERFLOW:
+    return "EVAL_OVERFLOW";
+  case TRAP_DIV_ZERO:
+    return "EVAL_DIV_ZERO";
+  case TRAP_STOCHASTIC:
+    return "EVAL_STOCHASTIC";
+  case TRAP_MATRIX_SIZE:
+    return "EVAL_MATRIX_SIZE";
+  }
+  return "EVAL_OVERFLOW";
 }
 
 const char *trap_text(const Value *v) {
-  return v->nat == (uint64_t)TRAP_DIV_ZERO ? "a division or modulo by zero" : "an operation overflowed (a Nat past 2^64-1, a Rat numerator past 2^63-1 or denominator past 2^64-1)";
+  switch ((TrapReason)v->nat) {
+  case TRAP_OVERFLOW:
+    break;
+  case TRAP_DIV_ZERO:
+    return "a division or modulo by zero";
+  case TRAP_STOCHASTIC:
+    return "a matrix row is not stochastic (an entry below 0 or a row sum other than 1)";
+  case TRAP_MATRIX_SIZE:
+    return "a matrix has more than 2^24 rows, columns or cells";
+  }
+  return "an operation overflowed (a Nat past 2^64-1, a Rat numerator past 2^63-1 or denominator past 2^64-1)";
 }
 
 const Value *val_var(Machine *m, uint32_t level) {
@@ -278,6 +313,7 @@ static Scrut scrut_of(const Value *v) {
     return SCRUT_NEUTRAL;
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_UNIV:
   case VAL_LAM:
   case VAL_PI:
@@ -390,6 +426,7 @@ const Value *apply_value(Machine *m, const Value *fn, const Value *arg) {
     return v;
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_UNIV:
   case VAL_PI:
   case VAL_SIGMA:
@@ -888,45 +925,82 @@ static Wide wide_div(Wide a, uint64_t d, uint64_t *rem) {
   return q;
 }
 
-/* -MAG/DEN when NEG, else MAG/DEN, already in lowest terms. Zero is 0/1. A
-   numerator above INT64_MAX or a denominator above UINT64_MAX traps. */
-static const Value *rat_make(Machine *m, int neg, Wide mag, Wide den) {
-  if (mag.hi == 0 && mag.lo == 0)
-    return val_rat(m, 0, 1);
+/* -MAG/DEN when NEG, else MAG/DEN, already in lowest terms, into OUT. Zero
+   is 0/1. A numerator above INT64_MAX or a denominator above UINT64_MAX
+   gives 0 (an overflow). These raw Rat helpers work on Cells, so matComp and
+   matKron make no Value per step. */
+static int cell_make(int neg, Wide mag, Wide den, Cell *out) {
+  if (mag.hi == 0 && mag.lo == 0) {
+    out->num = 0;
+    out->den = 1;
+    return 1;
+  }
   if (mag.hi != 0 || mag.lo > (uint64_t)INT64_MAX || den.hi != 0)
-    return overflow(m);
-  return val_rat(m, neg ? -(int64_t)mag.lo : (int64_t)mag.lo, den.lo);
+    return 0;
+  out->num = neg ? -(int64_t)mag.lo : (int64_t)mag.lo;
+  out->den = den.lo;
+  return 1;
 }
 
 /* X + Y, or X - Y when NEGATE. Knuth 4.5.1: d1 = gcd(b, d), t = a (d / d1)
    + c (b / d1), d2 = gcd(t mod d1, d1), result (t / d2) / ((b / d1) (d / d2)). */
-static const Value *rat_add(Machine *m, const Value *x, const Value *y, int negate) {
-  uint64_t b = x->nat;
-  uint64_t d = y->nat;
+static int cell_add(Cell x, Cell y, int negate, Cell *out) {
+  uint64_t b = x.den;
+  uint64_t d = y.den;
   uint64_t d1 = gcd_u64(b, d);
-  int nx = x->num < 0;
-  int ny = (y->num < 0) != (negate != 0);
-  Wide p = wide_mul(magnitude(x->num), d / d1);
-  Wide q = wide_mul(magnitude(y->num), b / d1);
+  int nx = x.num < 0;
+  int ny = (y.num < 0) != (negate != 0);
+  Wide p = wide_mul(magnitude(x.num), d / d1);
+  Wide q = wide_mul(magnitude(y.num), b / d1);
   int swap = nx != ny && wide_cmp(p, q) < 0;
   Wide t = nx == ny ? wide_add(p, q) : swap ? wide_sub(q, p) : wide_sub(p, q);
   uint64_t r = 0;
   uint64_t d2;
   if (t.hi == 0 && t.lo == 0)
-    return val_rat(m, 0, 1);
+    return cell_make(0, wide(0), wide(1), out);
   wide_div(t, d1, &r);
   d2 = gcd_u64(r, d1);
-  return rat_make(m, swap ? ny : nx, wide_div(t, d2, &r), wide_mul(b / d1, d / d2));
+  return cell_make(swap ? ny : nx, wide_div(t, d2, &r), wide_mul(b / d1, d / d2), out);
 }
 
 /* X * Y: (a / g1) (c / g2) over (b / g2) (d / g1), g1 = gcd(|a|, d) and
    g2 = gcd(|c|, b). */
+static int cell_mul(Cell x, Cell y, Cell *out) {
+  uint64_t a = magnitude(x.num);
+  uint64_t c = magnitude(y.num);
+  uint64_t g1 = gcd_u64(a, y.den);
+  uint64_t g2 = gcd_u64(c, x.den);
+  return cell_make((x.num < 0) != (y.num < 0), wide_mul(a / g1, c / g2), wide_mul(x.den / g2, y.den / g1), out);
+}
+
+static Cell cell_of(const Value *v) {
+  Cell c;
+  c.num = v->num;
+  c.den = v->nat;
+  return c;
+}
+
+/* The Rat value of a raw result; OK = 0 traps (EVAL_OVERFLOW). */
+static const Value *val_cell(Machine *m, int ok, Cell c) {
+  return ok ? val_rat(m, c.num, c.den) : overflow(m);
+}
+
+static const Value *rat_make(Machine *m, int neg, Wide mag, Wide den) {
+  Cell r = {0, 1};
+  int ok = cell_make(neg, mag, den, &r);
+  return val_cell(m, ok, r);
+}
+
+static const Value *rat_add(Machine *m, const Value *x, const Value *y, int negate) {
+  Cell r = {0, 1};
+  int ok = cell_add(cell_of(x), cell_of(y), negate, &r);
+  return val_cell(m, ok, r);
+}
+
 static const Value *rat_mul(Machine *m, const Value *x, const Value *y) {
-  uint64_t a = magnitude(x->num);
-  uint64_t c = magnitude(y->num);
-  uint64_t g1 = gcd_u64(a, y->nat);
-  uint64_t g2 = gcd_u64(c, x->nat);
-  return rat_make(m, (x->num < 0) != (y->num < 0), wide_mul(a / g1, c / g2), wide_mul(x->nat / g2, y->nat / g1));
+  Cell r = {0, 1};
+  int ok = cell_mul(cell_of(x), cell_of(y), &r);
+  return val_cell(m, ok, r);
 }
 
 /* X / Y on the magnitudes, with no reciprocal: (a / g1) (d / g2) over
@@ -1021,6 +1095,210 @@ static const Value *reduce_sum_rat(Machine *m, const Value *const *a, uint32_t n
     acc = rat_add(m, r, acc, 0);
   }
   return acc;
+}
+
+#define MATRIX_SIDE_MAX ((uint64_t)1 << 24)
+#define MATRIX_CELLS_MAX ((uint64_t)1 << 24)
+
+/* Strict in the first COUNT arguments, in order: a trap gives the trap, then
+   a neutral gives the stuck OP in *OUT. 1 when all are values. */
+static int mat_args(Machine *m, Op op, const Value *const *a, uint32_t n, uint32_t count, const Value **out) {
+  uint32_t i;
+  for (i = 0; i < count; i++) {
+    if (a[i]->kind == VAL_TRAP) {
+      *out = a[i];
+      return 0;
+    }
+  }
+  for (i = 0; i < count; i++)
+    if (blocked(m, a[i], op, 0, 0, a, n, out))
+      return 0;
+  return 1;
+}
+
+/* The cells of a ROWS by COLS matrix, all 0/1. Past 2^24 rows, columns or
+   cells it gives NULL and *TRAP gets EVAL_MATRIX_SIZE (D42); out of memory
+   it gives NULL with *TRAP NULL. */
+static Cell *mat_cells(Machine *m, uint64_t rows, uint64_t cols, const Value **trap) {
+  Cell *cells;
+  uint64_t i;
+  *trap = NULL;
+  if (rows > MATRIX_SIDE_MAX || cols > MATRIX_SIDE_MAX || rows * cols > MATRIX_CELLS_MAX) {
+    *trap = val_trap(m, TRAP_MATRIX_SIZE);
+    return NULL;
+  }
+  cells = arena_alloc(m->arena, (size_t)(rows * cols + 1u) * sizeof *cells);
+  if (cells == NULL) {
+    oom(m);
+    return NULL;
+  }
+  for (i = 0; i < rows * cols; i++) {
+    cells[i].num = 0;
+    cells[i].den = 1;
+  }
+  return cells;
+}
+
+/* 1 when X and Y have the same size and the same cells (in lowest terms,
+   so equal Rats have equal parts). */
+static int cells_equal(const Value *x, const Value *y) {
+  uint64_t count = (uint64_t)x->rows * x->cols;
+  uint64_t i;
+  if (x->rows != y->rows || x->cols != y->cols)
+    return 0;
+  for (i = 0; i < count; i++)
+    if (x->cells[i].num != y->cells[i].num || x->cells[i].den != y->cells[i].den)
+      return 0;
+  return 1;
+}
+
+/* matTabulate m n f: f i j for each cell, row by row, in a C loop. The first
+   trap stops it; a neutral cell gives the stuck matTabulate. Each row must
+   be stochastic (D44): an entry below 0/1 or a row sum other than 1/1 traps
+   (EVAL_STOCHASTIC). */
+static const Value *reduce_mat_tabulate(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  Cell *cells;
+  uint64_t i;
+  uint64_t j;
+  if (!mat_args(m, OP_MAT_TABULATE, a, n, 2, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT || a[1]->kind != VAL_NAT)
+    return internal(m, "a matTabulate with a size that is not a Nat");
+  cells = mat_cells(m, a[0]->nat, a[1]->nat, &out);
+  if (cells == NULL)
+    return out;
+  for (i = 0; i < a[0]->nat; i++) {
+    const Value *row = apply_value(m, a[2], val_nat(m, i));
+    Cell sum = {0, 1};
+    if (row == NULL)
+      return NULL;
+    for (j = 0; j < a[1]->nat; j++) {
+      const Value *r = apply_value(m, row, val_nat(m, j));
+      Cell *cell = &cells[i * a[1]->nat + j];
+      if (r == NULL || r->kind == VAL_TRAP)
+        return r;
+      if (r->kind != VAL_RAT)
+        return scrut_of(r) == SCRUT_NEUTRAL ? val_op(m, VAL_STUCK, OP_MAT_TABULATE, 0, 0, a, n) : internal(m, "a matTabulate cell that is not a Rat");
+      *cell = cell_of(r);
+      if (cell->num < 0)
+        return val_trap(m, TRAP_STOCHASTIC);
+      if (!cell_add(sum, *cell, 0, &sum))
+        return overflow(m);
+    }
+    if (sum.num != 1 || sum.den != 1)
+      return val_trap(m, TRAP_STOCHASTIC);
+  }
+  return val_matrix(m, (uint32_t)a[0]->nat, (uint32_t)a[1]->nat, cells);
+}
+
+/* matOfFn m n f (detMatrix): row i is 1/1 at column f i and 0/1 elsewhere;
+   m applications of f, not m * n. No stochastic check: each row has one 1/1. */
+static const Value *reduce_mat_of_fn(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  Cell *cells;
+  uint64_t i;
+  if (!mat_args(m, OP_MAT_OF_FN, a, n, 2, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT || a[1]->kind != VAL_NAT)
+    return internal(m, "a matOfFn with a size that is not a Nat");
+  cells = mat_cells(m, a[0]->nat, a[1]->nat, &out);
+  if (cells == NULL)
+    return out;
+  for (i = 0; i < a[0]->nat; i++) {
+    const Value *r = apply_value(m, a[2], val_nat(m, i));
+    if (r == NULL || r->kind == VAL_TRAP)
+      return r;
+    if (r->kind != VAL_NAT)
+      return scrut_of(r) == SCRUT_NEUTRAL ? val_op(m, VAL_STUCK, OP_MAT_OF_FN, 0, 0, a, n) : internal(m, "a matOfFn column that is not a Fin");
+    if (r->nat >= a[1]->nat)
+      return internal(m, "a matOfFn column past the size");
+    cells[i * a[1]->nat + r->nat].num = 1;
+  }
+  return val_matrix(m, (uint32_t)a[0]->nat, (uint32_t)a[1]->nat, cells);
+}
+
+/* matEntry M i j: the cell (i, j). */
+static const Value *reduce_mat_entry(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  const Cell *cell;
+  if (!mat_args(m, OP_MAT_ENTRY, a, n, 3, &out))
+    return out;
+  if (a[0]->kind != VAL_MATRIX || a[1]->kind != VAL_NAT || a[2]->kind != VAL_NAT || a[1]->nat >= a[0]->rows || a[2]->nat >= a[0]->cols)
+    return internal(m, "a matEntry outside the matrix");
+  cell = &a[0]->cells[a[1]->nat * a[0]->cols + a[2]->nat];
+  return val_rat(m, cell->num, cell->den);
+}
+
+/* matComp m k n M N: cell (i, j) is the sum over l of M (i, l) * N (l, j),
+   on the stored cells, O(m k n), exact. The first overflow traps
+   (EVAL_OVERFLOW). */
+static const Value *reduce_mat_comp(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  const Value *x = a[3];
+  const Value *y = a[4];
+  Cell *cells;
+  uint64_t i;
+  uint64_t j;
+  uint64_t l;
+  if (!mat_args(m, OP_MAT_COMP, a, n, 5, &out))
+    return out;
+  if (x->kind != VAL_MATRIX || y->kind != VAL_MATRIX || x->cols != y->rows)
+    return internal(m, "a matComp of matrices that do not compose");
+  cells = mat_cells(m, x->rows, y->cols, &out);
+  if (cells == NULL)
+    return out;
+  for (i = 0; i < x->rows; i++) {
+    for (j = 0; j < y->cols; j++) {
+      Cell sum = {0, 1};
+      for (l = 0; l < x->cols; l++) {
+        Cell p = {0, 1};
+        if (!cell_mul(x->cells[i * x->cols + l], y->cells[l * y->cols + j], &p))
+          return overflow(m);
+        if (p.num != 0 && !cell_add(sum, p, 0, &sum))
+          return overflow(m);
+      }
+      cells[i * y->cols + j] = sum;
+    }
+  }
+  return val_matrix(m, x->rows, y->cols, cells);
+}
+
+/* matKron m k m' k' M N: cell (x, y) is M (x mod m, y mod k) * N (x div m,
+   y div k); the first component is the low digit (D11, D12). */
+static const Value *reduce_mat_kron(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  const Value *x = a[4];
+  const Value *y = a[5];
+  Cell *cells;
+  uint64_t rows;
+  uint64_t cols;
+  uint64_t r;
+  uint64_t c;
+  if (!mat_args(m, OP_MAT_KRON, a, n, 6, &out))
+    return out;
+  if (x->kind != VAL_MATRIX || y->kind != VAL_MATRIX)
+    return internal(m, "a matKron of a value that is not a Matrix");
+  rows = (uint64_t)x->rows * y->rows;
+  cols = (uint64_t)x->cols * y->cols;
+  cells = mat_cells(m, rows, cols, &out);
+  if (cells == NULL)
+    return out;
+  for (r = 0; r < rows; r++)
+    for (c = 0; c < cols; c++)
+      if (!cell_mul(x->cells[(r % x->rows) * x->cols + c % x->cols], y->cells[(r / x->rows) * y->cols + c / x->cols], &cells[r * cols + c]))
+        return overflow(m);
+  return val_matrix(m, (uint32_t)rows, (uint32_t)cols, cells);
+}
+
+/* matEq M N: flagYes when the sizes and all cells are equal. */
+static const Value *reduce_mat_eq(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  if (!mat_args(m, OP_MAT_EQ, a, n, 2, &out))
+    return out;
+  if (a[0]->kind != VAL_MATRIX || a[1]->kind != VAL_MATRIX)
+    return internal(m, "a matEq of a value that is not a Matrix");
+  return flag(m, cells_equal(a[0], a[1]));
 }
 
 static const Value *reduce_flag_if(Machine *m, const Value *const *a, uint32_t n) {
@@ -1134,6 +1412,7 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
   case OP_CTOR:
   case OP_FIN:
   case OP_RAT:
+  case OP_MATRIX:
     return val_op(m, VAL_OP, op, inst, field, a, n);
   case OP_FIRST:
     return reduce_part(m, op, a, n, OP_PAIR, 0);
@@ -1207,6 +1486,18 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
     return rat_test(m, op, a, n);
   case OP_SUM_RAT:
     return reduce_sum_rat(m, a, n);
+  case OP_MAT_TABULATE:
+    return reduce_mat_tabulate(m, a, n);
+  case OP_MAT_OF_FN:
+    return reduce_mat_of_fn(m, a, n);
+  case OP_MAT_ENTRY:
+    return reduce_mat_entry(m, a, n);
+  case OP_MAT_COMP:
+    return reduce_mat_comp(m, a, n);
+  case OP_MAT_KRON:
+    return reduce_mat_kron(m, a, n);
+  case OP_MAT_EQ:
+    return reduce_mat_eq(m, a, n);
   case OP_PROJ:
     return reduce_proj(m, inst, field, a, n);
   }
@@ -1236,6 +1527,8 @@ static const Value *eval_inner(Machine *m, const Env *env, const Core *c) {
     return val_nat(m, c->nat);
   case CORE_RAT:
     return val_rat(m, c->num, c->nat);
+  case CORE_MATRIX:
+    return val_matrix(m, c->rows, c->cols, c->cells);
   case CORE_TRAP:
     return val_trap(m, c->nat);
   case CORE_UNIV:
@@ -1294,6 +1587,8 @@ static int conv_loop(Machine *m, uint32_t level, const Value *a, const Value *b)
       return a->nat == b->nat;
     case VAL_RAT:
       return a->num == b->num && a->nat == b->nat;
+    case VAL_MATRIX:
+      return cells_equal(a, b);
     case VAL_TRAP:
       return 1;
     case VAL_LAM:
@@ -1355,6 +1650,16 @@ static const Core *core_rat(Machine *m, int64_t num, uint64_t den) {
   if (c != NULL) {
     c->num = num;
     c->nat = den;
+  }
+  return c;
+}
+
+static const Core *core_matrix(Machine *m, const Value *v) {
+  Core *c = new_core(m, CORE_MATRIX);
+  if (c != NULL) {
+    c->rows = v->rows;
+    c->cols = v->cols;
+    c->cells = v->cells;
   }
   return c;
 }
@@ -1430,6 +1735,8 @@ static const Core *quote_inner(Machine *m, uint32_t level, const Value *v) {
     return core_leaf(m, CORE_NAT, v->nat);
   case VAL_RAT:
     return core_rat(m, v->num, v->nat);
+  case VAL_MATRIX:
+    return core_matrix(m, v);
   case VAL_TRAP:
     return core_leaf(m, CORE_TRAP, v->nat);
   case VAL_UNIV:
@@ -1545,6 +1852,7 @@ static void print_binder(Printer *p, const Value *v) {
     break;
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_TRAP:
   case VAL_UNIV:
   case VAL_OP:
@@ -1558,6 +1866,24 @@ static void print_binder(Printer *p, const Value *v) {
   p->extra_count++;
   print_value(p, body, v->kind == VAL_SIGMA);
   p->extra_count--;
+}
+
+/* [[1/1, 0/1], [0/1, 1/1]] (D46); 0 rows is []. */
+static void print_matrix(Printer *p, const Value *v) {
+  char num[64];
+  uint64_t i;
+  uint64_t j;
+  put(p, "[");
+  for (i = 0; i < v->rows && !p->full; i++) {
+    put(p, i == 0 ? "[" : ", [");
+    for (j = 0; j < v->cols && !p->full; j++) {
+      const Cell *cell = &v->cells[i * v->cols + j];
+      snprintf(num, sizeof num, "%s%lld/%llu", j == 0 ? "" : ", ", (long long)cell->num, (unsigned long long)cell->den);
+      put(p, num);
+    }
+    put(p, "]");
+  }
+  put(p, "]");
 }
 
 static void print_other(Printer *p, const Value *v, int atom) {
@@ -1574,6 +1900,9 @@ static void print_other(Printer *p, const Value *v, int atom) {
   case VAL_RAT:
     snprintf(num, sizeof num, "%lld/%llu", (long long)v->num, (unsigned long long)v->nat);
     put(p, num);
+    return;
+  case VAL_MATRIX:
+    print_matrix(p, v);
     return;
   case VAL_TRAP:
     put(p, "trap");
@@ -1611,6 +1940,7 @@ static void print_other(Printer *p, const Value *v, int atom) {
     break;
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_TRAP:
   case VAL_VAR:
   case VAL_OP:

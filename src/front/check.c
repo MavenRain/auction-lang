@@ -77,7 +77,13 @@ typedef enum {
   RULE_FIN2,
   RULE_ALL_FIN,
   RULE_RAT2,
-  RULE_RAT_OF_NAT
+  RULE_RAT_OF_NAT,
+  RULE_MATRIX_TYPE,
+  RULE_MAT_BUILD,
+  RULE_MAT_ENTRY,
+  RULE_MAT_COMP,
+  RULE_MAT_KRON,
+  RULE_MAT_EQ
 } Rule;
 
 typedef struct {
@@ -158,7 +164,14 @@ static const Builtin BUILTINS[] = {
   {"ratEq", 2, RULE_RAT2, OP_RAT_EQ, OP_FLAG, 0},
   {"ratLe", 2, RULE_RAT2, OP_RAT_LE, OP_FLAG, 0},
   {"ratLt", 2, RULE_RAT2, OP_RAT_LT, OP_FLAG, 0},
-  {"sumRat", 2, RULE_ALL_FIN, OP_SUM_RAT, OP_RAT, 0}
+  {"sumRat", 2, RULE_ALL_FIN, OP_SUM_RAT, OP_RAT, 0},
+  {"Matrix", 2, RULE_MATRIX_TYPE, OP_MATRIX, OP_NAT, 0},
+  {"matTabulate", 3, RULE_MAT_BUILD, OP_MAT_TABULATE, OP_RAT, 0},
+  {"matOfFn", 3, RULE_MAT_BUILD, OP_MAT_OF_FN, OP_FIN, 0},
+  {"matEntry", 3, RULE_MAT_ENTRY, OP_MAT_ENTRY, OP_RAT, 0},
+  {"matComp", 5, RULE_MAT_COMP, OP_MAT_COMP, OP_MATRIX, 0},
+  {"matKron", 6, RULE_MAT_KRON, OP_MAT_KRON, OP_MATRIX, 0},
+  {"matEq", 2, RULE_MAT_EQ, OP_MAT_EQ, OP_FLAG, 0}
 };
 
 #define BUILTIN_COUNT ((uint32_t)(sizeof BUILTINS / sizeof BUILTINS[0]))
@@ -187,7 +200,14 @@ static const char *const REFUSED[][2] = {
   {"ratGe", "ratLe y x"},
   {"ratGt", "ratLt y x"},
   {"ratFloor", "no Rat to Nat form in slice A1"},
-  {"ratCeil", "no Rat to Nat form in slice A1"}
+  {"ratCeil", "no Rat to Nat form in slice A1"},
+  {"matMul", "matComp m k n M N"},
+  {"matTensor", "matKron m k m' k' M N"},
+  {"matDet", "matOfFn m n f (detMatrix is matOfFn; there is no determinant)"},
+  {"matTranspose", "no transpose (the transpose of a stochastic matrix is not stochastic in general)"},
+  {"matInv", "no inverse (the inverse of a stochastic matrix is not stochastic in general)"},
+  {"matAdd", "no sum (the sum of two stochastic matrices is not stochastic)"},
+  {"matScale", "no scale (a scaled stochastic matrix is not stochastic in general)"}
 };
 
 typedef enum {
@@ -1053,6 +1073,107 @@ static const Core *rule_rat_of_nat(Call *k) {
   return op3(k->c, OP_RAT_OF_NAT, 0, 1, x, NULL, NULL);
 }
 
+static const Value *matrix_type(Checker *c, const Value *rows, const Value *cols) {
+  return tyop(c, OP_MATRIX, 2, rows, cols, NULL);
+}
+
+/* Matrix m n: m and n are Nats; every size is accepted (D42). */
+static const Core *rule_matrix_type(Call *k) {
+  Checker *c = k->c;
+  const Core *m = check(c, k->args[0], nat_type(c));
+  const Core *n = m == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  k->type = val_univ(c->m, 0);
+  return op3(c, OP_MATRIX, 0, 2, m, n, NULL);
+}
+
+/* matTabulate m n f, f : Fin m -> Fin n -> Rat; matOfFn m n f, f : Fin m
+   -> Fin n. The row gives the operation. */
+static const Core *rule_mat_build(Call *k) {
+  Checker *c = k->c;
+  const Core *m = check(c, k->args[0], nat_type(c));
+  const Core *n = m == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  const Value *rows;
+  const Value *cols;
+  const Value *cell;
+  const Core *f;
+  if (n == NULL)
+    return NULL;
+  rows = here(c, m);
+  cols = here(c, n);
+  cell = k->b->op == OP_MAT_TABULATE ? val_arrow(c->m, fin_type(c, cols), rat_type(c)) : fin_type(c, cols);
+  f = check(c, k->args[2], val_arrow(c->m, fin_type(c, rows), cell));
+  k->type = matrix_type(c, rows, cols);
+  return op3(c, k->b->op, 0, 3, m, n, f);
+}
+
+/* The first argument of matEntry and matEq: it must infer Matrix m n. */
+static const Core *matrix_arg(Call *k, const Value **type) {
+  Checker *c = k->c;
+  const Core *x = infer(c, k->args[0], type);
+  if (x == NULL)
+    return NULL;
+  if (!val_is(*type, OP_MATRIX))
+    return nul(FAIL(c, "TYPE_MISMATCH", "%s needs a Matrix, found a term of type %s", k->b->name, show(c, *type)));
+  return x;
+}
+
+/* matEntry M i j: i is a Fin m and j a Fin n. */
+static const Core *rule_mat_entry(Call *k) {
+  Checker *c = k->c;
+  const Value *mt = NULL;
+  const Core *x = matrix_arg(k, &mt);
+  const Core *i = x == NULL ? NULL : check(c, k->args[1], fin_type(c, mt->args[0]));
+  const Core *j = i == NULL ? NULL : check(c, k->args[2], fin_type(c, mt->args[1]));
+  k->type = rat_type(c);
+  return op3(c, OP_MAT_ENTRY, 0, 3, x, i, j);
+}
+
+/* The size arguments of matComp and matKron: COUNT Nats. */
+static int mat_sizes(Call *k, uint32_t count, const Core **args) {
+  uint32_t i;
+  for (i = 0; i < count; i++) {
+    args[i] = check(k->c, k->args[i], nat_type(k->c));
+    if (args[i] == NULL)
+      return 0;
+  }
+  return 1;
+}
+
+/* matComp m k n M N: M is a Matrix m k, N a Matrix k n (sizes explicit, as
+   finPair). */
+static const Core *rule_mat_comp(Call *k) {
+  Checker *c = k->c;
+  const Core *args[5];
+  if (!mat_sizes(k, 3, args))
+    return NULL;
+  args[3] = check(c, k->args[3], matrix_type(c, here(c, args[0]), here(c, args[1])));
+  args[4] = args[3] == NULL ? NULL : check(c, k->args[4], matrix_type(c, here(c, args[1]), here(c, args[2])));
+  k->type = matrix_type(c, here(c, args[0]), here(c, args[2]));
+  return core_op(c, OP_MAT_COMP, 0, 0, args, 5);
+}
+
+/* matKron m k m' k' M N : Matrix (natMul m m') (natMul k k'). */
+static const Core *rule_mat_kron(Call *k) {
+  Checker *c = k->c;
+  const Core *args[6];
+  if (!mat_sizes(k, 4, args))
+    return NULL;
+  args[4] = check(c, k->args[4], matrix_type(c, here(c, args[0]), here(c, args[1])));
+  args[5] = args[4] == NULL ? NULL : check(c, k->args[5], matrix_type(c, here(c, args[2]), here(c, args[3])));
+  k->type = matrix_type(c, here(c, op3(c, OP_NAT_MUL, 0, 2, args[0], args[2], NULL)), here(c, op3(c, OP_NAT_MUL, 0, 2, args[1], args[3], NULL)));
+  return core_op(c, OP_MAT_KRON, 0, 0, args, 6);
+}
+
+/* matEq M N: N checks at the Matrix type of M. */
+static const Core *rule_mat_eq(Call *k) {
+  Checker *c = k->c;
+  const Value *mt = NULL;
+  const Core *x = matrix_arg(k, &mt);
+  const Core *y = x == NULL ? NULL : check(c, k->args[1], mt);
+  k->type = tyop(c, OP_FLAG, 0, NULL, NULL, NULL);
+  return op3(c, OP_MAT_EQ, 0, 2, x, y, NULL);
+}
+
 static const Core *rule(Call *k) {
   switch (k->b->rule) {
   case RULE_TYPE0:
@@ -1133,6 +1254,18 @@ static const Core *rule(Call *k) {
     return rule_rat2(k);
   case RULE_RAT_OF_NAT:
     return rule_rat_of_nat(k);
+  case RULE_MATRIX_TYPE:
+    return rule_matrix_type(k);
+  case RULE_MAT_BUILD:
+    return rule_mat_build(k);
+  case RULE_MAT_ENTRY:
+    return rule_mat_entry(k);
+  case RULE_MAT_COMP:
+    return rule_mat_comp(k);
+  case RULE_MAT_KRON:
+    return rule_mat_kron(k);
+  case RULE_MAT_EQ:
+    return rule_mat_eq(k);
   }
   return NULL;
 }
@@ -1730,7 +1863,7 @@ int entry_of(Machine *m, const Value *type, Entry *out) {
     out->param_count++;
   }
   out->result_flag = val_is(t, OP_FLAG);
-  return val_is(t, OP_NAT) || val_is(t, OP_FLAG) || val_is(t, OP_FIN) || val_is(t, OP_RAT);
+  return val_is(t, OP_NAT) || val_is(t, OP_FLAG) || val_is(t, OP_FIN) || val_is(t, OP_RAT) || val_is(t, OP_MATRIX);
 }
 
 static int parse_u64(const char *s, uint64_t *out) {
@@ -1770,6 +1903,20 @@ static const Value *entry_arg(Machine *m, const char *text, const Value *dom) {
   return is_flag ? val_make(m, n == 1u ? OP_FLAG_YES : OP_FLAG_NO, 0, 0, NULL, NULL, NULL) : val_nat(m, n);
 }
 
+/* [[1/1, 0/1], [0/1, 1/1]] (D46); 0 rows is []. */
+static void print_matrix_rows(const Value *v, FILE *out) {
+  uint64_t i;
+  uint64_t j;
+  fputs("[", out);
+  for (i = 0; i < v->rows; i++) {
+    fputs(i == 0 ? "[" : ", [", out);
+    for (j = 0; j < v->cols; j++)
+      fprintf(out, "%s%lld/%llu", j == 0 ? "" : ", ", (long long)v->cells[i * v->cols + j].num, (unsigned long long)v->cells[i * v->cols + j].den);
+    fputs("]", out);
+  }
+  fputs("]\n", out);
+}
+
 static int print_result(Machine *m, const char *name, const Value *v, FILE *out, FILE *err) {
   switch (v->kind) {
   case VAL_NAT:
@@ -1777,6 +1924,9 @@ static int print_result(Machine *m, const char *name, const Value *v, FILE *out,
     return 0;
   case VAL_RAT:
     fprintf(out, "%lld/%llu\n", (long long)v->num, (unsigned long long)v->nat);
+    return 0;
+  case VAL_MATRIX:
+    print_matrix_rows(v, out);
     return 0;
   case VAL_TRAP:
     fputs("trap\n", out);

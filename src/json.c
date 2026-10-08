@@ -73,6 +73,7 @@ static int ready(Out *o, const Value *v) {
   switch (v->kind) {
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_OP:
     return 1;
   case VAL_TRAP:
@@ -167,6 +168,27 @@ static int family_json(Out *o, const Value *type, const Value *v) {
   return ok && put_text(o, "}");
 }
 
+/* Matrix m n: m rows, each an array of n {"num":N,"den":D} (D47). */
+static int matrix_json(Out *o, const Value *v) {
+  char num[64];
+  uint64_t i;
+  uint64_t j;
+  int ok;
+  if (v->kind != VAL_MATRIX)
+    return internal(o, "a Matrix value that is not a matrix");
+  ok = put_text(o, "[");
+  for (i = 0; ok && i < v->rows; i++) {
+    ok = put_text(o, i == 0 ? "[" : ",[");
+    for (j = 0; ok && j < v->cols; j++) {
+      const Cell *cell = &v->cells[i * v->cols + j];
+      snprintf(num, sizeof num, "%s{\"num\":%lld,\"den\":%llu}", j == 0 ? "" : ",", (long long)cell->num, (unsigned long long)cell->den);
+      ok = put_text(o, num);
+    }
+    ok = ok && put_text(o, "]");
+  }
+  return ok && put_text(o, "]");
+}
+
 static int op_json(Out *o, const Value *type, const Value *v) {
   char num[64];
   switch (type->op) {
@@ -181,6 +203,8 @@ static int op_json(Out *o, const Value *type, const Value *v) {
       return internal(o, "a Rat value that is not a fraction");
     snprintf(num, sizeof num, "{\"num\":%lld,\"den\":%llu}", (long long)v->num, (unsigned long long)v->nat);
     return put_text(o, num);
+  case OP_MATRIX:
+    return matrix_json(o, v);
   case OP_FLAG:
     if (val_is(v, OP_FLAG_YES))
       return put_text(o, "true");
@@ -255,6 +279,12 @@ static int op_json(Out *o, const Value *type, const Value *v) {
   case OP_RAT_LE:
   case OP_RAT_LT:
   case OP_SUM_RAT:
+  case OP_MAT_TABULATE:
+  case OP_MAT_OF_FN:
+  case OP_MAT_ENTRY:
+  case OP_MAT_COMP:
+  case OP_MAT_KRON:
+  case OP_MAT_EQ:
   case OP_PROJ:
     return internal(o, "a type that is not a type former");
   }
@@ -284,6 +314,7 @@ static int typed_json(Out *o, const Value *type, const Value *v) {
     return refuse(o, "a type");
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_TRAP:
   case VAL_LAM:
   case VAL_VAR:
@@ -319,6 +350,7 @@ static int is_instance(const DefInfo *d) {
   case VAL_SIGMA:
   case VAL_NAT:
   case VAL_RAT:
+  case VAL_MATRIX:
   case VAL_TRAP:
   case VAL_LAM:
   case VAL_VAR:

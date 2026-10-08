@@ -1,0 +1,1 @@
+def wrong : Matrix 2 2 := matTranspose (matId 2)

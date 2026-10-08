@@ -1,0 +1,1 @@
+def wrong : Flag := matEq (matId 2) (matId 3)

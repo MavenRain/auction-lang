@@ -1,0 +1,1 @@
+def m : Matrix 1 2 := matTabulate 1 2 (fun (i : Fin 1) (j : Fin 2) => 1/1)

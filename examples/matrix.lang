@@ -1,0 +1,40 @@
+-- Matrix m n: a stochastic matrix with m rows and n columns (FinStoch.lean:433).
+-- matTabulate, matOfFn, matEntry, matComp, matKron and matEq are built in.
+-- matId, matCopy, matDiscard, matBraiding, the unitors and the associators are
+-- domain definitions (domain/finstoch.lang). A pair index of Fin (natMul x y)
+-- has the first component as the low digit.
+def id2 : Matrix 2 2 := matId 2
+def idEmpty : Matrix 0 0 := matId 0
+def coin : Matrix 1 2 := matTabulate 1 2 (fun (i : Fin 1) (j : Fin 2) => 1/2)
+def skew : Matrix 2 2 := matTabulate 2 2 (fun (i j : Fin 2) => flagIf (finEq i j) 2/3 1/3)
+def skewTwice : Matrix 2 2 := matComp 2 2 2 skew skew
+def coinThenSkew : Matrix 1 2 := matComp 1 2 2 coin skew
+def coinPair : Matrix 1 4 := matKron 1 2 1 2 coin coin
+def skewId : Matrix 4 4 := matKron 2 2 2 2 skew id2
+def copy2 : Matrix 2 4 := matCopy 2
+def discard3 : Matrix 3 1 := matDiscard 3
+def braid23 : Matrix 6 6 := matBraiding 2 3
+def leftUnit : Matrix 2 2 := matLeftUnitor 2
+def rightUnitInv : Matrix 2 2 := matRightUnitorInv 2
+def assoc : Matrix 12 12 := matAssociator 2 3 2
+def skewCorner : Rat := matEntry skew 0 1
+def kronCell : Rat := matEntry skewId 3 1
+def skewIsId : Flag := matEq skew id2
+def idLeft : Flag := matEq (matComp 2 2 2 id2 skew) skew
+def idRight : Flag := matEq (matComp 2 2 2 skew id2) skew
+def braidBack : Flag := matEq (matComp 6 6 6 (matBraiding 2 3) (matBraiding 3 2)) (matId 6)
+def leftUnitBack : Flag := matEq (matComp 3 3 3 (matLeftUnitorInv 3) (matLeftUnitor 3)) (matId 3)
+def rightUnitBack : Flag := matEq (matComp 3 3 3 (matRightUnitor 3) (matRightUnitorInv 3)) (matId 3)
+def assocBack : Flag := matEq (matComp 12 12 12 (matAssociator 2 3 2) (matAssociatorInv 2 3 2)) (matId 12)
+def copyCounit : Flag := matEq (matComp 2 4 2 copy2 (matComp 4 2 2 (matKron 2 1 2 2 (matDiscard 2) id2) (matLeftUnitor 2))) id2
+def kronAssoc : Flag := matEq (matComp 8 8 8 (matKron 4 4 2 2 skewId skew) (matAssociator 2 2 2)) (matComp 8 8 8 (matAssociator 2 2 2) (matKron 2 2 4 4 skew (matKron 2 2 2 2 id2 skew)))
+-- Defs with a Nat parameter: the trap rows of test/eval/expect.txt use them.
+def idOf : (n : Nat) -> Matrix n n := fun (n : Nat) => matId n
+def discardOf : (n : Nat) -> Matrix n 1 := fun (n : Nat) => matDiscard n
+def split : (k : Nat) -> Matrix 1 2 := fun (k : Nat) => matTabulate 1 2 (fun (i : Fin 1) (j : Fin 2) => ratDiv 1/1 (ratOfNat k))
+def tilt : (k : Nat) -> Matrix 1 2 := fun (k : Nat) => matTabulate 1 2 (fun (i : Fin 1) (j : Fin 2) => flagIf (finEq j 0) (ratSub 1/2 (ratOfNat k)) (ratAdd 1/2 (ratOfNat k)))
+def fine : (k : Nat) -> Matrix 2 2 := fun (k : Nat) => matTabulate 2 2 (fun (i j : Fin 2) => flagIf (finEq j 0) (ratDiv 1/1 (ratOfNat k)) (ratSub 1/1 (ratDiv 1/1 (ratOfNat k))))
+def fineTwice : (k : Nat) -> Matrix 2 2 := fun (k : Nat) => matComp 2 2 2 (fine k) (fine k)
+def finePair : (k : Nat) -> Matrix 4 4 := fun (k : Nat) => matKron 2 2 2 2 (fine k) (fine k)
+def fineCorner : (k : Nat) -> Rat := fun (k : Nat) => matEntry (fine k) 1 0
+def discardSquare : (n : Nat) -> Matrix (natMul n n) 1 := fun (n : Nat) => matKron n 1 n 1 (matDiscard n) (matDiscard n)

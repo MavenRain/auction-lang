@@ -1,0 +1,1 @@
+def wrong : Matrix 1 1 := matTabulate 1 1 (fun (i j : Fin 1) => flagYes)

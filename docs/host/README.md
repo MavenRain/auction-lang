@@ -47,7 +47,7 @@ data. These definitions are checked, but they are not instances:
 - functions (a Pi type, dependent or not);
 - types and families (a universe type);
 - equality proofs (an `Eq` type);
-- the definitions in `domain/domain.lang`.
+- the definitions in `domain/domain.lang` and `domain/finstoch.lang`.
 
 `type` is the normal form of the definition type in source syntax, for
 example `Sigma (n : Nat) (Eq Nat n 1200)`. It is at most 4096 bytes.
@@ -59,6 +59,7 @@ starts again for each instance.
 |---|---|
 | `Nat` | A number: the full unsigned 64-bit value in decimal |
 | `Rat` | `{"num": n, "den": d}`, the fraction in lowest terms: `n` is a signed 64-bit value above -2^63 and `d` is above 0. Zero is `{"num": 0, "den": 1}`. |
+| `Matrix m n` | An array of m rows. Each row is an array of n Rat values, for example `[[{"num":1,"den":2},{"num":1,"den":2}]]`. A matrix with 0 rows is `[]`. |
 | `Flag` | `true` or `false` |
 | `Unit` | `{}` |
 | `Prod A B` | `{"first": a, "second": b}` |
@@ -80,8 +81,10 @@ example `Lot 3`), not in `value`.
 |---|---|
 | `JSON_VALUE` | An instance holds a function, a type or a stuck term |
 | `JSON_DEPTH` | An instance nests deeper than 2000 levels. A list spine does not count. |
-| `EVAL_OVERFLOW` | A Nat or Rat operation in an instance overflows |
+| `EVAL_OVERFLOW` | A Nat, Rat or Matrix operation in an instance overflows |
 | `EVAL_DIV_ZERO` | A natDiv, natMod or ratDiv in an instance divides by zero |
+| `EVAL_STOCHASTIC` | A matTabulate row in an instance has a cell below 0/1 or a sum other than 1/1 |
+| `EVAL_MATRIX_SIZE` | A matrix in an instance has more than 2^24 rows, columns or cells |
 
 The check and evaluation codes are the same as in `langc check` and
 `langc eval`. `test/parse`, `test/check` and `test/emit` hold a program
@@ -97,15 +100,19 @@ these codes:
 | `TYPE_FIN_SIZE` | The size `natMul m n` of a finPair, finFirst or finSecond is not below 2^64 |
 | `TYPE_RAT_ZERO` | A Rat literal `N/D` with `D` = 0 |
 | `TYPE_RAT_RANGE` | The numerator of a Rat literal, after the reduction to lowest terms, is above 2^63 - 1 |
-| `REFUSE_ALLOW` | A name outside the allow-list, for example `natMin`, `flagOr`, `finMin` or `ratNeg` |
+| `REFUSE_ALLOW` | A name outside the allow-list, for example `natMin`, `flagOr`, `finMin`, `ratNeg` or `matMul` |
 
 `langc eval` refuses a Fin argument that is not below its size with
 `EVAL_ARGS`. `langc eval` does not take a Rat argument. A Rat result
-prints as `N/D`, for example `-1/6`.
+prints as `N/D`, for example `-1/6`. `langc eval` does not take a
+Matrix argument. A Matrix result prints its rows in brackets, for
+example `[[1/2, 1/2]]`.
 
 ## The domain
 
-`domain/domain.lang` is the sample domain. `gen/embed.c` embeds it in the
+`domain/domain.lang` is the sample domain. `domain/finstoch.lang` holds
+the matrix definitions (slice A2). The Makefile joins the two files into
+`build/domain-all.lang`, and `gen/embed.c` embeds that file in the
 executable at build time. `domain/README.md` tells how to replace it.
 
 ## Limits

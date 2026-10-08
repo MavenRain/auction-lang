@@ -83,6 +83,13 @@ typedef enum {
   OP_RAT_LE,
   OP_RAT_LT,
   OP_SUM_RAT,
+  OP_MATRIX,
+  OP_MAT_TABULATE,
+  OP_MAT_OF_FN,
+  OP_MAT_ENTRY,
+  OP_MAT_COMP,
+  OP_MAT_KRON,
+  OP_MAT_EQ,
   OP_PROJ
 } Op;
 
@@ -96,14 +103,23 @@ typedef enum {
 /* Why a trap stops the program (VAL_TRAP and CORE_TRAP keep it in nat). */
 typedef enum {
   TRAP_OVERFLOW,
-  TRAP_DIV_ZERO
+  TRAP_DIV_ZERO,
+  TRAP_STOCHASTIC,
+  TRAP_MATRIX_SIZE
 } TrapReason;
+
+/* One cell of a Matrix: a Rat in lowest terms (den > 0), as VAL_RAT. */
+typedef struct {
+  int64_t num;
+  uint64_t den;
+} Cell;
 
 typedef enum {
   CORE_VAR,    /* index: de Bruijn index */
   CORE_GLOBAL, /* index: definition number */
   CORE_NAT,    /* nat */
   CORE_RAT,    /* num over nat, in lowest terms */
+  CORE_MATRIX, /* rows by cols cells, row-major */
   CORE_TRAP,   /* nat: the TrapReason; only quote writes it */
   CORE_UNIV,   /* Type nat */
   CORE_LAM,    /* fun name => b */
@@ -119,6 +135,9 @@ struct Core {
   uint32_t index;
   uint64_t nat;
   int64_t num; /* CORE_RAT: the numerator; nat is the denominator */
+  uint32_t rows; /* CORE_MATRIX: the size and the cells, row-major */
+  uint32_t cols;
+  const Cell *cells;
   Op op;
   /* OP_FAMILY, OP_FOLD_FAMILY: the family. OP_CTOR, OP_PROJ: the
      constructor. OP_PURE, OP_MAP, OP_BIND, OP_FILTER: the Carrier. */
@@ -134,6 +153,7 @@ struct Core {
 typedef enum {
   VAL_NAT,
   VAL_RAT,  /* num over nat, in lowest terms */
+  VAL_MATRIX, /* rows by cols cells, row-major */
   VAL_TRAP,
   VAL_UNIV,
   VAL_LAM,
@@ -158,6 +178,9 @@ struct Value {
   ValKind kind;
   uint64_t nat; /* NAT: the number. RAT: the denominator. TRAP: the TrapReason. UNIV, VAR: the level. */
   int64_t num;  /* RAT: the numerator */
+  uint32_t rows; /* MATRIX: the size and the cells, row-major */
+  uint32_t cols;
+  const Cell *cells;
   Op op;        /* OP, STUCK */
   uint32_t inst;
   uint32_t field;

@@ -1,0 +1,1 @@
+def m : Matrix 4 4 := matKron 2 2 2 2 (matTabulate 2 2 (fun (i j : Fin 2) => flagIf (finEq j 0) 1/4294967296 4294967295/4294967296)) (matTabulate 2 2 (fun (i j : Fin 2) => flagIf (finEq j 0) 1/4294967296 4294967295/4294967296))

@@ -1,0 +1,23 @@
+-- The FinStoch reindexing maps (auction-cat MarkovCat/FinStoch.lean) as
+-- definitions over matOfFn (D45). The Makefile joins this file after
+-- domain.lang, so each name here is a core name too (rule R4).
+def matId : (n : Nat) -> Matrix n n :=
+  fun (n : Nat) => matOfFn n n (fun (i : Fin n) => i)
+def matCopy : (x : Nat) -> Matrix x (natMul x x) :=
+  fun (x : Nat) => matOfFn x (natMul x x) (fun (i : Fin x) => finPair x x i i)
+def matDiscard : (x : Nat) -> Matrix x 1 :=
+  fun (x : Nat) => matOfFn x 1 (fun (i : Fin x) => 0)
+def matBraiding : (x : Nat) -> (y : Nat) -> Matrix (natMul x y) (natMul y x) :=
+  fun (x : Nat) (y : Nat) => matOfFn (natMul x y) (natMul y x) (fun (i : Fin (natMul x y)) => finPair y x (finSecond x y i) (finFirst x y i))
+def matLeftUnitor : (x : Nat) -> Matrix (natMul 1 x) x :=
+  fun (x : Nat) => matOfFn (natMul 1 x) x (fun (i : Fin (natMul 1 x)) => finSecond 1 x i)
+def matRightUnitor : (x : Nat) -> Matrix (natMul x 1) x :=
+  fun (x : Nat) => matOfFn (natMul x 1) x (fun (i : Fin (natMul x 1)) => finFirst x 1 i)
+def matLeftUnitorInv : (x : Nat) -> Matrix x (natMul 1 x) :=
+  fun (x : Nat) => matOfFn x (natMul 1 x) (fun (i : Fin x) => finPair 1 x 0 i)
+def matRightUnitorInv : (x : Nat) -> Matrix x (natMul x 1) :=
+  fun (x : Nat) => matOfFn x (natMul x 1) (fun (i : Fin x) => finPair x 1 i 0)
+def matAssociator : (x : Nat) -> (y : Nat) -> (z : Nat) -> Matrix (natMul (natMul x y) z) (natMul x (natMul y z)) :=
+  fun (x : Nat) (y : Nat) (z : Nat) => matOfFn (natMul (natMul x y) z) (natMul x (natMul y z)) (fun (i : Fin (natMul (natMul x y) z)) => finPair x (natMul y z) (finFirst x y (finFirst (natMul x y) z i)) (finPair y z (finSecond x y (finFirst (natMul x y) z i)) (finSecond (natMul x y) z i)))
+def matAssociatorInv : (x : Nat) -> (y : Nat) -> (z : Nat) -> Matrix (natMul x (natMul y z)) (natMul (natMul x y) z) :=
+  fun (x : Nat) (y : Nat) (z : Nat) => matOfFn (natMul x (natMul y z)) (natMul (natMul x y) z) (fun (i : Fin (natMul x (natMul y z))) => finPair (natMul x y) z (finPair x y (finFirst x (natMul y z) i) (finFirst y z (finSecond x (natMul y z) i))) (finSecond y z (finSecond x (natMul y z) i)))
