@@ -1,0 +1,35 @@
+-- Slice A3: the auction library on the auction-cat golden numbers (Examples.lean, Envelope.lean).
+-- Expected revenue under the uniform prior on Fin k x Fin k: both bidders half shade in the first price auction, or both bid truthfully.
+def halfFirstRevenue : (k : Nat) -> Rat := fun (k : Nat) => expectedRevenue k (biddedMechanism k (fun (v : Fin k) => halfShading k v) (fun (v : Fin k) => halfShading k v) (firstPriceSealedBid k)) (fun (v : Fin (natMul k k)) => uniformPrior k v)
+def firstRevenue : (k : Nat) -> Rat := fun (k : Nat) => expectedRevenue k (firstPriceSealedBid k) (fun (v : Fin (natMul k k)) => uniformPrior k v)
+def secondRevenue : (k : Nat) -> Rat := fun (k : Nat) => expectedRevenue k (secondPriceSealedBid k) (fun (v : Fin (natMul k k)) => uniformPrior k v)
+-- Half-shaded first price against truthful second price: equal at k = 3 and 5, not equal at k = 2 and 4.
+def halfFirst2 : Rat := halfFirstRevenue 2
+def halfFirst3 : Rat := halfFirstRevenue 3
+def halfFirst4 : Rat := halfFirstRevenue 4
+def halfFirst5 : Rat := halfFirstRevenue 5
+def second2 : Rat := secondRevenue 2
+def second3 : Rat := secondRevenue 3
+def second4 : Rat := secondRevenue 4
+def second5 : Rat := secondRevenue 5
+def first2 : Rat := firstRevenue 2
+def first3 : Rat := firstRevenue 3
+def equivalent2 : Flag := ratEq halfFirst2 second2
+def equivalent3 : Flag := ratEq halfFirst3 second3
+def equivalent4 : Flag := ratEq halfFirst4 second4
+def equivalent5 : Flag := ratEq halfFirst5 second5
+-- Three truthful bidders at k = 2. expectedRevenue3 at k = 5 (16/5) sums 125000 terms: it stays out of the gate.
+def threeFirst2 : Rat := expectedRevenue3 2 (firstPriceSealedBid3 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+def threeSecond2 : Rat := expectedRevenue3 2 (secondPriceSealedBid3 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+def threeGap2 : Rat := ratSub threeFirst2 threeSecond2
+-- A reserve price r = 1 at k = 2. In the second price auction, r = 1 gives the highest revenue.
+def secondReserve2 : Rat := expectedRevenue 2 (spsbReserve 2 1) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def firstReserve2 : Rat := expectedRevenue 2 (fpsbReserve 2 1) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def threeFirstReserve2 : Rat := expectedRevenue3 2 (fpsb3Reserve 2 1) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+def reserveRevenue : (r : Fin 2) -> Rat := fun (r : Fin 2) => expectedRevenue 2 (spsbReserve 2 r) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def reserveOneOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (reserveRevenue r) (reserveRevenue 1))
+-- Bidder 1 with value 2 in the Vickrey auction on Fin 3, both bidders truthful, prior 1/3.
+def vickreyTruthful3 : Rat := vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)
+-- The envelope identity: the equilibrium utility equals the integral of the allocation.
+def envelope4 : Flag := ratEq (vickreyEqUtility 4 (fun (v : Fin 4) => 1/4) 3) (vickreyEnvelopeIntegral 4 (fun (v : Fin 4) => 1/4) 3)
+def envelope5 : Flag := ratEq (vickreyEqUtility 5 (fun (v : Fin 5) => 1/5) 4) (vickreyEnvelopeIntegral 5 (fun (v : Fin 5) => 1/5) 4)

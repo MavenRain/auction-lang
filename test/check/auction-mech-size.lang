@@ -1,0 +1,1 @@
+def badSize : Rat := expectedRevenue 2 (secondPriceSealedBid 3) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)

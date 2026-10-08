@@ -24,10 +24,10 @@ def divBy : (k : Nat) -> Rat := fun (k : Nat) => ratDiv 1/3 (ratOfNat k)
 def twice : (k : Nat) -> Rat := fun (k : Nat) => sumRat 2 (fun (i : Fin 2) => ratOfNat k)
 def uniform : (n : Nat) -> Rat := fun (n : Nat) => sumRat n (fun (i : Fin n) => ratDiv 1/1 (ratOfNat n))
 def sumTraps : (k : Nat) -> Rat := fun (k : Nat) => sumRat 3 (fun (i : Fin 3) => ratDiv 1/1 (ratOfNat (natAdd (finVal i) k)))
--- Ports of auction-cat: uniformPrior (Revenue.lean:240), kron (FinStoch.lean:273),
+-- Ports of auction-cat: uniformWeight (uniformPrior, Revenue.lean:240), kron (FinStoch.lean:273),
 -- vickreyAllocation, vickreyEqUtility and vickreyEnvelopeIntegral at n = 4 with
 -- the prior 1/4 (Envelope.lean:53-80, the decided example at Envelope.lean:84-88).
-def uniformPrior : (n : Nat) -> Rat := fun (n : Nat) => ratDiv 1/1 (ratOfNat (natMul n n))
+def uniformWeight : (n : Nat) -> Rat := fun (n : Nat) => ratDiv 1/1 (ratOfNat (natMul n n))
 def kron : (i j : Fin 3) -> Rat := fun (i j : Fin 3) => flagIf (finEq i j) 1/1 0/1
 def allocation : (v1 : Fin 4) -> Rat := fun (v1 : Fin 4) => sumRat 4 (fun (v2 : Fin 4) => flagIf (finLe v2 v1) 1/4 0/1)
 def eqUtility : (v1 : Fin 4) -> Rat := fun (v1 : Fin 4) => sumRat 4 (fun (v2 : Fin 4) => ratMul 1/4 (ratOfNat (finVal (finSub v1 (finVal v2)))))

@@ -8,3 +8,6 @@ sumrat-trap.lang EVAL_DIV_ZERO
 mat-stochastic.lang EVAL_STOCHASTIC
 mat-size.lang EVAL_MATRIX_SIZE
 mat-overflow.lang EVAL_OVERFLOW
+auction-size.lang EVAL_MATRIX_SIZE
+auction-overflow.lang EVAL_OVERFLOW
+auction3-size.lang EVAL_MATRIX_SIZE

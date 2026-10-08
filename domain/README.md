@@ -3,10 +3,15 @@
 Replace the sample domain in `domain.lang` with the design of your
 language. `finstoch.lang` holds the matrix definitions of slice A2
 (matId, matCopy, matDiscard, matBraiding, the unitors and the
-associators). The Makefile joins `domain.lang` and `finstoch.lang` into
-`build/domain-all.lang`, and `gen/embed.c` embeds that file in
-`build/langc` at build time. The definitions of the two files have
-DOMAIN origin. Program files cannot redefine them.
+associators). `auction.lang` holds the auction library of slice A3
+(strategies, utilities, mechanisms, expected revenue and the Vickrey
+envelope). The Makefile joins `domain.lang`, `finstoch.lang` and
+`auction.lang` into `build/domain-all.lang`, and `gen/embed.c` embeds
+that file in `build/langc` at build time. The definitions of the three
+files have DOMAIN origin. Program files cannot redefine them. A message
+about a domain definition names `domain/domain.lang` for all three files
+(`src/front/front.c:13`), and its line is a line of
+`build/domain-all.lang`.
 
 `domain.lang` uses the program syntax, and it can also declare families:
 

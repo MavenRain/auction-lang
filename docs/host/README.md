@@ -47,7 +47,8 @@ data. These definitions are checked, but they are not instances:
 - functions (a Pi type, dependent or not);
 - types and families (a universe type);
 - equality proofs (an `Eq` type);
-- the definitions in `domain/domain.lang` and `domain/finstoch.lang`.
+- the definitions in `domain/domain.lang`, `domain/finstoch.lang` and
+  `domain/auction.lang`.
 
 `type` is the normal form of the definition type in source syntax, for
 example `Sigma (n : Nat) (Eq Nat n 1200)`. It is at most 4096 bytes.
@@ -111,7 +112,8 @@ example `[[1/2, 1/2]]`.
 ## The domain
 
 `domain/domain.lang` is the sample domain. `domain/finstoch.lang` holds
-the matrix definitions (slice A2). The Makefile joins the two files into
+the matrix definitions (slice A2). `domain/auction.lang` holds the
+auction library (slice A3). The Makefile joins the three files into
 `build/domain-all.lang`, and `gen/embed.c` embeds that file in the
 executable at build time. `domain/README.md` tells how to replace it.
 

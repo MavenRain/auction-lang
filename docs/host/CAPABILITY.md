@@ -11,10 +11,13 @@ kit, or to the root of a generated language.
 - `cc -Wall -Wextra -Wswitch-enum -Werror -fsyntax-only` checks the same
   sources (`make check-clang`). Each switch on an enum names every case
   and has no default arm.
-- The Makefile joins `domain/domain.lang` and `domain/finstoch.lang`
-  into `build/domain-all.lang`. `tcc -run gen/embed.c` turns that file
-  into `build/domain.c` at build time. The domain is part of the
-  executable.
+- The Makefile joins `domain/domain.lang`, `domain/finstoch.lang` and
+  `domain/auction.lang` into `build/domain-all.lang`. `tcc -run
+  gen/embed.c` turns that file into `build/domain.c` at build time. The
+  domain is part of the executable. A message about a domain definition
+  names `domain/domain.lang` for all three files
+  (`src/front/front.c:13`), and its line is a line of
+  `build/domain-all.lang`.
 
 ## Values
 
@@ -61,6 +64,22 @@ kit, or to the root of a generated language.
   matLeftUnitorInv, matRightUnitorInv, matAssociator and
   matAssociatorInv with matOfFn. `langc eval` prints a matrix as
   `[[1/1, 0/1], [0/1, 1/1]]`, and a matrix with 0 rows as `[]`.
+- `domain/auction.lang` is the auction library (slice A3). It defines
+  the bid strategies truthful and halfShading, the bidder utilities for
+  2 and 3 bidders, the mechanisms secondPriceSealedBid,
+  firstPriceSealedBid, spsbReserve, fpsbReserve, their 3-bidder forms,
+  dutchAuction and englishAuction, biddedMechanism, expectedRevenue and
+  uniformPrior (and the 3-bidder forms), the expected utilities, and the
+  Vickrey allocation, payment and envelope definitions. A 2-bidder
+  mechanism for n values is a matrix with natMul n n rows and natMul
+  (natMul 2 n) (natMul 2 n) columns. A column is an outcome: for each
+  bidder, a win index (Fin 2) and a price (Fin n). All 81 definitions,
+  the At and Win helpers too, are core names
+  (`test/check/auction-name.lang`, `test/check/auction-helper-name.lang`).
+  The examples give a strategy or a prior as a lambda, for example
+  `(fun (v : Fin 3) => halfShading 3 v)` (`examples/auction.lang`).
+  secondPriceSealedBid 46 has more than 2^24 cells, a trap
+  (`EVAL_MATRIX_SIZE`, `test/emit/auction-size.lang`).
 - `flagIf x a b` is the if-then-else at any result type.
 - `langc check` refuses these names with `REFUSE_ALLOW`, and the message
   gives the allowed form: natMin, natGe, natGt, flagOr, finMin, finGe,

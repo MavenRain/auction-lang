@@ -1,0 +1,193 @@
+-- The auction library (auction-cat Auction/*.lean, slice A3) as
+-- definitions over Fin, Flag and matOfFn (D63-D69). The Makefile joins this
+-- file after finstoch.lang, so each name here is a core name too (rule R4).
+-- A strategy is a map Fin n -> Fin n. In a joint bid or an outcome of
+-- Fin (natMul x y), the first bidder is the low digit. Ties go to the lowest
+-- bidder index. The Lean lets are helper parameters: an At helper takes the
+-- bids, a Win helper also takes the win flags (D74).
+-- Strategies: truthful (Lean id, Examples.lean:202), halfShading (Bidder.lean:114).
+def truthful : (n : Nat) -> (v : Fin n) -> Fin n :=
+  fun (n : Nat) (v : Fin n) => v
+def halfShading : (n : Nat) -> (v : Fin n) -> Fin n :=
+  fun (n : Nat) (v : Fin n) => finSub v (natSub (finVal v) (natDiv (finVal v) 2))
+-- 2-bidder utilities (SecondPrice.lean, FirstPrice.lean, ReserveTruth.lean,
+-- Bidder.lean:66). The reserve r is FIRST in fpsbReserve* and LAST in
+-- vickreyReserve*, as in Lean.
+def vickreyUtility : (n : Nat) -> (v b1 b2 : Fin n) -> Fin n :=
+  fun (n : Nat) (v b1 b2 : Fin n) => flagIf (finLe b2 b1) (finSub v (finVal b2)) (finSub v (finVal v))
+def vickreyBidder2Util : (n : Nat) -> (v oppBid myBid : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppBid myBid : Fin n) => flagIf (finLt oppBid myBid) (finSub v (finVal oppBid)) (finSub v (finVal v))
+def spsbBidder1Utility : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v1 v2 : Fin n) -> Fin n :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v1 v2 : Fin n) => vickreyUtility n v1 (bid v1) v2
+def fpsbUtility : (n : Nat) -> (v b1 b2 : Fin n) -> Fin n :=
+  fun (n : Nat) (v b1 b2 : Fin n) => flagIf (finLe b2 b1) (finSub v (finVal b1)) (finSub v (finVal v))
+def fpsbReserveUtility : (n : Nat) -> (r v b1 b2 : Fin n) -> Fin n :=
+  fun (n : Nat) (r v b1 b2 : Fin n) => flagIf (flagAnd (finLe b2 b1) (finLe r b1)) (finSub v (finVal b1)) (finSub v (finVal v))
+def fpsbBidder2Util : (n : Nat) -> (v oppBid myBid : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppBid myBid : Fin n) => flagIf (finLt oppBid myBid) (finSub v (finVal myBid)) (finSub v (finVal v))
+def fpsbReserveBidder2Util : (n : Nat) -> (r v oppBid myBid : Fin n) -> Fin n :=
+  fun (n : Nat) (r v oppBid myBid : Fin n) => flagIf (flagAnd (finLt oppBid myBid) (finLe r myBid)) (finSub v (finVal myBid)) (finSub v (finVal v))
+def vickreyReserveUtility : (n : Nat) -> (v b1 b2 r : Fin n) -> Fin n :=
+  fun (n : Nat) (v b1 b2 r : Fin n) => flagIf (flagAnd (finLe b2 b1) (finLe r b1)) (finSub v (finVal (finMax r b2))) (finSub v (finVal v))
+def vickreyReserveBidder2Util : (n : Nat) -> (v oppBid myBid r : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppBid myBid r : Fin n) => flagIf (flagAnd (finLt oppBid myBid) (finLe r myBid)) (finSub v (finVal (finMax r oppBid))) (finSub v (finVal v))
+def truthfulUtilityFn : (n : Nat) -> (x : Fin (natMul n (natMul 2 n))) -> Fin n :=
+  fun (n : Nat) (x : Fin (natMul n (natMul 2 n))) => flagIf (finEq (finFirst 2 n (finSecond n (natMul 2 n) x)) 1) (finSub (finFirst n (natMul 2 n) x) (finVal (finSecond 2 n (finSecond n (natMul 2 n) x)))) (finSub (finFirst n (natMul 2 n) x) (finVal (finFirst n (natMul 2 n) x)))
+-- 3-bidder utilities (Vickrey3.lean, FirstPrice3.lean, Reserve3Truth.lean).
+def vickreyUtility3 : (n : Nat) -> (v b1 b2 b3 : Fin n) -> Fin n :=
+  fun (n : Nat) (v b1 b2 b3 : Fin n) => flagIf (flagAnd (finLe b2 b1) (finLe b3 b1)) (finSub v (finVal (finMax b2 b3))) (finSub v (finVal v))
+def vickreyBidder2Util3 : (n : Nat) -> (v oppB1 myB2 oppB3 : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppB1 myB2 oppB3 : Fin n) => flagIf (flagAnd (finLt oppB1 myB2) (finLe oppB3 myB2)) (finSub v (finVal (finMax oppB1 oppB3))) (finSub v (finVal v))
+def vickreyBidder3Util3 : (n : Nat) -> (v oppB1 oppB2 myB3 : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppB1 oppB2 myB3 : Fin n) => flagIf (flagAnd (finLt oppB1 myB3) (finLt oppB2 myB3)) (finSub v (finVal (finMax oppB1 oppB2))) (finSub v (finVal v))
+def spsbBidder1Utility3 : (n : Nat) -> (bid : (v : Fin n) -> Fin n) -> (v1 v2 v3 : Fin n) -> Fin n :=
+  fun (n : Nat) (bid : (v : Fin n) -> Fin n) (v1 v2 v3 : Fin n) => vickreyUtility3 n v1 (bid v1) v2 v3
+def fpsbUtility3 : (n : Nat) -> (v b1 b2 b3 : Fin n) -> Fin n :=
+  fun (n : Nat) (v b1 b2 b3 : Fin n) => flagIf (flagAnd (finLe b2 b1) (finLe b3 b1)) (finSub v (finVal b1)) (finSub v (finVal v))
+def fpsbReserveUtility3 : (n : Nat) -> (r v b1 b2 b3 : Fin n) -> Fin n :=
+  fun (n : Nat) (r v b1 b2 b3 : Fin n) => flagIf (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1))) (finSub v (finVal b1)) (finSub v (finVal v))
+def fpsbBidder2Util3 : (n : Nat) -> (v oppB1 myB2 oppB3 : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppB1 myB2 oppB3 : Fin n) => flagIf (flagAnd (finLt oppB1 myB2) (finLe oppB3 myB2)) (finSub v (finVal myB2)) (finSub v (finVal v))
+def fpsbBidder3Util3 : (n : Nat) -> (v oppB1 oppB2 myB3 : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppB1 oppB2 myB3 : Fin n) => flagIf (flagAnd (finLt oppB1 myB3) (finLt oppB2 myB3)) (finSub v (finVal myB3)) (finSub v (finVal v))
+def fpsbReserveBidder2Util3 : (n : Nat) -> (r v oppB1 myB2 oppB3 : Fin n) -> Fin n :=
+  fun (n : Nat) (r v oppB1 myB2 oppB3 : Fin n) => flagIf (flagAnd (finLt oppB1 myB2) (flagAnd (finLe oppB3 myB2) (finLe r myB2))) (finSub v (finVal myB2)) (finSub v (finVal v))
+def fpsbReserveBidder3Util3 : (n : Nat) -> (r v oppB1 oppB2 myB3 : Fin n) -> Fin n :=
+  fun (n : Nat) (r v oppB1 oppB2 myB3 : Fin n) => flagIf (flagAnd (finLt oppB1 myB3) (flagAnd (finLt oppB2 myB3) (finLe r myB3))) (finSub v (finVal myB3)) (finSub v (finVal v))
+def vickreyReserveUtility3 : (n : Nat) -> (v b1 b2 b3 r : Fin n) -> Fin n :=
+  fun (n : Nat) (v b1 b2 b3 r : Fin n) => flagIf (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1))) (finSub v (finVal (finMax r (finMax b2 b3)))) (finSub v (finVal v))
+def vickreyReserveBidder2Util3 : (n : Nat) -> (v oppB1 myB2 oppB3 r : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppB1 myB2 oppB3 r : Fin n) => flagIf (flagAnd (finLt oppB1 myB2) (flagAnd (finLe oppB3 myB2) (finLe r myB2))) (finSub v (finVal (finMax r (finMax oppB1 oppB3)))) (finSub v (finVal v))
+def vickreyReserveBidder3Util3 : (n : Nat) -> (v oppB1 oppB2 myB3 r : Fin n) -> Fin n :=
+  fun (n : Nat) (v oppB1 oppB2 myB3 r : Fin n) => flagIf (flagAnd (finLt oppB1 myB3) (flagAnd (finLt oppB2 myB3) (finLe r myB3))) (finSub v (finVal (finMax r (finMax oppB1 oppB2)))) (finSub v (finVal v))
+-- Mechanism Fns over the joint bid (SecondPrice.lean:38, FirstPrice.lean:39,
+-- Reserve.lean:33-120, SecondPrice3.lean:33, FirstPrice3.lean:36). The outcome
+-- of a bidder is finPair 2 n allocation price.
+def spsbFnAt : (n : Nat) -> (b1 b2 : Fin n) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (b1 b2 : Fin n) => finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf (finLe b2 b1) 1 0) (flagIf (finLe b2 b1) b2 (finSub b1 (finVal b1)))) (finPair 2 n (flagIf (finLe b2 b1) 0 1) (flagIf (finLe b2 b1) (finSub b1 (finVal b1)) b1))
+def spsbFn : (n : Nat) -> (i : Fin (natMul n n)) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (i : Fin (natMul n n)) => spsbFnAt n (finFirst n n i) (finSecond n n i)
+def fpsbFnAt : (n : Nat) -> (b1 b2 : Fin n) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (b1 b2 : Fin n) => finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf (finLe b2 b1) 1 0) (flagIf (finLe b2 b1) b1 (finSub b1 (finVal b1)))) (finPair 2 n (flagIf (finLe b2 b1) 0 1) (flagIf (finLe b2 b1) (finSub b1 (finVal b1)) b2))
+def fpsbFn : (n : Nat) -> (i : Fin (natMul n n)) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (i : Fin (natMul n n)) => fpsbFnAt n (finFirst n n i) (finSecond n n i)
+def fpsbReserveFnAt : (n : Nat) -> (r b1 b2 : Fin n) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (r b1 b2 : Fin n) => finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf (flagAnd (finLe b2 b1) (finLe r b1)) 1 0) (flagIf (flagAnd (finLe b2 b1) (finLe r b1)) b1 (finSub b1 (finVal b1)))) (finPair 2 n (flagIf (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe r b1))) (finLe r b2)) 1 0) (flagIf (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe r b1))) (finLe r b2)) b2 (finSub b1 (finVal b1))))
+def fpsbReserveFn : (n : Nat) -> (r : Fin n) -> (i : Fin (natMul n n)) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) (i : Fin (natMul n n)) => fpsbReserveFnAt n r (finFirst n n i) (finSecond n n i)
+def spsbReserveFnAt : (n : Nat) -> (r b1 b2 : Fin n) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (r b1 b2 : Fin n) => finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf (flagAnd (finLe b2 b1) (finLe r b1)) 1 0) (flagIf (flagAnd (finLe b2 b1) (finLe r b1)) (finMax r b2) (finSub b1 (finVal b1)))) (finPair 2 n (flagIf (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe r b1))) (finLe r b2)) 1 0) (flagIf (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe r b1))) (finLe r b2)) (finMax r b1) (finSub b1 (finVal b1))))
+def spsbReserveFn : (n : Nat) -> (r : Fin n) -> (i : Fin (natMul n n)) -> Fin (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) (i : Fin (natMul n n)) => spsbReserveFnAt n r (finFirst n n i) (finSecond n n i)
+def spsb3ReserveFnWin : (n : Nat) -> (r b1 b2 b3 : Fin n) -> (win1 win2 win3 : Flag) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r b1 b2 b3 : Fin n) (win1 win2 win3 : Flag) => finPair (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) (finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf win1 1 0) (flagIf win1 (finMax r (finMax b2 b3)) (finSub b1 (finVal b1)))) (finPair 2 n (flagIf win2 1 0) (flagIf win2 (finMax r (finMax b1 b3)) (finSub b1 (finVal b1))))) (finPair 2 n (flagIf win3 1 0) (flagIf win3 (finMax r (finMax b1 b2)) (finSub b1 (finVal b1))))
+def spsb3ReserveFnAt : (n : Nat) -> (r b1 b2 b3 : Fin n) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r b1 b2 b3 : Fin n) => spsb3ReserveFnWin n r b1 b2 b3 (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1))) (flagAnd (flagNot (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1)))) (flagAnd (finLe b3 b2) (finLe r b2))) (flagAnd (flagNot (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1)))) (flagAnd (flagNot (flagAnd (flagNot (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1)))) (flagAnd (finLe b3 b2) (finLe r b2)))) (finLe r b3)))
+def spsb3ReserveFn : (n : Nat) -> (r : Fin n) -> (i : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) (i : Fin (natMul (natMul n n) n)) => spsb3ReserveFnAt n r (finFirst n n (finFirst (natMul n n) n i)) (finSecond n n (finFirst (natMul n n) n i)) (finSecond (natMul n n) n i)
+def fpsb3ReserveFnWin : (n : Nat) -> (r b1 b2 b3 : Fin n) -> (win1 win2 win3 : Flag) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r b1 b2 b3 : Fin n) (win1 win2 win3 : Flag) => finPair (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) (finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf win1 1 0) (flagIf win1 b1 (finSub b1 (finVal b1)))) (finPair 2 n (flagIf win2 1 0) (flagIf win2 b2 (finSub b1 (finVal b1))))) (finPair 2 n (flagIf win3 1 0) (flagIf win3 b3 (finSub b1 (finVal b1))))
+def fpsb3ReserveFnAt : (n : Nat) -> (r b1 b2 b3 : Fin n) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r b1 b2 b3 : Fin n) => fpsb3ReserveFnWin n r b1 b2 b3 (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1))) (flagAnd (flagNot (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1)))) (flagAnd (finLe b3 b2) (finLe r b2))) (flagAnd (flagNot (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1)))) (flagAnd (flagNot (flagAnd (flagNot (flagAnd (finLe b2 b1) (flagAnd (finLe b3 b1) (finLe r b1)))) (flagAnd (finLe b3 b2) (finLe r b2)))) (finLe r b3)))
+def fpsb3ReserveFn : (n : Nat) -> (r : Fin n) -> (i : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) (i : Fin (natMul (natMul n n) n)) => fpsb3ReserveFnAt n r (finFirst n n (finFirst (natMul n n) n i)) (finSecond n n (finFirst (natMul n n) n i)) (finSecond (natMul n n) n i)
+def spsb3FnWin : (n : Nat) -> (b1 b2 b3 : Fin n) -> (win1 win2 win3 : Flag) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (b1 b2 b3 : Fin n) (win1 win2 win3 : Flag) => finPair (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) (finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf win1 1 0) (flagIf win1 (finMax b2 b3) (finSub b1 (finVal b1)))) (finPair 2 n (flagIf win2 1 0) (flagIf win2 (finMax b1 b3) (finSub b1 (finVal b1))))) (finPair 2 n (flagIf win3 1 0) (flagIf win3 (finMax b1 b2) (finSub b1 (finVal b1))))
+def spsb3FnAt : (n : Nat) -> (b1 b2 b3 : Fin n) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (b1 b2 b3 : Fin n) => spsb3FnWin n b1 b2 b3 (flagAnd (finLe b2 b1) (finLe b3 b1)) (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe b3 b1))) (finLe b3 b2)) (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe b3 b1))) (flagNot (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe b3 b1))) (finLe b3 b2))))
+def spsb3Fn : (n : Nat) -> (i : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (i : Fin (natMul (natMul n n) n)) => spsb3FnAt n (finFirst n n (finFirst (natMul n n) n i)) (finSecond n n (finFirst (natMul n n) n i)) (finSecond (natMul n n) n i)
+def fpsb3FnWin : (n : Nat) -> (b1 b2 b3 : Fin n) -> (win1 win2 win3 : Flag) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (b1 b2 b3 : Fin n) (win1 win2 win3 : Flag) => finPair (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) (finPair (natMul 2 n) (natMul 2 n) (finPair 2 n (flagIf win1 1 0) (flagIf win1 b1 (finSub b1 (finVal b1)))) (finPair 2 n (flagIf win2 1 0) (flagIf win2 b2 (finSub b1 (finVal b1))))) (finPair 2 n (flagIf win3 1 0) (flagIf win3 b3 (finSub b1 (finVal b1))))
+def fpsb3FnAt : (n : Nat) -> (b1 b2 b3 : Fin n) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (b1 b2 b3 : Fin n) => fpsb3FnWin n b1 b2 b3 (flagAnd (finLe b2 b1) (finLe b3 b1)) (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe b3 b1))) (finLe b3 b2)) (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe b3 b1))) (flagNot (flagAnd (flagNot (flagAnd (finLe b2 b1) (finLe b3 b1))) (finLe b3 b2))))
+def fpsb3Fn : (n : Nat) -> (i : Fin (natMul (natMul n n) n)) -> Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (i : Fin (natMul (natMul n n) n)) => fpsb3FnAt n (finFirst n n (finFirst (natMul n n) n i)) (finSecond n n (finFirst (natMul n n) n i)) (finSecond (natMul n n) n i)
+-- Mechanism matrices: Lean detMatrix (xFn n) is matOfFn rows cols (xFn n).
+def secondPriceSealedBid : (n : Nat) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) => matOfFn (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (fun (i : Fin (natMul n n)) => spsbFn n i)
+def firstPriceSealedBid : (n : Nat) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) => matOfFn (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (fun (i : Fin (natMul n n)) => fpsbFn n i)
+def fpsbReserve : (n : Nat) -> (r : Fin n) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) => matOfFn (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (fun (i : Fin (natMul n n)) => fpsbReserveFn n r i)
+def spsbReserve : (n : Nat) -> (r : Fin n) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) => matOfFn (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (fun (i : Fin (natMul n n)) => spsbReserveFn n r i)
+def spsb3Reserve : (n : Nat) -> (r : Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) => matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (fun (i : Fin (natMul (natMul n n) n)) => spsb3ReserveFn n r i)
+def fpsb3Reserve : (n : Nat) -> (r : Fin n) -> Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) (r : Fin n) => matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (fun (i : Fin (natMul (natMul n n) n)) => fpsb3ReserveFn n r i)
+def secondPriceSealedBid3 : (n : Nat) -> Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) => matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (fun (i : Fin (natMul (natMul n n) n)) => spsb3Fn n i)
+def firstPriceSealedBid3 : (n : Nat) -> Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) => matOfFn (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (fun (i : Fin (natMul (natMul n n) n)) => fpsb3Fn n i)
+-- Aliases (Dutch.lean:42, English.lean:41, Dutch3.lean:32, English3.lean:33).
+def dutchAuction : (n : Nat) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) => firstPriceSealedBid n
+def englishAuction : (n : Nat) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) => secondPriceSealedBid n
+def dutchAuction3 : (n : Nat) -> Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) => firstPriceSealedBid3 n
+def englishAuction3 : (n : Nat) -> Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) :=
+  fun (n : Nat) => secondPriceSealedBid3 n
+-- biddedMechanism (Auction.lean:168, D69): the two strategies, then the mechanism.
+def biddedMechanism : (n : Nat) -> (bid1 : (v : Fin n) -> Fin n) -> (bid2 : (v : Fin n) -> Fin n) -> (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) -> Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) :=
+  fun (n : Nat) (bid1 : (v : Fin n) -> Fin n) (bid2 : (v : Fin n) -> Fin n) (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) => matComp (natMul n n) (natMul n n) (natMul (natMul 2 n) (natMul 2 n)) (matKron n n n n (matOfFn n n (fun (v : Fin n) => bid1 v)) (matOfFn n n (fun (v : Fin n) => bid2 v))) mech
+-- Revenue (Revenue.lean:62-241, Revenue3.lean:34-65; slice A3 group 2): the
+-- outcome revenue is the sum of the prices, the uniform prior is 1 / (n n) on each
+-- joint value, and the expected revenue is sumRat over the joint values v of
+-- prior v times sumRat over the outcomes o of matEntry mech v o times the revenue
+-- of o (D70). The Lean M is the parameter mech.
+def outcomeRevenue : (n : Nat) -> (i : Fin (natMul (natMul 2 n) (natMul 2 n))) -> Nat :=
+  fun (n : Nat) (i : Fin (natMul (natMul 2 n) (natMul 2 n))) => natAdd (finVal (finSecond 2 n (finFirst (natMul 2 n) (natMul 2 n) i))) (finVal (finSecond 2 n (finSecond (natMul 2 n) (natMul 2 n) i)))
+def uniformPrior : (n : Nat) -> (v : Fin (natMul n n)) -> Rat :=
+  fun (n : Nat) (v : Fin (natMul n n)) => ratDiv 1/1 (ratOfNat (natMul n n))
+def expectedRevenue : (n : Nat) -> (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) -> (prior : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (mech : Matrix (natMul n n) (natMul (natMul 2 n) (natMul 2 n))) (prior : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v : Fin (natMul n n)) => (ratMul (prior v) (sumRat (natMul (natMul 2 n) (natMul 2 n)) (fun (o : Fin (natMul (natMul 2 n) (natMul 2 n))) => (ratMul (matEntry mech v o) (ratOfNat (outcomeRevenue n o)))))))
+def outcomeRevenue3 : (n : Nat) -> (i : Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) -> Nat :=
+  fun (n : Nat) (i : Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) => natAdd (natAdd (finVal (finSecond 2 n (finFirst (natMul 2 n) (natMul 2 n) (finFirst (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) i)))) (finVal (finSecond 2 n (finSecond (natMul 2 n) (natMul 2 n) (finFirst (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) i))))) (finVal (finSecond 2 n (finSecond (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n) i)))
+def uniformPrior3 : (n : Nat) -> (v : Fin (natMul (natMul n n) n)) -> Rat :=
+  fun (n : Nat) (v : Fin (natMul (natMul n n) n)) => ratDiv 1/1 (ratOfNat (natMul (natMul n n) n))
+def expectedRevenue3 : (n : Nat) -> (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) -> (prior : (v : Fin (natMul (natMul n n) n)) -> Rat) -> Rat :=
+  fun (n : Nat) (mech : Matrix (natMul (natMul n n) n) (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) (prior : (v : Fin (natMul (natMul n n) n)) -> Rat) => sumRat (natMul (natMul n n) n) (fun (v : Fin (natMul (natMul n n) n)) => (ratMul (prior v) (sumRat (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n)) (fun (o : Fin (natMul (natMul (natMul 2 n) (natMul 2 n)) (natMul 2 n))) => (ratMul (matEntry mech v o) (ratOfNat (outcomeRevenue3 n o)))))))
+-- Expected utilities (BayesNash.lean:56-669): the own value is fixed and the
+-- other values are summed under the prior. A 3-bidder form sums over the pair of
+-- the other two values (finFirst = the lower bidder index, BayesNash.lean:106-109,
+-- :587-590, :612-615). A strategy is applied to its own bidder's value (D68).
+def vickreyExpectedUtility : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v1 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v2 : Fin n) => (ratMul (p v2) (ratOfNat (finVal (vickreyUtility n v1 (s1 v1) (s2 v2))))))
+def vickreyExpectedUtility3 : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p23 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v1 : Fin n) (p23 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v23 : Fin (natMul n n)) => (ratMul (p23 v23) (ratOfNat (finVal (vickreyUtility3 n v1 (s1 v1) (s2 (finFirst n n v23)) (s3 (finSecond n n v23)))))))
+def fpsbExpectedUtility : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v1 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v2 : Fin n) => (ratMul (p v2) (ratOfNat (finVal (fpsbUtility n v1 (s1 v1) (s2 v2))))))
+def fpsbExpectedUtility3 : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p23 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v1 : Fin n) (p23 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v23 : Fin (natMul n n)) => (ratMul (p23 v23) (ratOfNat (finVal (fpsbUtility3 n v1 (s1 v1) (s2 (finFirst n n v23)) (s3 (finSecond n n v23)))))))
+def fpsbReserveExpectedUtility : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v1 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v2 : Fin n) => (ratMul (p v2) (ratOfNat (finVal (fpsbReserveUtility n r v1 (s1 v1) (s2 v2))))))
+def fpsbReserveExpectedUtility3 : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v1 : Fin n) -> (p23 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v1 : Fin n) (p23 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v23 : Fin (natMul n n)) => (ratMul (p23 v23) (ratOfNat (finVal (fpsbReserveUtility3 n r v1 (s1 v1) (s2 (finFirst n n v23)) (s3 (finSecond n n v23)))))))
+def fpsbBidder2ExpectedUtility : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v2 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v1 : Fin n) => (ratMul (p v1) (ratOfNat (finVal (fpsbBidder2Util n v2 (s1 v1) (s2 v2))))))
+def fpsbReserveBidder2ExpectedUtility : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p : (v : Fin n) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (v2 : Fin n) (p : (v : Fin n) -> Rat) => sumRat n (fun (v1 : Fin n) => (ratMul (p v1) (ratOfNat (finVal (fpsbReserveBidder2Util n r v2 (s1 v1) (s2 v2))))))
+def fpsbBidder2ExpectedUtility3 : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p13 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v2 : Fin n) (p13 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v13 : Fin (natMul n n)) => (ratMul (p13 v13) (ratOfNat (finVal (fpsbBidder2Util3 n v2 (s1 (finFirst n n v13)) (s2 v2) (s3 (finSecond n n v13)))))))
+def fpsbBidder3ExpectedUtility3 : (n : Nat) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v3 : Fin n) -> (p12 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v3 : Fin n) (p12 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v12 : Fin (natMul n n)) => (ratMul (p12 v12) (ratOfNat (finVal (fpsbBidder3Util3 n v3 (s1 (finFirst n n v12)) (s2 (finSecond n n v12)) (s3 v3))))))
+def fpsbReserveBidder2ExpectedUtility3 : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v2 : Fin n) -> (p13 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v2 : Fin n) (p13 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v13 : Fin (natMul n n)) => (ratMul (p13 v13) (ratOfNat (finVal (fpsbReserveBidder2Util3 n r v2 (s1 (finFirst n n v13)) (s2 v2) (s3 (finSecond n n v13)))))))
+def fpsbReserveBidder3ExpectedUtility3 : (n : Nat) -> (r : Fin n) -> (s1 : (v : Fin n) -> Fin n) -> (s2 : (v : Fin n) -> Fin n) -> (s3 : (v : Fin n) -> Fin n) -> (v3 : Fin n) -> (p12 : (v : Fin (natMul n n)) -> Rat) -> Rat :=
+  fun (n : Nat) (r : Fin n) (s1 : (v : Fin n) -> Fin n) (s2 : (v : Fin n) -> Fin n) (s3 : (v : Fin n) -> Fin n) (v3 : Fin n) (p12 : (v : Fin (natMul n n)) -> Rat) => sumRat (natMul n n) (fun (v12 : Fin (natMul n n)) => (ratMul (p12 v12) (ratOfNat (finVal (fpsbReserveBidder3Util3 n r v3 (s1 (finFirst n n v12)) (s2 (finSecond n n v12)) (s3 v3))))))
+-- Envelope (Envelope.lean:53-80, :379): the Vickrey allocation, payment and
+-- equilibrium utility of bidder 1 at value v1, the envelope integral (the sum
+-- of the allocation below v1), and the payment from an allocation q. The
+-- implicit {n} of paymentFromAllocation is an explicit n; the Lean Q is q.
+def vickreyAllocation : (n : Nat) -> (prior : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (prior : (v : Fin n) -> Rat) (v1 : Fin n) => sumRat n (fun (v2 : Fin n) => (flagIf (finLe v2 v1) (prior v2) 0/1))
+def vickreyExpectedPayment : (n : Nat) -> (prior : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (prior : (v : Fin n) -> Rat) (v1 : Fin n) => sumRat n (fun (v2 : Fin n) => (flagIf (finLe v2 v1) (ratMul (prior v2) (ratOfNat (finVal v2))) 0/1))
+def vickreyEqUtility : (n : Nat) -> (prior : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (prior : (v : Fin n) -> Rat) (v1 : Fin n) => sumRat n (fun (v2 : Fin n) => (ratMul (prior v2) (ratOfNat (finVal (vickreyUtility n v1 v1 v2)))))
+def vickreyEnvelopeIntegral : (n : Nat) -> (prior : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (prior : (v : Fin n) -> Rat) (v1 : Fin n) => sumRat n (fun (t : Fin n) => (flagIf (finLt t v1) (vickreyAllocation n (fun (v : Fin n) => prior v) t) 0/1))
+def paymentFromAllocation : (n : Nat) -> (q : (v : Fin n) -> Rat) -> (v1 : Fin n) -> Rat :=
+  fun (n : Nat) (q : (v : Fin n) -> Rat) (v1 : Fin n) => ratSub (ratMul (ratOfNat (finVal v1)) (q v1)) (sumRat n (fun (t : Fin n) => (flagIf (finLt t v1) (q t) 0/1)))
