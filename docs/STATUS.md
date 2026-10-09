@@ -1,9 +1,9 @@
 # auction-lang status
 
-The build implements milestone M0 in the slices A1 to A6. It also has the
-core operations of the design (milestone M1 in `SPEC.md`). M0 is not
-complete: the open items O1 to O3 of `SPEC.md` need a ruling first. M2 and
-M3 are not started.
+The build implements milestone M0 in the slices A1 to A6 and the post-A6
+commit. It also has the core operations of the design (milestone M1 in
+`SPEC.md`). M0 is done. The M1 plan needs the rulings on the open items O5
+to O8 of `SPEC.md`. M2 and M3 are not started.
 
 ## Implemented
 
@@ -25,12 +25,9 @@ M3 are not started.
 
 ## Remaining M0 work
 
-1. O1: RULED 2026-10-08 (USER): keep. The 9 eval lines of
-   `examples/bayesnash.lang` stay. No work remains.
-2. O2: RULED 2026-10-08 (USER): write it. Done: `design/DESIGN.md`.
-   No work remains.
-3. O3: RULED 2026-10-08 (USER): write it. Done: `probe/CAPABILITY.md`.
-   No work remains.
+No M0 work remains. `SPEC.md` section 9 records the rulings on O1 to O4,
+and each one is done. The M1 plan is in `SPEC.md` section 9 (the open
+items O5 to O8) and section 10 (the slices B1 to B5).
 
 ## Known limits
 
