@@ -142,6 +142,56 @@ status=0
 build/langc build examples/formers.lang -x 2>/dev/null >/dev/null || status=$?
 [ "$status" -eq 2 ] || { echo "FAIL build usage: want exit 2, got $status"; fail=$((fail + 1)); }
 
+# The reader: each JSON golden reads and writes back with no change.
+trips=0
+for doc in test/json/*.json; do
+  if build/langc read "$doc" > "$tmp/read.json" 2>"$tmp/err" && cmp -s "$tmp/read.json" "$doc"; then
+    trips=$((trips + 1))
+  else
+    echo "FAIL read $doc: the document does not read back"; fail=$((fail + 1))
+  fi
+done
+echo "round trips: $trips checked"
+# White space and escapes read to the format of the writer.
+build/langc read test/read/spaces.json 2>/dev/null | cmp -s - test/json/formers.json \
+  || { echo "FAIL read: test/read/spaces.json does not read to test/json/formers.json"; fail=$((fail + 1)); }
+build/langc read test/read/escapes.json 2>/dev/null | cmp -s - test/read/escapes.out \
+  || { echo "FAIL read: test/read/escapes.json does not read to test/read/escapes.out"; fail=$((fail + 1)); }
+printf '{"auction-lang":1,"instances":[{"n\134u0061me":"q","type":"Nat","value":["a\134"b","c\134\134d","\134u0041"]}]}\n' > "$tmp/quotes.json"
+printf '{"auction-lang":1,"instances":[{"name":"q","type":"Nat","value":["a\134u0022b","c\134u005cd","A"]}]}\n' > "$tmp/quotes.out"
+build/langc read "$tmp/quotes.json" 2>/dev/null | cmp -s - "$tmp/quotes.out" \
+  || { echo "FAIL read: the quote and backslash escapes"; fail=$((fail + 1)); }
+printf '{"auction-lang":1,"instances":[{"name":"caf\134u00e9","type":"Nat","value":1}]}\n' > "$tmp/high.json"
+# Nesting: the reader permits 2008 levels (the writer writes at most 2005).
+deep() {
+  awk -v n="$1" 'BEGIN { s = ""; e = ""; for (i = 0; i < n; i++) { s = s "["; e = e "]" }
+    printf "{\"auction-lang\":1,\"instances\":[{\"name\":\"deep\",\"type\":\"Nat\",\"value\":%s%s}]}\n", s, e }'
+}
+deep 2005 > "$tmp/deep-ok.json"
+build/langc read "$tmp/deep-ok.json" 2>/dev/null | cmp -s - "$tmp/deep-ok.json" \
+  || { echo "FAIL read: 2008 levels do not read back"; fail=$((fail + 1)); }
+deep 2006 > "$tmp/deep.json"
+# Size: a document of 16 MiB reads, and 1 byte more is refused.
+awk 'BEGIN { s = " "; for (i = 0; i < 20; i++) s = s s; h = "{\"auction-lang\":1,\"instances\":[]}"
+  printf "%s", h; for (i = 0; i < 15; i++) printf "%s", s; printf "%s", substr(s, 1 + length(h)) }' > "$tmp/big-ok.json"
+build/langc read "$tmp/big-ok.json" 2>/dev/null | cmp -s - test/json/entries.json \
+  || { echo "FAIL read: a document of 16 MiB does not read"; fail=$((fail + 1)); }
+cp "$tmp/big-ok.json" "$tmp/big.json"
+printf ' ' >> "$tmp/big.json"
+# Read refusals. A document that test/read does not hold is in $tmp.
+checked=0
+while read -r file code; do
+  doc=test/read/$file
+  [ -e "$doc" ] || doc=$tmp/$file
+  status=0
+  build/langc read "$doc" >/dev/null 2>"$tmp/err" || status=$?
+  case "$status:$(head -n 1 "$tmp/err")" in
+  "1:langc: $code: "*) checked=$((checked + 1)) ;;
+  *) echo "FAIL read $file: want $code, got $status $(head -n 1 "$tmp/err")"; fail=$((fail + 1)) ;;
+  esac
+done < test/read/expect.txt
+echo "read refusals: $checked checked"
+
 rm -rf "$tmp"
 
 if rg -n '\x{2013}|\x{2014}' . >/dev/null; then

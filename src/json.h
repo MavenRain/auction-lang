@@ -14,6 +14,9 @@
 
 #define JSON_DEPTH_LIMIT 2000u
 
+/* The language name in the head of a document (src/json.c, src/read.c). */
+extern const char json_lang_name[];
+
 /* Builds the document for the checked program M in the arena of M. Returns
    1 and sets TEXT and LEN, or 0 after a diagnostic (then no document). */
 int json_document(Machine *m, const char **text, size_t *len);

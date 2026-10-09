@@ -1,7 +1,7 @@
 # auction-lang specification
 
-Status: milestones M0 and M1 are done, 2026-10-09. M2 is planned, and the
-plan waits for the rulings on O9 to O12 (sections 9 and 10).
+Status: milestones M0 and M1 are done, 2026-10-09. M2 is in progress
+(sections 9 and 10): slice C1 adds the JSON reader.
 
 ## 1. Purpose
 
@@ -298,6 +298,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   mechanism, from a contract host kit of lang-template. This is a new host,
   and sections 7 and 8 do not include it; (c) no M2 slices: M2 closes now,
   and M3 starts. Proposal: (a).
+  RULED 2026-10-09 (USER): "a (queries and reads)".
 - O10. The form of a query (only with O9 a). Options: (a) a verb
   `langc query DOC NAME` that prints the value of one instance of the
   document. The language does not change. (b) The instances of a document
@@ -306,12 +307,14 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   and the checker checks its type. (c) Both: (a) in C2 and (b) in C3.
   Proposal: (b). Then the tests of a query are programs in this language
   with eval lines, and a query can use each domain operation.
+  RULED 2026-10-09 (USER): "b (read instances become definitions)".
 - O11. The gate counts for M2 (only with O9 a). The gate prints 7 counts
   (`test/gate.sh`). Options: (a) 2 new count lines: the round trips of the
   JSON goldens and the read refusals; (b) count the round trips with the
   JSON builds and the read refusals with the build refusals, so that the
   gate keeps 7 count lines; (c) a separate target `make check-read`.
   Proposal: (a).
+  RULED 2026-10-09 (USER): "a (2 new count lines)".
 - O12. Two open choices of slice B4. First, the 3-bidder scores keep the
   kron of the identity of size 27 and the mechanism: 729 x 5,832
   (4,251,528 cells) at n = 3 (O7). At n = 4 this kron has 134,217,728
@@ -324,6 +327,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   n = 3 eval lines for these kernels if the gate time permits; (b) do both
   in M2, as a slice before C1; (c) close both: the kron form follows the
   score of auction-cat, and the n = 2 lines stay. Proposal: (a).
+  RULED 2026-10-09 (USER): "a (D192 and D193 to M3)".
 
 ## 10. Milestones
 
@@ -365,14 +369,14 @@ M1 is done (2026-10-09). The slices B1 to B5 give it, and O5 to O8 are
 ruled. The core operations of M1 exist since M0 (section 6), and B1 to B4
 add their tests.
 
-M2 has these planned slices (2026-10-09). The plan follows the proposals
-of O9 to O12 (section 9), and the rulings can change it. With O9 (a), M2
+M2 has these slices (2026-10-09). The rulings on O9 to O12 (section 9)
+keep the plan of the proposals. With O9 (a), M2
 adds a reader for the JSON document of `langc build`, and queries over
 the instances that it reads.
 
 | Slice | Commit | Content |
 |---|---|---|
-| C1 | Not started | The JSON reader: `langc read DOC` reads a document of format version 1 and writes it again. Each of the 22 JSON goldens reads and writes back with no change. New read refusals for syntax, depth, size and version |
+| C1 | This commit | The JSON reader: `langc read DOC` reads a document of format version 1 and writes it again. Each of the 22 JSON goldens reads and writes back with no change. New read refusals for syntax, depth, size, version and shape |
 | C2 | Not started | The typed read: the reader parses and checks each `type` field and decodes each `value` against its type (section 7). The read value of each instance of the 22 examples equals its value from `langc eval` |
 | C3 | Not started | The queries (O10 b): `langc eval PROG NAME --read DOC` and `langc build PROG --read DOC`. The instances of the document become definitions of the program, and a query is a definition of the program |
 | C4 | Not started | Close M2: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `docs/host/README.md`, `probe/CAPABILITY.md` and `README.md`. No test changes |

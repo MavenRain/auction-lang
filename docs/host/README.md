@@ -27,6 +27,7 @@ No network access or package installation is needed.
 | `langc check PROG` | Checks the program. Prints `ok`. |
 | `langc eval PROG NAME [ARGS...]` | Applies the definition `NAME` to the literal arguments and prints the normal form. An overflow or a division by zero prints `trap`. |
 | `langc build PROG [-o OUT]` | Checks the program, evaluates each instance and writes one JSON document to stdout, or to `OUT` |
+| `langc read DOC` | Reads a JSON document of `langc build` (format version 1) and writes it again to stdout, in the format of `langc build` |
 
 Exit 0 is success. Exit 1 is a refused program. Exit 2 is a usage or IO
 error. A refusal writes one line to stderr: `langc: CODE: NAME: message`.
@@ -91,6 +92,19 @@ The check and evaluation codes are the same as in `langc check` and
 `langc eval`. `test/parse`, `test/check` and `test/emit` hold a program
 for each refusal.
 
+`langc read DOC` refuses a document with these codes:
+
+| Code | Cause |
+|---|---|
+| `READ_SIZE` | The document is larger than 16 MiB |
+| `READ_SYNTAX` | The document is not JSON text in ASCII with objects, arrays, strings, integers, `true`, `false` and `null`. The message gives the byte offset |
+| `READ_DEPTH` | The document nests more than 2008 arrays and objects |
+| `READ_VERSION` | The first member is not `"auction-lang":1` (format version 1) |
+| `READ_SHAPE` | The second and last member is not `"instances"`, an array of objects with the members `name`, `type` and `value` in this order |
+
+`test/read` holds a document for each refusal, and `test/gate.sh` makes
+the large documents. The reader does not check a value against its type.
+
 `langc check` refuses Fin n terms, Rat literals and names outside the allow-list with
 these codes:
 
@@ -130,6 +144,8 @@ executable at build time. `domain/README.md` tells how to replace it.
 | Evaluator depth | 2000 | `src/front/core.h:16` |
 | Evaluator fuel, for each instance | 20,000,000 steps | `src/front/core.h:17` |
 | JSON nesting | 2000 | `src/json.h:15` |
+| Read document size | 16 MiB | `src/read.h:16` |
+| Read nesting | 2008 | `src/read.h:21` |
 | `type` text | 4096 bytes | `src/json.c:7` |
 
 ## Origin

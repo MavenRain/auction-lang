@@ -7,7 +7,7 @@
 #define JSON_TYPE_MAX 4096u
 
 /* new-lang.sh replaces the placeholder with the language name. */
-static const char LANG_NAME[] = "auction-lang";
+const char json_lang_name[] = "auction-lang";
 
 typedef struct {
   Machine *m;
@@ -388,7 +388,7 @@ int json_document(Machine *m, const char **text, size_t *len) {
   o.m = m;
   if (type_text == NULL)
     return diag_fail(m->diag, "OOM", NULL, "the arena limit is reached");
-  ok = put_text(&o, "{") && put_string(&o, LANG_NAME) && put_text(&o, ":1,\"instances\":[");
+  ok = put_text(&o, "{") && put_string(&o, json_lang_name) && put_text(&o, ":1,\"instances\":[");
   for (i = 0; ok && i < m->def_count; i++) {
     if (is_instance(&m->defs[i])) {
       ok = instance_json(&o, i, type_text, first);

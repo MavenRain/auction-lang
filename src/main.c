@@ -6,13 +6,15 @@
 #include "front/check.h"
 #include "front/front.h"
 #include "json.h"
+#include "read.h"
 
 #define ARENA_LIMIT_BYTES ((size_t)1 << 30)
 
 typedef enum {
   CMD_CHECK,
   CMD_EVAL,
-  CMD_BUILD
+  CMD_BUILD,
+  CMD_READ
 } Command;
 
 typedef struct {
@@ -31,12 +33,14 @@ static const struct {
   {"check", CMD_CHECK},
   {"eval", CMD_EVAL},
   {"build", CMD_BUILD},
+  {"read", CMD_READ},
 };
 
 static int usage(FILE *err) {
   fputs("usage: langc check PROG\n"
         "       langc eval PROG NAME [ARGS...]\n"
-        "       langc build PROG [-o OUT]\n", err);
+        "       langc build PROG [-o OUT]\n"
+        "       langc read DOC\n", err);
   return 2;
 }
 
@@ -76,22 +80,30 @@ static int parse_options(int argc, char **argv, Options *opt, Diag *diag) {
       return 1;
     case CMD_BUILD:
       return parse_build_options(argc, argv, opt, diag);
+    case CMD_READ:
+      return argc == 3 ? 1 : diag_fail(diag, "USAGE", NULL, "read takes one DOC");
   }
   return 0;
 }
 
-static int read_source(Arena *arena, const char *path, char **out, size_t *len, Diag *diag) {
+/* Reads at most LIMIT + 1 bytes, so *LEN > LIMIT tells that the file is larger. */
+static int read_file(Arena *arena, const char *path, size_t limit, char **out, size_t *len, Diag *diag) {
   FILE *file = fopen(path, "rb");
   if (file == NULL) return diag_fail(diag, "IO", NULL, "cannot open %s", path);
-  char *buf = arena_alloc(arena, SOURCE_MAX_BYTES + 1);
-  size_t count = buf == NULL ? 0 : fread(buf, 1, SOURCE_MAX_BYTES + 1, file);
+  char *buf = arena_alloc(arena, limit + 1);
+  size_t count = buf == NULL ? 0 : fread(buf, 1, limit + 1, file);
   int read_error = ferror(file);
   fclose(file);
   if (buf == NULL) return diag_fail(diag, "OOM", NULL, "no memory for %s", path);
   if (read_error) return diag_fail(diag, "IO", NULL, "cannot read %s", path);
-  if (count > SOURCE_MAX_BYTES) return diag_fail(diag, "IO_SIZE", NULL, "%s is larger than %zu bytes", path, SOURCE_MAX_BYTES);
   *out = buf;
   *len = count;
+  return 1;
+}
+
+static int read_source(Arena *arena, const char *path, char **out, size_t *len, Diag *diag) {
+  if (!read_file(arena, path, SOURCE_MAX_BYTES, out, len, diag)) return 0;
+  if (*len > SOURCE_MAX_BYTES) return diag_fail(diag, "IO_SIZE", NULL, "%s is larger than %zu bytes", path, SOURCE_MAX_BYTES);
   return 1;
 }
 
@@ -104,7 +116,20 @@ static int write_output(const char *path, const char *text, size_t len, Diag *di
   return count == len && closed == 0 ? 1 : diag_fail(diag, "IO", NULL, "cannot write %s", path == NULL ? "stdout" : path);
 }
 
+/* langc read DOC: the document is not a program. READ_SIZE is a refusal (exit 1). */
+static int run_read(const char *path, Arena *arena, Diag *diag) {
+  char *text = NULL;
+  size_t len = 0;
+  if (!read_file(arena, path, READ_MAX_BYTES, &text, &len, diag)) return 2;
+  const JsonNode *doc = NULL;
+  const char *out = NULL;
+  size_t out_len = 0;
+  if (!read_document(arena, text, len, &doc, diag) || !read_write(arena, doc, &out, &out_len, diag)) return 1;
+  return write_output(NULL, out, out_len, diag) ? 0 : 2;
+}
+
 static int run(const Options *opt, Arena *arena, Diag *diag) {
+  if (opt->command == CMD_READ) return run_read(opt->prog_path, arena, diag);
   char *text = NULL;
   size_t len = 0;
   if (!read_source(arena, opt->prog_path, &text, &len, diag)) return 2;
@@ -124,6 +149,8 @@ static int run(const Options *opt, Arena *arena, Diag *diag) {
       if (!json_document(&machine, &doc, &doc_len)) return 1;
       return write_output(opt->out_path, doc, doc_len, diag) ? 0 : 2;
     }
+    case CMD_READ:
+      break; /* run_read, above */
   }
   return 1;
 }

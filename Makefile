@@ -4,7 +4,7 @@ CC ?= cc
 CFLAGS = -std=c99 -Wall -Werror -Isrc
 CLANG_FLAGS = -std=c99 -Wall -Wextra -Wswitch-enum -Werror -fsyntax-only -Isrc
 FRONT = src/front/base.c src/front/lexer.c src/front/parser.c src/front/front.c src/front/eval.c src/front/check.c
-TARGET = src/json.c
+TARGET = src/json.c src/read.c
 SRC = src/main.c $(FRONT) $(TARGET)
 HEADERS = $(wildcard src/*.h src/front/*.h)
 
