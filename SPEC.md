@@ -1,6 +1,6 @@
 # auction-lang specification
 
-Status: milestone M0 is done, 2026-10-09. M1 is in progress (section 10).
+Status: milestones M0 and M1 are done, 2026-10-09 (section 10).
 
 ## 1. Purpose
 
@@ -139,6 +139,7 @@ definitions.
 | `makeBidder`, `truthfulBidder`, `deviatorBidder`, `halfShadeBidder` | See `domain/opengame.lang:24` | A bidder as an open game (auction-cat `Bidder.lean:49`) (section 6) |
 | `auctionGame`, `auctionScore`, `spsbAuction`, `fpsbAuction`, the reserve forms and the deviator forms | See `domain/opengame.lang:34` | The 2-bidder auction games (auction-cat `Auction.lean:38-160`) (section 6) |
 | `auctionGame3`, `auctionScore3`, `spsb3Auction`, `fpsb3Auction`, the reserve forms and the deviator forms | See `domain/opengame.lang:72` | The 3-bidder auction games (auction-cat `Auction.lean:201-318`) (section 6) |
+| `auctionGame3Det` and `auctionGame3Deviator1Det` to `auctionGame3Deviator3Det` | See `domain/opengame.lang:95` | The factored 3-bidder games: the view and the update are the `matOfFn` of their Fns (auction-cat `Vickrey3.lean`). The 3-bidder scores use them, so they work at n = 3 (O7) (section 6) |
 | The `Fn` and `Util` forms, for example `spsbAuctionFn` and `auctionBidder1Util` | See `domain/opengame.lang:137` | The deterministic function of each auction score and game (section 6) |
 | `auctionExpectedBidder1Util`, `vickreyReserveExpectedUtility` and the forms for bidders 2 and 3 | See `domain/opengame.lang:191` | The Bayes-Nash pipeline expectations (auction-cat `BayesNashPipeline.lean`) (sections 5 and 6) |
 
@@ -234,6 +235,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   B2 only; B3 moves to M2 and B4 moves to M3. (c) No slices: M0 gives the
   operations, so M1 closes now. Proposal: (a). RULED 2026-10-09 (USER):
   "a (B1 to B4)". M1 has the slices B1 to B4, and B5 closes M1.
+  DONE 2026-10-09 (slice B5): B1 to B4 are done, and B5 closes M1.
 - O6. The auction-cat results that M0 does not compute. These are the
   dominant-strategy truthfulness results
   (`AuctionCat/SecondPrice.lean:149`, `AuctionCat/ReserveTruth.lean:53`,
@@ -281,7 +283,9 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   `examples/dominance.lang` and the other existing files. The example and
   JSON build counts stay at 20. Proposal: (b) for B1, (a) for B2 and B3.
   RULED 2026-10-09 (USER): "b for B1, a for B2 and B3". The B1 checks go
-  into the existing example files.
+  into the existing example files. DONE 2026-10-09: B1 adds its checks to
+  4 existing example files. B2 and B3 add `examples/finstoch-laws.lang`
+  and `examples/truthful.lang`.
 
 ## 10. Milestones
 
@@ -308,17 +312,17 @@ M0 has these slices:
 M0 is done (2026-10-09). The slices A1 to A6 and the post-A6 commit give
 it, and O1 to O4 are ruled.
 
-M1 has these planned slices. The rulings on O5 to O8 are in section 9
+M1 has these slices. The rulings on O5 to O8 are in section 9
 (2026-10-09).
 
-| Slice | Content |
-|---|---|
-| B1 | Done 2026-10-09: 22 eval lines for the 22 domain definitions that no example or test used |
-| B2 | Done 2026-10-09: 15 eval lines in the new example `examples/finstoch-laws.lang`: 12 FinStoch laws at fixed sizes, with `matEq`, and 3 stochastic matrices for them |
-| B3 | Done 2026-10-09: 11 eval lines in the new example `examples/truthful.lang`: the auction-cat results of O6 at fixed sizes, with `allFin`, `natLe`, `ratLe` and `matEq` |
-| B4 | Done 2026-10-09: `auctionGame3` at n = 3 (O7 a): the factored games in `domain/opengame.lang`, 4 eval lines in `examples/opengame.lang`, and the size refusal at n = 4 |
-| B5 | Close M1: `SPEC.md`, `docs/STATUS.md`, `docs/VALIDATION.md` and the gate |
+| Slice | Commit | Content |
+|---|---|---|
+| B1 | efd75c6 | 22 eval lines for the 22 domain definitions that no example or test used |
+| B2 | 56ed192 | 15 eval lines in the new example `examples/finstoch-laws.lang`: 12 FinStoch laws at fixed sizes, with `matEq`, and 3 stochastic matrices for them |
+| B3 | cea7627 | 11 eval lines in the new example `examples/truthful.lang`: the auction-cat results of O6 at fixed sizes, with `allFin`, `natLe`, `ratLe` and `matEq` |
+| B4 | f2d43c9 | `auctionGame3` at n = 3 (O7 a): the factored games in `domain/opengame.lang`, 4 eval lines in `examples/opengame.lang`, and the size refusal at n = 4 |
+| B5 | This commit | Close M1: this file, `docs/STATUS.md` and `docs/VALIDATION.md`. No test changes |
 
-Status 2026-10-09: the core operations of M1 exist since M0 (section 6).
-M1 is in progress: B1 to B4 are done, and B5 remains. M2 and M3 are not
-started.
+M1 is done (2026-10-09). The slices B1 to B5 give it, and O5 to O8 are
+ruled. The core operations of M1 exist since M0 (section 6), and B1 to B4
+add their tests. M2 and M3 are not started, and no plan for them exists.

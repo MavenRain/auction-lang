@@ -3,7 +3,7 @@
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of ed8da0a, the last commit that changes
-`src/`. Slices B1 to B3 change no source file. Slice B4 changes no file in `src/`,
+`src/`. Slices B1 to B3 and B5 change no source file. Slice B4 changes no file in `src/`,
 but it changes `domain/opengame.lang`, which `build/langc` embeds.
 
 `make check` passes. It builds `build/langc` with TinyCC
@@ -14,8 +14,8 @@ refusals, 361 eval lines, 22 JSON builds and 15 build refusals. The gate
 also checks a nesting of 1100 parentheses, the usage exit code 2, the `-o`
 file, a `Fin` argument out of range, the absence of em-dashes and en-dashes
 in the kit, and Node `JSON.parse` of each golden. A timed run
-(`/usr/bin/time -l make check`) took 45.92 seconds real and 33.20 seconds
-user. Its maximum resident set size was 771,014,656 bytes (735.3 MiB).
+(`/usr/bin/time -l make check`) took 39.89 seconds real and 31.52 seconds
+user. Its maximum resident set size was 765,116,416 bytes (729.7 MiB).
 Other jobs loaded the machine during this run.
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
@@ -108,3 +108,6 @@ links the kron games and the factored games at n = 2. The trap line
 `spsb3FnEq 4` and `test/emit/opengame-size.lang` refuse at n = 4. One
 factored kernel at n = 3 took 11.75 s, with a maximum resident set of
 217,317,376 bytes, and it did not stop on the fuel.
+
+Slice B5 adds no test. It closes M1 in `SPEC.md`, `docs/STATUS.md` and
+this file. The gate counts are the counts of B4.

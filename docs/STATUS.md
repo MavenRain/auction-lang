@@ -2,8 +2,9 @@
 
 The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
-`SPEC.md`). M0 is done. M1 is in progress: `SPEC.md` section 9 records the
-rulings on O5 to O8, and the slices B1 to B4 are done. M2 and M3 are not started.
+`SPEC.md`), and the slices B1 to B4 add their tests. M0 and M1 are done.
+`SPEC.md` section 9 records the rulings on O1 to O8. M2 and M3 are not
+started.
 
 ## Implemented
 
@@ -13,7 +14,7 @@ rulings on O5 to O8, and the slices B1 to B4 are done. M2 and M3 are not started
 - `domain/finstoch.lang`: 10 definitions. The structure maps of FinStoch.
 - `domain/auction.lang`: 81 definitions. Bid strategies, utilities,
   mechanisms, expected revenue, expected utility and the envelope objects.
-- `domain/opengame.lang`: 90 definitions. The `OpenGame` family, bidders,
+- `domain/opengame.lang`: 94 definitions. The `OpenGame` family, bidders,
   the 2-bidder and 3-bidder auction games, their functions and the
   Bayes-Nash pipeline expectations.
 - `domain/domain.lang`: 5 definitions and 4 families. The sample domain of
@@ -23,12 +24,12 @@ rulings on O5 to O8, and the slices B1 to B4 are done. M2 and M3 are not started
   JSON document (`docs/host/README.md`).
 - The gate `make check` (`docs/VALIDATION.md`).
 
-## Remaining M0 work
+## Remaining work
 
-No M0 work remains. `SPEC.md` section 9 records the rulings on O1 to O4,
-and each one is done. The M1 plan is in `SPEC.md` section 9 (the rulings
-on O5 to O8) and section 10 (the slices B1 to B5). B1 to B4 are done. B5
-remains.
+No M0 or M1 work remains. `SPEC.md` section 9 records the rulings on O1
+to O8, and each one is done. `SPEC.md` section 10 lists the slices of M0
+and M1. M2 (queries and reads, or the contract) and M3 (hardening) are not
+started, and no plan for them exists.
 
 ## Known limits
 
