@@ -3,8 +3,8 @@
 The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`), and the slices B1 to B4 add their tests. M0 and M1 are done.
-`SPEC.md` section 9 records the rulings on O1 to O8. M2 and M3 are not
-started.
+`SPEC.md` section 9 records the rulings on O1 to O8 and the open items O9
+to O12. M2 is planned, and M3 is not started.
 
 ## Implemented
 
@@ -28,8 +28,14 @@ started.
 
 No M0 or M1 work remains. `SPEC.md` section 9 records the rulings on O1
 to O8, and each one is done. `SPEC.md` section 10 lists the slices of M0
-and M1. M2 (queries and reads, or the contract) and M3 (hardening) are not
-started, and no plan for them exists.
+and M1, and the planned slices C1 to C4 of M2. The plan waits for the
+rulings on O9 to O12 (`SPEC.md` section 9). The proposal for M2 is
+queries and reads: a reader for the JSON document of `langc build`, and
+queries over the instances that it reads. No program reads that document
+now (`probe/CAPABILITY.md`). M3 (hardening) is not started. The proposal
+of O12 moves two choices of slice B4 to M3: the kron of an identity and
+the mechanism in the 3-bidder scores, and the kernels that have eval lines
+at n = 2 only.
 
 ## Known limits
 
