@@ -121,11 +121,11 @@ kit, or to the root of a generated language.
 ## Limits
 
 - The checker and the evaluator stop at a depth of 2000
-  (`src/front/check.c:10`, `src/front/core.h:16`), and the parser at a
+  (`src/front/check.c:10`, `src/front/core.h:17`), and the parser at a
   nesting of 1000 (`src/front/parser.c:16`). These limits keep the C stack
   bounded. `test/gate.sh` checks a nesting of 1100 parentheses.
 - The evaluator has a fuel of 20,000,000 steps for each instance
-  (`src/front/core.h:17`). `langc build` starts the fuel again for each
+  (`src/front/core.h:18`). `langc build` starts the fuel again for each
   instance.
 - All memory comes from one arena with a limit of 1 GiB (`src/main.c:10`).
   A run that reaches it stops with `OOM`.
