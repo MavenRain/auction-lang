@@ -1,0 +1,28 @@
+-- The auction-cat results of O6 (SPEC.md section 9) at fixed sizes.
+-- Each def is a Flag that evaluates to 1. Lean (AuctionCat/):
+-- vickrey_truthful_dominant SecondPrice.lean:149,
+-- vickreyReserve_truthful_dominant ReserveTruth.lean:53,
+-- spsb3Reserve_bidder3_kernel_dominance Reserve3Truth.lean:812,
+-- expectedRevenue_fpsb_ge_spsb ExpectedRevenueComparison.lean:84,
+-- fpsbAuction_eq_detMatrix KernelFirstPrice.lean:96,
+-- fpsb3ReserveAuction_eq_detMatrix KernelFirstPrice3.lean:346.
+-- detMatrix in Lean is matOfFn here.
+-- A utility is a Fin n value, so the dominance checks use natLe on finVal.
+-- The bidder 3 deviator applies bid only to the value of bidder 3. Thus the
+-- constant bids b cover each bid function at a value profile.
+-- The prior of revGe is the weight v + 1. It is not normalized: the Lean
+-- result needs only 0 <= prior v.
+-- examples/opengame.lang checks the fpsbAuction kernel form at n = 2 and 3.
+-- This file uses n = 4. The 3-bidder kernel check is at n = 2: at n = 3 the
+-- matrices of fpsb3ReserveAuction are over the matrix limit (O4).
+def vickTruth3 : Flag := allFin 3 (fun (v : Fin 3) => allFin 3 (fun (b1 : Fin 3) => allFin 3 (fun (b2 : Fin 3) => natLe (finVal (vickreyUtility 3 v b1 b2)) (finVal (vickreyUtility 3 v v b2)))))
+def vickTruth5 : Flag := allFin 5 (fun (v : Fin 5) => allFin 5 (fun (b1 : Fin 5) => allFin 5 (fun (b2 : Fin 5) => natLe (finVal (vickreyUtility 5 v b1 b2)) (finVal (vickreyUtility 5 v v b2)))))
+def vickResTruth3 : Flag := allFin 3 (fun (v : Fin 3) => allFin 3 (fun (b1 : Fin 3) => allFin 3 (fun (b2 : Fin 3) => allFin 3 (fun (r : Fin 3) => natLe (finVal (vickreyReserveUtility 3 v b1 b2 r)) (finVal (vickreyReserveUtility 3 v v b2 r))))))
+def vickResTruth5 : Flag := allFin 5 (fun (v : Fin 5) => allFin 5 (fun (b1 : Fin 5) => allFin 5 (fun (b2 : Fin 5) => allFin 5 (fun (r : Fin 5) => natLe (finVal (vickreyReserveUtility 5 v b1 b2 r)) (finVal (vickreyReserveUtility 5 v v b2 r))))))
+def spsb3ResBidder3Dom3 : Flag := allFin 3 (fun (r : Fin 3) => allFin 3 (fun (b : Fin 3) => allFin (natMul (natMul 3 3) 3) (fun (v : Fin (natMul (natMul 3 3) 3)) => ratLe (auctionBidder3Util3 3 (matOfFn (natMul (natMul 3 3) 3) (natMul (natMul 3 3) 3) (fun (u : Fin (natMul (natMul 3 3) 3)) => spsb3ReserveAuctionDeviator3Fn 3 r (fun (w : Fin 3) => b) u)) v) (auctionBidder3Util3 3 (matOfFn (natMul (natMul 3 3) 3) (natMul (natMul 3 3) 3) (fun (u : Fin (natMul (natMul 3 3) 3)) => spsb3ReserveAuctionFn 3 r u)) v))))
+def revGe2 : Flag := ratLe (expectedRevenue 2 (secondPriceSealedBid 2) (fun (v : Fin (natMul 2 2)) => ratOfNat (natAdd (finVal v) 1))) (expectedRevenue 2 (firstPriceSealedBid 2) (fun (v : Fin (natMul 2 2)) => ratOfNat (natAdd (finVal v) 1)))
+def revGe3 : Flag := ratLe (expectedRevenue 3 (secondPriceSealedBid 3) (fun (v : Fin (natMul 3 3)) => ratOfNat (natAdd (finVal v) 1))) (expectedRevenue 3 (firstPriceSealedBid 3) (fun (v : Fin (natMul 3 3)) => ratOfNat (natAdd (finVal v) 1)))
+def revGe4 : Flag := ratLe (expectedRevenue 4 (secondPriceSealedBid 4) (fun (v : Fin (natMul 4 4)) => ratOfNat (natAdd (finVal v) 1))) (expectedRevenue 4 (firstPriceSealedBid 4) (fun (v : Fin (natMul 4 4)) => ratOfNat (natAdd (finVal v) 1)))
+def revGe5 : Flag := ratLe (expectedRevenue 5 (secondPriceSealedBid 5) (fun (v : Fin (natMul 5 5)) => ratOfNat (natAdd (finVal v) 1))) (expectedRevenue 5 (firstPriceSealedBid 5) (fun (v : Fin (natMul 5 5)) => ratOfNat (natAdd (finVal v) 1)))
+def fpsbKernel4 : Flag := matEq (fpsbAuction 4) (matOfFn (natMul 4 4) (natMul 4 4) (fun (v : Fin (natMul 4 4)) => fpsbAuctionFn 4 v))
+def fpsb3ResKernel2 : Flag := allFin 2 (fun (r : Fin 2) => matEq (fpsb3ReserveAuction 2 r) (matOfFn (natMul (natMul 2 2) 2) (natMul (natMul 2 2) 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => fpsbAuctionFn3 2 v)))

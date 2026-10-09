@@ -141,6 +141,13 @@ their values. They port the decided forms in `AuctionCat/Examples.lean`.
 | The expected utility of one bidder | `vickreyExpectedUtility_truthful_eq_one_uniform`, `AuctionCat/Examples.lean:202`, n = 3 | `examples/utility.lang` |
 | The open game kernels | `AuctionCat/KernelTruth.lean`, `AuctionCat/Vickrey3.lean` | `examples/opengame.lang` |
 | The Bayes-Nash pipeline expectations | `AuctionCat/BayesNashPipeline.lean` | `examples/bayesnash.lang` |
+| Dominant-strategy truthfulness of the second price auction | `vickrey_truthful_dominant`, `AuctionCat/SecondPrice.lean:149`, all n | `examples/truthful.lang`: `vickTruth3`, `vickTruth5` |
+| Dominant-strategy truthfulness of the second price auction with a reserve | `vickreyReserve_truthful_dominant`, `AuctionCat/ReserveTruth.lean:53`, all n | `examples/truthful.lang`: `vickResTruth3`, `vickResTruth5` |
+| The kernel dominance of bidder 3 in the 3-bidder second price auction with a reserve | `spsb3Reserve_bidder3_kernel_dominance`, `AuctionCat/Reserve3Truth.lean:812`, all n | `examples/truthful.lang`: `spsb3ResBidder3Dom3` |
+| The expected revenue of first price is at least the expected revenue of second price for nonnegative prior weights | `expectedRevenue_fpsb_ge_spsb`, `AuctionCat/ExpectedRevenueComparison.lean:84`, all n | `examples/truthful.lang`: `revGe2`, `revGe3`, `revGe4`, `revGe5` |
+| The 2-bidder first price kernel form | `fpsbAuction_eq_detMatrix`, `AuctionCat/KernelFirstPrice.lean:96`, all n | `examples/truthful.lang`: `fpsbKernel4`; `examples/opengame.lang`: `fpsbFnEq` |
+| The 3-bidder first price kernel form with a reserve | `fpsb3ReserveAuction_eq_detMatrix`, `AuctionCat/KernelFirstPrice3.lean:346`, all n | `examples/truthful.lang`: `fpsb3ResKernel2` |
+| The 3-bidder Dutch and English auctions | `dutch3_eq_firstPrice3`, `AuctionCat/Dutch3.lean:38`; `english3_eq_secondPrice3`, `AuctionCat/English3.lean:39`; all n | `examples/auction.lang`: `dutch3Eq3`, `english3Eq3` |
 
 The first two rows compare auctions with truthful bids at the valuations
 and priors written in the example files. They do not check bids that
@@ -148,6 +155,8 @@ deviate from the valuation. Dominant-strategy truthfulness is a separate
 Lean result (`vickrey_truthful_dominant`,
 `AuctionCat/SecondPrice.lean:149`, and
 `vickreyReserve_truthful_dominant`, `AuctionCat/ReserveTruth.lean:53`).
+`examples/truthful.lang` checks these results at fixed sizes (the rows
+above).
 
 A program can state and prove an equality over variable sizes and values
 when both sides are definitionally equal, or when a supplied equality

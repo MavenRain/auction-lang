@@ -251,7 +251,12 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   remaining results, and list them in `docs/VALIDATION.md` only;
   (c) do not check them in M1. Proposal: (a). RULED 2026-10-09 (USER):
   "a (check them at fixed sizes and add DESIGN.md section 7 rows)". Slice
-  B3 does this.
+  B3 does this. DONE in B3 (2026-10-09): `examples/truthful.lang` has 11
+  checks (`vickTruth3`, `vickTruth5`, `vickResTruth3`, `vickResTruth5`,
+  `spsb3ResBidder3Dom3`, `revGe2`, `revGe3`, `revGe4`, `revGe5`,
+  `fpsbKernel4` and `fpsb3ResKernel2`). B1 checks the Dutch and English
+  results (`examples/auction.lang`: `dutch3Eq3` and `english3Eq3`).
+  `design/DESIGN.md` section 7 has a row for each result.
 - O7. `auctionGame3` at n = 3. It exceeds the matrix limit of O4
   (`test/emit/opengame-size.lang`), and its score kernels run at n = 2.
   Options: (a) a factored construction: build each 3-bidder kernel as the
@@ -301,10 +306,10 @@ M1 has these planned slices. The rulings on O5 to O8 are in section 9
 |---|---|
 | B1 | Done 2026-10-09: 22 eval lines for the 22 domain definitions that no example or test used |
 | B2 | Done 2026-10-09: 15 eval lines in the new example `examples/finstoch-laws.lang`: 12 FinStoch laws at fixed sizes, with `matEq`, and 3 stochastic matrices for them |
-| B3 | The auction-cat results of O6 at fixed sizes |
+| B3 | Done 2026-10-09: 11 eval lines in the new example `examples/truthful.lang`: the auction-cat results of O6 at fixed sizes, with `allFin`, `natLe`, `ratLe` and `matEq` |
 | B4 | `auctionGame3` at n = 3 (O7) |
 | B5 | Close M1: `SPEC.md`, `docs/STATUS.md`, `docs/VALIDATION.md` and the gate |
 
 Status 2026-10-09: the core operations of M1 exist since M0 (section 6).
-M1 is in progress: B1 and B2 are done, and B3 to B5 remain. M2 and M3 are not
+M1 is in progress: B1 to B3 are done, and B4 and B5 remain. M2 and M3 are not
 started.

@@ -3,18 +3,18 @@
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of ed8da0a, the last commit that changes
-`src/`. Slices B1 and B2 change no source file.
+`src/`. Slices B1 to B3 change no source file.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 499 tests with zero failures: 21 examples, 10 parse refusals, 86 check
-refusals, 346 eval lines, 21 JSON builds and 15 build refusals. The gate
+runs 512 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+refusals, 357 eval lines, 22 JSON builds and 15 build refusals. The gate
 also checks a nesting of 1100 parentheses, the usage exit code 2, the `-o`
 file, a `Fin` argument out of range, the absence of em-dashes and en-dashes
 in the kit, and Node `JSON.parse` of each golden. A timed run
-(`/usr/bin/time -l make check`) took 29.85 seconds real and 26.07 seconds
-user. Its maximum resident set size was 365,248,512 bytes (348.3 MiB).
+(`/usr/bin/time -l make check`) took 42.03 seconds real and 32.05 seconds
+user. Its maximum resident set size was 365,133,824 bytes (348.2 MiB).
 Other jobs loaded the machine during this run.
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
@@ -71,3 +71,23 @@ definitions are the stochastic matrices for the laws that take morphisms
 index has the first component as the low digit. Thus each associator is an
 identity matrix, and the pentagon and the triangle check the reindex maps
 and `matKron`, but no permutation.
+
+Slice B3 adds the example `examples/truthful.lang`, its JSON golden and 11
+eval lines. Each definition checks one auction-cat result of O6 (`SPEC.md`
+section 9) at a fixed size, and each definition evaluates to 1.
+`vickTruth3` and `vickTruth5` check `vickrey_truthful_dominant` over each
+value and each 2 bids at n = 3 and 5. `vickResTruth3` and `vickResTruth5`
+check `vickreyReserve_truthful_dominant` also over each reserve. A utility
+is a `Fin n` value, so these checks use `natLe` on `finVal`.
+`spsb3ResBidder3Dom3` checks `spsb3Reserve_bidder3_kernel_dominance` at
+n = 3 over each reserve, each constant bid and each value profile. The
+deviator applies the bid only to the value of bidder 3. Thus the constant
+bids cover each bid function. `revGe2` to `revGe5` check
+`expectedRevenue_fpsb_ge_spsb` with `ratLe` at n = 2, 3, 4 and 5, with the
+prior weight v + 1. `fpsbKernel4` checks the 2-bidder first price kernel
+form with `matEq` at n = 4 (`examples/opengame.lang` checks n = 2 and 3).
+`fpsb3ResKernel2` checks the 3-bidder first price kernel form with a
+reserve at n = 2 for each reserve. No check stops on the evaluation fuel of
+20,000,000 steps. A mutant of each kind of check (the 2 sides swapped, or
+the kernel function of the other auction) evaluates to 0, so no check is
+vacuous.
