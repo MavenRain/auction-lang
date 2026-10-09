@@ -85,7 +85,7 @@ example `Lot 3`), not in `value`.
 | `EVAL_OVERFLOW` | A Nat, Rat or Matrix operation in an instance overflows |
 | `EVAL_DIV_ZERO` | A natDiv, natMod or ratDiv in an instance divides by zero |
 | `EVAL_STOCHASTIC` | A matTabulate row in an instance has a cell below 0/1 or a sum other than 1/1 |
-| `EVAL_MATRIX_SIZE` | A matrix in an instance has more than 2^24 rows, columns or cells |
+| `EVAL_MATRIX_SIZE` | A matrix in an instance has more than 2^25 rows, columns or cells |
 
 The check and evaluation codes are the same as in `langc check` and
 `langc eval`. `test/parse`, `test/check` and `test/emit` hold a program

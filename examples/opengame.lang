@@ -1,6 +1,6 @@
 -- Slice A4: the open-game kernels of auction-cat (KernelTruth, FirstPrice, ReserveTruth, Reserve3Truth, Vickrey3).
 -- Each Flag says that a kernel matrix of the domain equals the matOfFn of its entry function (D98).
--- Two bidders at n = 2 and 3. Three bidders at n = 2 only: at n = 3 a matrix is over the 2^24 cap (D97).
+-- Two bidders at n = 2 and 3. Three bidders at n = 2 only: at n = 3 a matrix is over the 2^25 cap (D97).
 def spsbFnEq : (n : Nat) -> Flag :=
   fun (n : Nat) => matEq (spsbAuction n) (matOfFn (natMul n n) (natMul n n) (fun (v : Fin (natMul n n)) => spsbAuctionFn n v))
 def fpsbFnEq : (n : Nat) -> Flag :=

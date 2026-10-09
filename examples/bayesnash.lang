@@ -1,7 +1,7 @@
 -- Slice A4: the BayesNashPipeline expectations and the dominance of the second price auction (auction-cat Examples.lean).
 -- A dom Flag says that truthful bids in the second price auction give the bidder at least the expected utility of truthful bids in the first price auction.
 -- A pipe Flag says that the expected utility of the auction kernel equals the Vickrey expected utility.
--- Two bidders at n = 3 (prior 1/3, v = 2). Three bidders at n = 2 (prior 1/4, v = 1): at n = 3 a matrix is over the 2^24 cap (D99).
+-- Two bidders at n = 3 (prior 1/3, v = 2). Three bidders at n = 2 (prior 1/4, v = 1): at n = 3 a matrix is over the 2^25 cap (D99).
 def domSpsb1 : Flag := ratLe (auctionExpectedBidder1Util 3 (fpsbAuction 3) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder1Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2)
 def domRes1 : Flag := ratLe (auctionExpectedBidder1Util 3 (fpsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder1Util 3 (spsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2)
 def domSpsb2 : Flag := ratLe (auctionExpectedBidder2Util 3 (fpsbAuction 3) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder2Util 3 (spsbAuction 3) (fun (v : Fin 3) => 1/3) 2)

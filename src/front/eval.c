@@ -178,7 +178,7 @@ const char *trap_text(const Value *v) {
   case TRAP_STOCHASTIC:
     return "a matrix row is not stochastic (an entry below 0 or a row sum other than 1)";
   case TRAP_MATRIX_SIZE:
-    return "a matrix has more than 2^24 rows, columns or cells";
+    return "a matrix has more than 2^25 rows, columns or cells";
   }
   return "an operation overflowed (a Nat past 2^64-1, a Rat numerator past 2^63-1 or denominator past 2^64-1)";
 }
@@ -1097,8 +1097,8 @@ static const Value *reduce_sum_rat(Machine *m, const Value *const *a, uint32_t n
   return acc;
 }
 
-#define MATRIX_SIDE_MAX ((uint64_t)1 << 24)
-#define MATRIX_CELLS_MAX ((uint64_t)1 << 24)
+#define MATRIX_SIDE_MAX ((uint64_t)1 << 25)
+#define MATRIX_CELLS_MAX ((uint64_t)1 << 25)
 
 /* Strict in the first COUNT arguments, in order: a trap gives the trap, then
    a neutral gives the stuck OP in *OUT. 1 when all are values. */
@@ -1116,9 +1116,10 @@ static int mat_args(Machine *m, Op op, const Value *const *a, uint32_t n, uint32
   return 1;
 }
 
-/* The cells of a ROWS by COLS matrix, all 0/1. Past 2^24 rows, columns or
-   cells it gives NULL and *TRAP gets EVAL_MATRIX_SIZE (D42); out of memory
-   it gives NULL with *TRAP NULL. */
+/* The cells of a ROWS by COLS matrix, all 0/1. Past 2^25 rows, columns or
+   cells it gives NULL and *TRAP gets EVAL_MATRIX_SIZE (D42, O4: 2^25 cells
+   of 16 bytes is half of the 1 GiB arena); out of memory it gives NULL with
+   *TRAP NULL. */
 static Cell *mat_cells(Machine *m, uint64_t rows, uint64_t cols, const Value **trap) {
   Cell *cells;
   uint64_t i;

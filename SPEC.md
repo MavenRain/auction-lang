@@ -14,8 +14,7 @@ The host is the TinyCC JSON host kit (tcc-json) of lang-template. The
 target is JSON. The type formers are F1 to F15 of `formers/FORMERS.md`. The
 core types and the core operations are only those of sections 5 and 6: the
 built-ins of `src/front/check.c` and the 186 definitions in `domain/`. They
-port auction-cat (Lean 4). `design/DESIGN.md` does not hold the design yet
-(open item O2).
+port auction-cat (Lean 4). `design/DESIGN.md` gives the design.
 
 ## 2. Programs
 
@@ -77,8 +76,8 @@ these structures. The core operation `matComp` composes two matrices.
 
 ## 5. Core types
 
-No definition is probe-forced, because `probe/CAPABILITY.md` is not filled
-(O3). The host facts are in `docs/host/CAPABILITY.md`.
+No definition is probe-forced. The probe answers are in
+`probe/CAPABILITY.md`, and the host facts are in `docs/host/CAPABILITY.md`.
 
 | Type | Meaning (design section) | Definition |
 |---|---|---|
@@ -203,20 +202,27 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 ## 9. Open items
 
 - O1. The 9 eval lines of `examples/bayesnash.lang` in
-  `test/eval/expect.txt`: keep them or remove them. OPEN. The lines stay
-  until a ruling. Without them, the gate has 300 evals.
-- O2. `design/DESIGN.md` does not hold the domain design. The design source
-  is auction-cat. OPEN.
-- O3. `probe/CAPABILITY.md` is the unfilled template. The host facts are in
-  `docs/host/CAPABILITY.md`. OPEN.
-- O4. The matrix limit: at most 1 << 24 rows or columns, and 1 << 24 cells
-  (`src/front/eval.c:1100-1101`). A larger matrix refuses with
-  `EVAL_MATRIX_SIZE` (`test/emit/mat-size.lang`,
+  `test/eval/expect.txt`. RULED 2026-10-08 (USER): keep. The 9 bayesnash
+  eval rows stay.
+- O2. `design/DESIGN.md` did not hold the domain design. RULED 2026-10-08
+  (USER): write it. Done: `design/DESIGN.md`, from auction-cat.
+- O3. `probe/CAPABILITY.md` was the unfilled template. RULED 2026-10-08
+  (USER): write it. Done: `probe/CAPABILITY.md`.
+- O4. The matrix limit. RULED 2026-10-08 (USER): the largest limit that
+  is free. A matrix has at most 1 << 25 rows or columns, and 1 << 25
+  cells (`src/front/eval.c:1100-1101`). A cell is 16 bytes, so a matrix
+  at the limit takes 512 MiB. This is half of the 1 GiB arena
+  (`src/main.c:10`). 1 << 26 cells take 1 GiB and 16 bytes, so they do
+  not fit. The size check runs before the allocation
+  (`src/front/eval.c:1127-1131`), so a refusal uses no memory. A larger
+  matrix refuses with `EVAL_MATRIX_SIZE` (`test/emit/mat-size.lang`,
   `test/emit/auction3-size.lang`). This limit applies to intermediate
   matrices too. Ordinary 3-bidder mechanisms work at n = 3 and n = 5;
-  `test/emit/auction3-size.lang` checks their size refusal at n = 12.
-  The current 3-bidder open-game construction (`auctionGame3`) exceeds
-  the limit at n = 3; its score kernels run at n = 2. Host limit. OPEN.
+  `test/emit/auction3-size.lang` checks their size refusal at n = 13.
+  The current 3-bidder open-game construction (`auctionGame3`) still
+  exceeds the limit at n = 3 (`test/emit/opengame-size.lang`); its score
+  kernels run at n = 2. A higher limit needs a larger arena, and that is
+  not free.
 
 ## 10. Milestones
 

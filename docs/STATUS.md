@@ -25,11 +25,12 @@ M3 are not started.
 
 ## Remaining M0 work
 
-1. O1: keep or remove the 9 eval lines of `examples/bayesnash.lang`. This
-   needs a ruling first. Without the lines, the gate has 300 evals.
-2. O2: put the domain design in `design/DESIGN.md`. This needs a ruling on
-   the design text first. The source is auction-cat.
-3. O3: fill `probe/CAPABILITY.md`. This needs a host probe run first.
+1. O1: RULED 2026-10-08 (USER): keep. The 9 eval lines of
+   `examples/bayesnash.lang` stay. No work remains.
+2. O2: RULED 2026-10-08 (USER): write it. Done: `design/DESIGN.md`.
+   No work remains.
+3. O3: RULED 2026-10-08 (USER): write it. Done: `probe/CAPABILITY.md`.
+   No work remains.
 
 ## Known limits
 
@@ -48,13 +49,15 @@ M3 are not started.
   (`src/front/core.h:18`). No test in `test/` reaches the fuel limit.
 - All memory comes from one arena of 1 GiB (`src/main.c:10`). A source file
   is at most 1 MiB (`src/front/front.h:7`).
-- A matrix has at most 1 << 24 rows or columns and 1 << 24 cells
-  (`src/front/eval.c:1100-1101`). A larger matrix refuses with
-  `EVAL_MATRIX_SIZE` (`test/emit/mat-size.lang`). The limit also applies
-  to intermediate matrices. Ordinary 3-bidder mechanisms work at n = 3
-  and n = 5; `test/emit/auction3-size.lang` checks their refusal at n = 12.
-  The current 3-bidder open-game construction (`auctionGame3`) exceeds
-  the limit at n = 3; its score kernels run at n = 2 (`SPEC.md` O4).
+- A matrix has at most 1 << 25 rows or columns and 1 << 25 cells
+  (`src/front/eval.c:1100-1101`; `SPEC.md` O4, RULED 2026-10-08). A
+  larger matrix refuses with `EVAL_MATRIX_SIZE`
+  (`test/emit/mat-size.lang`). The limit also applies to intermediate
+  matrices. Ordinary 3-bidder mechanisms work at n = 3 and n = 5;
+  `test/emit/auction3-size.lang` checks their refusal at n = 13. The
+  current 3-bidder open-game construction (`auctionGame3`) still exceeds
+  the limit at n = 3 (`test/emit/opengame-size.lang`); its score kernels
+  run at n = 2.
 - The JSON `type` field of an instance is at most 4096 bytes.
 
 ## Internal boundaries

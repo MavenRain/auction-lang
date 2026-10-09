@@ -1,1 +1,1 @@
-def bigThree : Rat := expectedRevenue3 12 (firstPriceSealedBid3 12) (fun (v : Fin (natMul (natMul 12 12) 12)) => uniformPrior3 12 v)
+def bigThree : Rat := expectedRevenue3 13 (firstPriceSealedBid3 13) (fun (v : Fin (natMul (natMul 13 13) 13)) => uniformPrior3 13 v)

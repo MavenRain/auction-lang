@@ -58,7 +58,7 @@ kit, or to the root of a generated language.
   columns: cell (x, y) is M (x mod m) (y mod k) times N (x div m)
   (y div k). The first component of a Fin (natMul x y) index is the
   low digit. matEntry M i j is a cell, and matEq M N compares all the
-  cells. A matrix with more than 2^24 rows, columns or cells is a trap
+  cells. A matrix with more than 2^25 rows, columns or cells is a trap
   (`EVAL_MATRIX_SIZE`). A cell that does not fit is a trap
   (`EVAL_OVERFLOW`). `domain/finstoch.lang` defines matId, matCopy,
   matDiscard, matBraiding, matLeftUnitor, matRightUnitor,
@@ -79,7 +79,7 @@ kit, or to the root of a generated language.
   (`test/check/auction-name.lang`, `test/check/auction-helper-name.lang`).
   The examples give a strategy or a prior as a lambda, for example
   `(fun (v : Fin 3) => halfShading 3 v)` (`examples/auction.lang`).
-  secondPriceSealedBid 46 has more than 2^24 cells, a trap
+  secondPriceSealedBid 54 has more than 2^25 cells, a trap
   (`EVAL_MATRIX_SIZE`, `test/emit/auction-size.lang`).
 - `domain/opengame.lang` holds the open games (slice A4). The family
   `OpenGame x s y r m` has the constructor makeGame and the fields

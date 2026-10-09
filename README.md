@@ -54,8 +54,8 @@ The output is:
 - `test/`: the test tables and the gate, `test/gate.sh`.
 - `formers/FORMERS.md` and `formers/tcc-json.md`: the type formers and their
   status on this host.
-- `design/DESIGN.md` and `probe/CAPABILITY.md`: templates. They are not
-  filled yet (`SPEC.md` open items O2 and O3).
+- `probe/CAPABILITY.md`: the host probe answers for this language.
+- `design/DESIGN.md`: the domain design, from auction-cat.
 
 ## Requirements
 
