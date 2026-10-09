@@ -2,8 +2,8 @@
 
 The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
-`SPEC.md`). M0 is done. The M1 plan needs the rulings on the open items O5
-to O8 of `SPEC.md`. M2 and M3 are not started.
+`SPEC.md`). M0 is done. M1 is in progress: `SPEC.md` section 9 records the
+rulings on O5 to O8, and slice B1 is done. M2 and M3 are not started.
 
 ## Implemented
 
@@ -26,8 +26,9 @@ to O8 of `SPEC.md`. M2 and M3 are not started.
 ## Remaining M0 work
 
 No M0 work remains. `SPEC.md` section 9 records the rulings on O1 to O4,
-and each one is done. The M1 plan is in `SPEC.md` section 9 (the open
-items O5 to O8) and section 10 (the slices B1 to B5).
+and each one is done. The M1 plan is in `SPEC.md` section 9 (the rulings
+on O5 to O8) and section 10 (the slices B1 to B5). B1 is done. B2 to B5
+remain.
 
 ## Known limits
 

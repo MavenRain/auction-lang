@@ -1,19 +1,20 @@
 # Validation
 
-Date: 2026-10-08. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
+Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` at 50ac45c with the slice A6 docs. A6 changes no source file.
+`build/langc` from the sources of ed8da0a, the last commit that changes
+`src/`. Slice B1 changes no source file.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 460 tests with zero failures: 20 examples, 10 parse refusals, 86 check
-refusals, 309 eval lines, 20 JSON builds and 15 build refusals. The gate
+runs 482 tests with zero failures: 20 examples, 10 parse refusals, 86 check
+refusals, 331 eval lines, 20 JSON builds and 15 build refusals. The gate
 also checks a nesting of 1100 parentheses, the usage exit code 2, the `-o`
 file, a `Fin` argument out of range, the absence of em-dashes and en-dashes
 in the kit, and Node `JSON.parse` of each golden. A timed run
-(`/usr/bin/time -l make check`) took 90.15 seconds real and 51.39 seconds
-user. Its maximum resident set size was 255,492,096 bytes (243.7 MiB).
+(`/usr/bin/time -l make check`) took 33.18 seconds real and 26.50 seconds
+user. Its maximum resident set size was 258,097,152 bytes (246.1 MiB).
 Other jobs loaded the machine during this run.
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
@@ -48,3 +49,9 @@ revenue and dominance results. A5 adds no refusal.
 
 Slice A6 adds no test. It fills `SPEC.md`, `docs/STATUS.md`, this file and
 `README.md`.
+
+Slice B1 adds no test file. It adds 22 definitions to 4 examples and 22
+eval lines: 12 for `examples/utility.lang`, 2 for `examples/revenue.lang`,
+2 for `examples/auction.lang` and 6 for `examples/opengame.lang`. They use
+the 22 domain definitions that no example or test used before B1. The JSON
+goldens of these 4 examples get the new instances.

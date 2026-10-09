@@ -1,6 +1,6 @@
 # auction-lang specification
 
-Status: milestone M0 is done, 2026-10-09. M1 is planned (section 10).
+Status: milestone M0 is done, 2026-10-09. M1 is in progress (section 10).
 
 ## 1. Purpose
 
@@ -231,7 +231,8 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   no example or test uses; B2 the FinStoch laws at fixed sizes; B3 the
   auction-cat results of O6; B4 `auctionGame3` at n = 3 (O7). (b) B1 and
   B2 only; B3 moves to M2 and B4 moves to M3. (c) No slices: M0 gives the
-  operations, so M1 closes now. Proposal: (a). Not ruled.
+  operations, so M1 closes now. Proposal: (a). RULED 2026-10-09 (USER):
+  "a (B1 to B4)". M1 has the slices B1 to B4, and B5 closes M1.
 - O6. The auction-cat results that M0 does not compute. These are the
   dominant-strategy truthfulness results
   (`AuctionCat/SecondPrice.lean:149`, `AuctionCat/ReserveTruth.lean:53`,
@@ -248,21 +249,25 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   Options: (a) check the remaining results at fixed sizes and add rows for
   all these results to `design/DESIGN.md` section 7; (b) check the
   remaining results, and list them in `docs/VALIDATION.md` only;
-  (c) do not check them in M1. Proposal: (a). Not ruled.
+  (c) do not check them in M1. Proposal: (a). RULED 2026-10-09 (USER):
+  "a (check them at fixed sizes and add DESIGN.md section 7 rows)". Slice
+  B3 does this.
 - O7. `auctionGame3` at n = 3. It exceeds the matrix limit of O4
   (`test/emit/opengame-size.lang`), and its score kernels run at n = 2.
   Options: (a) a factored construction: build each 3-bidder kernel as the
   `matOfFn` of a function, so that no intermediate matrix has more than
   1 << 25 cells; (b) keep the limit, and move this item to M3; (c) a larger
   arena (O4: not free). Proposal: (a) if a size count shows that it fits,
-  else (b). Not ruled.
+  else (b). RULED 2026-10-09 (USER): "a if the size count fits, else b".
+  Slice B4 makes the size count first.
 - O8. The place of the new checks. Options: (a) new example files, for
   example `examples/finstoch-laws.lang` and `examples/truthful.lang`
   (`examples/laws.lang` exists already). Each new file adds 1 example and
   1 JSON build to the gate. (b) Add them to `examples/matrix.lang`,
   `examples/dominance.lang` and the other existing files. The example and
   JSON build counts stay at 20. Proposal: (b) for B1, (a) for B2 and B3.
-  Not ruled.
+  RULED 2026-10-09 (USER): "b for B1, a for B2 and B3". The B1 checks go
+  into the existing example files.
 
 ## 10. Milestones
 
@@ -289,16 +294,17 @@ M0 has these slices:
 M0 is done (2026-10-09). The slices A1 to A6 and the post-A6 commit give
 it, and O1 to O4 are ruled.
 
-M1 has these planned slices. They wait for the rulings on O5 to O8
-(section 9).
+M1 has these planned slices. The rulings on O5 to O8 are in section 9
+(2026-10-09).
 
 | Slice | Content |
 |---|---|
-| B1 | Tests for the 22 domain definitions that no example or test uses |
+| B1 | Done 2026-10-09: 22 eval lines for the 22 domain definitions that no example or test used |
 | B2 | The FinStoch laws at fixed sizes, with `matEq` |
 | B3 | The auction-cat results of O6 at fixed sizes |
 | B4 | `auctionGame3` at n = 3 (O7) |
 | B5 | Close M1: `SPEC.md`, `docs/STATUS.md`, `docs/VALIDATION.md` and the gate |
 
 Status 2026-10-09: the core operations of M1 exist since M0 (section 6).
-M1 is planned and not started. M2 and M3 are not started.
+M1 is in progress: B1 is done, and B2 to B5 remain. M2 and M3 are not
+started.

@@ -23,3 +23,17 @@ def fpsbBelow2 : Flag := ratLt fpsbZero2 vickHalf2
 def vickSymmetric3 : Flag := ratEq (vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)) (vickreyBidder2ExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
 def threeFpsbBidder2Zero3 : Rat := fpsbBidder2ExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)
 def threeFpsbBidder3Zero3 : Rat := fpsbBidder3ExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)
+-- Slice B1: the reserve and 3-bidder utilities that no other test uses (n = 3, value 2, halfShading 3 2 = 1).
+-- Each value comes from the definition by hand: the winner pays its bid (first price) or the highest other bid (Vickrey).
+def spsbB1Shade3 : Fin 3 := spsbBidder1Utility 3 (fun (v : Fin 3) => halfShading 3 v) 2 0
+def fpsbResTie3 : Fin 3 := fpsbReserveUtility 3 0 2 0 0
+def fpsbResB2Win3 : Fin 3 := fpsbReserveBidder2Util 3 1 2 0 1
+def spsb3B1Shade3 : Fin 3 := spsbBidder1Utility3 3 (fun (v : Fin 3) => halfShading 3 v) 2 0 1
+def fpsb3ResLose3 : Fin 3 := fpsbReserveUtility3 3 2 2 1 0 0
+def fpsb3ResB2Win3 : Fin 3 := fpsbReserveBidder2Util3 3 1 2 0 1 1
+def fpsb3ResB3Win3 : Fin 3 := fpsbReserveBidder3Util3 3 0 2 0 0 1
+def fpsbResExp3 : Rat := fpsbReserveExpectedUtility 3 1 (fun (v : Fin 3) => halfShading 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)
+def fpsb3ResExp3 : Rat := fpsbReserveExpectedUtility3 3 1 (fun (v : Fin 3) => halfShading 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)
+def fpsbResB2Exp3 : Rat := fpsbReserveBidder2ExpectedUtility 3 1 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => halfShading 3 v) 2 (fun (v : Fin 3) => 1/3)
+def fpsb3ResB2Exp3 : Rat := fpsbReserveBidder2ExpectedUtility3 3 1 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => halfShading 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)
+def fpsb3ResB3Exp3 : Rat := fpsbReserveBidder3ExpectedUtility3 3 1 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => halfShading 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)

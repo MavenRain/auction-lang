@@ -41,3 +41,7 @@ def fpsbResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (fpsbResAt r) (f
 def spsb3ResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (spsb3ResAt r) (spsb3ResAt 1))
 def fpsb3ResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (fpsb3ResAt r) (fpsb3ResAt 1))
 def optimalMain : Flag := flagAnd spsbResOptimal (flagAnd fpsbResOptimal (flagAnd spsb3ResOptimal fpsb3ResOptimal))
+-- Slice B1: the Vickrey payment (Envelope.lean:61) and revenue_equivalence (Envelope.lean:391) on Fin 3.
+-- Uniform prior, value 2: the payment is (0 + 1 + 2) / 3 = 1. The prior 1/6, 2/6, 3/6: the payment equals the payment from the allocation at each value.
+def vickPay3 : Rat := vickreyExpectedPayment 3 (fun (v : Fin 3) => 1/3) 2
+def payFromAlloc3 : Flag := allFin 3 (fun (v1 : Fin 3) => ratEq (vickreyExpectedPayment 3 (fun (v : Fin 3) => ratMul (ratOfNat (natAdd (finVal v) 1)) 1/6) v1) (paymentFromAllocation 3 (fun (t : Fin 3) => vickreyAllocation 3 (fun (v : Fin 3) => ratMul (ratOfNat (natAdd (finVal v) 1)) 1/6) t) v1))

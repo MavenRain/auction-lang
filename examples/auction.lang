@@ -33,3 +33,6 @@ def vickreyTruthful3 : Rat := vickreyExpectedUtility 3 (fun (v : Fin 3) => truth
 -- The envelope identity: the equilibrium utility equals the integral of the allocation.
 def envelope4 : Flag := ratEq (vickreyEqUtility 4 (fun (v : Fin 4) => 1/4) 3) (vickreyEnvelopeIntegral 4 (fun (v : Fin 4) => 1/4) 3)
 def envelope5 : Flag := ratEq (vickreyEqUtility 5 (fun (v : Fin 5) => 1/5) 4) (vickreyEnvelopeIntegral 5 (fun (v : Fin 5) => 1/5) 4)
+-- Slice B1: dutch3_eq_firstPrice3 (Dutch3.lean:38) and english3_eq_secondPrice3 (English3.lean:39) at n = 3.
+def dutch3Eq3 : Flag := matEq (dutchAuction3 3) (firstPriceSealedBid3 3)
+def english3Eq3 : Flag := matEq (englishAuction3 3) (secondPriceSealedBid3 3)
