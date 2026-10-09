@@ -142,24 +142,47 @@ status=0
 build/langc build examples/formers.lang -x 2>/dev/null >/dev/null || status=$?
 [ "$status" -eq 2 ] || { echo "FAIL build usage: want exit 2, got $status"; fail=$((fail + 1)); }
 
-# The reader: each JSON golden reads and writes back with no change.
+# The reader: with --json, each JSON golden reads and writes back with no change.
 trips=0
 for doc in test/json/*.json; do
-  if build/langc read "$doc" > "$tmp/read.json" 2>"$tmp/err" && cmp -s "$tmp/read.json" "$doc"; then
+  if build/langc read --json "$doc" > "$tmp/read.json" 2>"$tmp/err" && cmp -s "$tmp/read.json" "$doc"; then
     trips=$((trips + 1))
   else
     echo "FAIL read $doc: the document does not read back"; fail=$((fail + 1))
   fi
 done
 echo "round trips: $trips checked"
+# The typed read: one line `name : type = value` for each instance of each
+# golden, and the value equals the value of `langc eval` for the example.
+reads=0
+for doc in test/json/*.json; do
+  name=$(basename "$doc" .json)
+  status=0
+  build/langc read "$doc" > "$tmp/typed.txt" 2>"$tmp/err" || status=$?
+  [ "$status" -eq 0 ] || { echo "FAIL read $doc: exit $status: $(head -n 1 "$tmp/err")"; fail=$((fail + 1)); }
+  want=$(awk '{ n += gsub(/\{"name":"/, "") } END { print n + 0 }' "$doc")
+  got=$(wc -l < "$tmp/typed.txt" | tr -d ' ')
+  [ "$got" -eq "$want" ] || { echo "FAIL read $doc: $got lines for $want instances"; fail=$((fail + 1)); }
+  while IFS= read -r line; do
+    inst=${line%% : *}
+    value=${line##* = }
+    expected=$(build/langc eval "examples/$name.lang" "$inst" 2>/dev/null)
+    if [ "$value" = "$expected" ]; then
+      reads=$((reads + 1))
+    else
+      echo "FAIL read $doc $inst: read $value, eval $expected"; fail=$((fail + 1))
+    fi
+  done < "$tmp/typed.txt"
+done
+echo "reads: $reads checked"
 # White space and escapes read to the format of the writer.
-build/langc read test/read/spaces.json 2>/dev/null | cmp -s - test/json/formers.json \
+build/langc read --json test/read/spaces.json 2>/dev/null | cmp -s - test/json/formers.json \
   || { echo "FAIL read: test/read/spaces.json does not read to test/json/formers.json"; fail=$((fail + 1)); }
-build/langc read test/read/escapes.json 2>/dev/null | cmp -s - test/read/escapes.out \
+build/langc read --json test/read/escapes.json 2>/dev/null | cmp -s - test/read/escapes.out \
   || { echo "FAIL read: test/read/escapes.json does not read to test/read/escapes.out"; fail=$((fail + 1)); }
 printf '{"auction-lang":1,"instances":[{"n\134u0061me":"q","type":"Nat","value":["a\134"b","c\134\134d","\134u0041"]}]}\n' > "$tmp/quotes.json"
 printf '{"auction-lang":1,"instances":[{"name":"q","type":"Nat","value":["a\134u0022b","c\134u005cd","A"]}]}\n' > "$tmp/quotes.out"
-build/langc read "$tmp/quotes.json" 2>/dev/null | cmp -s - "$tmp/quotes.out" \
+build/langc read --json "$tmp/quotes.json" 2>/dev/null | cmp -s - "$tmp/quotes.out" \
   || { echo "FAIL read: the quote and backslash escapes"; fail=$((fail + 1)); }
 printf '{"auction-lang":1,"instances":[{"name":"caf\134u00e9","type":"Nat","value":1}]}\n' > "$tmp/high.json"
 # Nesting: the reader permits 2008 levels (the writer writes at most 2005).
@@ -168,13 +191,13 @@ deep() {
     printf "{\"auction-lang\":1,\"instances\":[{\"name\":\"deep\",\"type\":\"Nat\",\"value\":%s%s}]}\n", s, e }'
 }
 deep 2005 > "$tmp/deep-ok.json"
-build/langc read "$tmp/deep-ok.json" 2>/dev/null | cmp -s - "$tmp/deep-ok.json" \
+build/langc read --json "$tmp/deep-ok.json" 2>/dev/null | cmp -s - "$tmp/deep-ok.json" \
   || { echo "FAIL read: 2008 levels do not read back"; fail=$((fail + 1)); }
 deep 2006 > "$tmp/deep.json"
 # Size: a document of 16 MiB reads, and 1 byte more is refused.
 awk 'BEGIN { s = " "; for (i = 0; i < 20; i++) s = s s; h = "{\"auction-lang\":1,\"instances\":[]}"
   printf "%s", h; for (i = 0; i < 15; i++) printf "%s", s; printf "%s", substr(s, 1 + length(h)) }' > "$tmp/big-ok.json"
-build/langc read "$tmp/big-ok.json" 2>/dev/null | cmp -s - test/json/entries.json \
+build/langc read --json "$tmp/big-ok.json" 2>/dev/null | cmp -s - test/json/entries.json \
   || { echo "FAIL read: a document of 16 MiB does not read"; fail=$((fail + 1)); }
 cp "$tmp/big-ok.json" "$tmp/big.json"
 printf ' ' >> "$tmp/big.json"
@@ -191,6 +214,7 @@ while read -r file code; do
   esac
 done < test/read/expect.txt
 echo "read refusals: $checked checked"
+build/read-typed-test || fail=$((fail + 1))
 
 rm -rf "$tmp"
 

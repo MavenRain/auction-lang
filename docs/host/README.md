@@ -27,7 +27,7 @@ No network access or package installation is needed.
 | `langc check PROG` | Checks the program. Prints `ok`. |
 | `langc eval PROG NAME [ARGS...]` | Applies the definition `NAME` to the literal arguments and prints the normal form. An overflow or a division by zero prints `trap`. |
 | `langc build PROG [-o OUT]` | Checks the program, evaluates each instance and writes one JSON document to stdout, or to `OUT` |
-| `langc read DOC` | Reads a JSON document of `langc build` (format version 1) and writes it again to stdout, in the format of `langc build` |
+| `langc read [--json] DOC` | Reads a JSON document of `langc build` (format version 1). It parses and checks the `type` of each instance, decodes the `value` against that type, and prints one line `name : type = value` for each instance. The value prints as in `langc eval`. With `--json`, it does not check the types, and it writes the document again to stdout, in the format of `langc build` |
 
 Exit 0 is success. Exit 1 is a refused program. Exit 2 is a usage or IO
 error. A refusal writes one line to stderr: `langc: CODE: NAME: message`.
@@ -101,9 +101,15 @@ for each refusal.
 | `READ_DEPTH` | The document nests more than 2008 arrays and objects |
 | `READ_VERSION` | The first member is not `"auction-lang":1` (format version 1) |
 | `READ_SHAPE` | The second and last member is not `"instances"`, an array of objects with the members `name`, `type` and `value` in this order |
+| `READ_NAME` | Two instances have the same name, or a name contains an ASCII control byte |
+| `READ_TYPE` | A `type` text is not exactly one type that checks after the domain, or it is a function type, a universe or an equality |
+| `READ_VALUE` | A `value` does not match its type (the table above). For example: a Nat above 2^64-1, a `Fin n` value that is not below n, a Rat that is not in lowest terms, a Matrix with a wrong number of rows, a Matrix row that does not sum to 1, or `null` for an `Eq` type whose two sides are not equal |
 
-`test/read` holds a document for each refusal, and `test/gate.sh` makes
-the large documents. The reader does not check a value against its type.
+Typed reads check each type against the domain in isolation and infer its
+universe. With `--json`, only the first 5 codes apply. `test/read` holds a
+document for each refusal, and `test/gate.sh` makes the large documents.
+`test/read-typed.c` checks built documents with higher-universe types and
+wide matrix sums, plus type isolation and name controls, in `make check`.
 
 `langc check` refuses Fin n terms, Rat literals and names outside the allow-list with
 these codes:

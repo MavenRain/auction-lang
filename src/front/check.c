@@ -1852,6 +1852,23 @@ int check_program(Arena *arena, const DeclList *decls, Machine *m, Diag *diag) {
   return 1;
 }
 
+int check_closed_type(Machine *m, const Term *term, const Value **out) {
+  Checker c;
+  DeclList decls;
+  const Core *core;
+  uint64_t level = 0;
+  memset(&c, 0, sizeof c);
+  memset(&decls, 0, sizeof decls);
+  c.m = m;
+  c.decls = &decls;
+  c.self = NO_FAMILY;
+  *out = NULL;
+  core = check_type(&c, term, &level);
+  if (core != NULL)
+    *out = eval_core(m, NULL, core);
+  return *out != NULL;
+}
+
 int entry_of(Machine *m, const Value *type, Entry *out) {
   const Value *t = type;
   memset(out, 0, sizeof *out);

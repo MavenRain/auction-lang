@@ -1,10 +1,12 @@
-/* The JSON reader (slice C1). The tcc-json kit only (not shared with tcc-wasm).
+/* The JSON reader (slices C1 and C2). The tcc-json kit only (not shared with
+   tcc-wasm).
 
    `langc read DOC` reads a document of `langc build` (format version 1):
    {"LANG":1,"instances":[{"name","type","value"}]}. read_document parses it
-   into a tree in the arena, and read_write writes the tree again in the
-   format of src/json.c. Thus each document of the writer reads and writes
-   back with no change. This slice does not check a value against its type. */
+   into a tree in the arena. read_write writes the tree again in the format
+   of src/json.c (`langc read --json DOC`), so each document of the writer
+   reads and writes back with no change. read_typed checks each type and
+   decodes each value against its type (`langc read DOC`). */
 #ifndef LANG_READ_H
 #define LANG_READ_H
 
@@ -51,5 +53,13 @@ int read_document(Arena *arena, const char *text, size_t len, const JsonNode **d
 /* Writes DOC in the format of src/json.c, with a final newline. Returns 1
    and sets TEXT and LEN, or 0 after a diagnostic (OOM). */
 int read_write(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag);
+
+/* Checks each instance of DOC: the names are unique and have no control bytes
+   (READ_NAME), the type
+   parses and checks after the domain (READ_TYPE), and the value matches the
+   type (READ_VALUE). Writes one line `name : type = value` for each
+   instance, with the value as `langc eval` prints it. Returns 1 and sets
+   TEXT and LEN, or 0 after a diagnostic. */
+int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag);
 
 #endif

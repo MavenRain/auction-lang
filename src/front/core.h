@@ -248,6 +248,9 @@ typedef struct {
    NULL result, so a caller can test once at the end. */
 const Value *val_nat(Machine *m, uint64_t n);
 uint64_t gcd_u64(uint64_t a, uint64_t b);
+/* Checks an exact nonnegative row sum, without the scalar Rat range limit.
+   Returns 1 and sets STOCHASTIC, or 0 after a diagnostic. */
+int cell_row_stochastic(Machine *m, const Cell *cells, uint32_t count, int *stochastic);
 const Value *val_var(Machine *m, uint32_t level);
 const Value *val_univ(Machine *m, uint64_t level);
 const Value *val_op(Machine *m, ValKind kind, Op op, uint32_t inst, uint32_t field, const Value *const *args, uint32_t argc);

@@ -1,7 +1,8 @@
 # auction-lang specification
 
 Status: milestones M0 and M1 are done, 2026-10-09. M2 is in progress
-(sections 9 and 10): slice C1 adds the JSON reader.
+(sections 9 and 10): slice C1 adds the JSON reader, and slice C2 adds
+the typed read.
 
 ## 1. Purpose
 
@@ -376,8 +377,8 @@ the instances that it reads.
 
 | Slice | Commit | Content |
 |---|---|---|
-| C1 | This commit | The JSON reader: `langc read DOC` reads a document of format version 1 and writes it again. Each of the 22 JSON goldens reads and writes back with no change. New read refusals for syntax, depth, size, version and shape |
-| C2 | Not started | The typed read: the reader parses and checks each `type` field and decodes each `value` against its type (section 7). The read value of each instance of the 22 examples equals its value from `langc eval` |
+| C1 | a96d772 | The JSON reader: `langc read DOC` reads a document of format version 1 and writes it again. Each of the 22 JSON goldens reads and writes back with no change. New read refusals for syntax, depth, size, version and shape |
+| C2 | This commit | The typed read: the reader parses and checks each `type` field and decodes each `value` against its type (section 7). The read value of each instance of the 22 examples equals its value from `langc eval`. `langc read DOC` prints one line `name : type = value` for each instance, and `langc read --json DOC` keeps the output of C1. New read refusals for names, types and values |
 | C3 | Not started | The queries (O10 b): `langc eval PROG NAME --read DOC` and `langc build PROG --read DOC`. The instances of the document become definitions of the program, and a query is a definition of the program |
 | C4 | Not started | Close M2: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `docs/host/README.md`, `probe/CAPABILITY.md` and `README.md`. No test changes |
 

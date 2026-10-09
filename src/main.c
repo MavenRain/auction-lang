@@ -24,6 +24,7 @@ typedef struct {
   char **args;
   int arg_count;
   const char *out_path; /* NULL: stdout */
+  int json;             /* read --json: write the parsed tree (slice C1) */
 } Options;
 
 static const struct {
@@ -40,7 +41,7 @@ static int usage(FILE *err) {
   fputs("usage: langc check PROG\n"
         "       langc eval PROG NAME [ARGS...]\n"
         "       langc build PROG [-o OUT]\n"
-        "       langc read DOC\n", err);
+        "       langc read [--json] DOC\n", err);
   return 2;
 }
 
@@ -81,7 +82,12 @@ static int parse_options(int argc, char **argv, Options *opt, Diag *diag) {
     case CMD_BUILD:
       return parse_build_options(argc, argv, opt, diag);
     case CMD_READ:
-      return argc == 3 ? 1 : diag_fail(diag, "USAGE", NULL, "read takes one DOC");
+      if (argc == 4 && strcmp(argv[2], "--json") == 0) {
+        opt->json = 1;
+        opt->prog_path = argv[3];
+        return 1;
+      }
+      return argc == 3 ? 1 : diag_fail(diag, "USAGE", NULL, "read takes an optional --json and one DOC");
   }
   return 0;
 }
@@ -116,20 +122,24 @@ static int write_output(const char *path, const char *text, size_t len, Diag *di
   return count == len && closed == 0 ? 1 : diag_fail(diag, "IO", NULL, "cannot write %s", path == NULL ? "stdout" : path);
 }
 
-/* langc read DOC: the document is not a program. READ_SIZE is a refusal (exit 1). */
-static int run_read(const char *path, Arena *arena, Diag *diag) {
+/* langc read [--json] DOC: the document is not a program. READ_SIZE is a
+   refusal (exit 1). With --json, the parsed tree is written again (slice C1).
+   Otherwise each instance is checked and printed as `name : type = value`. */
+static int run_read(const char *path, int json, Arena *arena, Diag *diag) {
   char *text = NULL;
   size_t len = 0;
   if (!read_file(arena, path, READ_MAX_BYTES, &text, &len, diag)) return 2;
   const JsonNode *doc = NULL;
   const char *out = NULL;
   size_t out_len = 0;
-  if (!read_document(arena, text, len, &doc, diag) || !read_write(arena, doc, &out, &out_len, diag)) return 1;
+  if (!read_document(arena, text, len, &doc, diag)) return 1;
+  int ok = json ? read_write(arena, doc, &out, &out_len, diag) : read_typed(arena, doc, &out, &out_len, diag);
+  if (!ok) return 1;
   return write_output(NULL, out, out_len, diag) ? 0 : 2;
 }
 
 static int run(const Options *opt, Arena *arena, Diag *diag) {
-  if (opt->command == CMD_READ) return run_read(opt->prog_path, arena, diag);
+  if (opt->command == CMD_READ) return run_read(opt->prog_path, opt->json, arena, diag);
   char *text = NULL;
   size_t len = 0;
   if (!read_source(arena, opt->prog_path, &text, &len, diag)) return 2;

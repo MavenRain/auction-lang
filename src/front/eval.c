@@ -963,6 +963,163 @@ static int cell_add(Cell x, Cell y, int negate, Cell *out) {
   return cell_make(swap ? ny : nx, wide_div(t, d2, &r), wide_mul(b / d1, d / d2), out);
 }
 
+/* An unsigned accumulator permits stochastic partial sums above INT64_MAX.
+   Reduce wide intermediates before checking the stored 64-bit parts. */
+static int row_sum_add(uint64_t *num, uint64_t *den, Cell x) {
+  uint64_t g = gcd_u64(*den, x.den);
+  Wide p = wide_mul(*num, x.den / g);
+  Wide q = wide_mul((uint64_t)x.num, *den / g);
+  Wide t = wide_add(p, q);
+  Wide d;
+  uint64_t rem = 0;
+  uint64_t cancel;
+  if (wide_cmp(t, p) < 0)
+    return 0;
+  wide_div(t, g, &rem);
+  cancel = gcd_u64(rem, g);
+  t = wide_div(t, cancel, &rem);
+  d = wide_mul(*den / g, x.den / cancel);
+  if (t.hi != 0 || d.hi != 0)
+    return 0;
+  *num = t.lo;
+  *den = t.lo == 0 ? 1 : d.lo;
+  return 1;
+}
+
+/* Rare rows from matComp or matKron need a common denominator wider than
+   64 bits. Keep the numerator and the LCM in base 2^32. Each nonzero cell
+   adds at most two words; three extra words cover scratch products/carries. */
+typedef struct {
+  uint32_t *words;
+  size_t count;
+} RowInt;
+
+static void row_trim(RowInt *n) {
+  while (n->count != 0 && n->words[n->count - 1u] == 0)
+    n->count--;
+}
+
+static uint64_t row_div(const RowInt *n, uint64_t d, RowInt *out) {
+  uint64_t rem = 0;
+  size_t i = n->count;
+  while (i != 0) {
+    Wide part;
+    Wide q;
+    i--;
+    part.hi = rem >> 32;
+    part.lo = (rem << 32) | n->words[i];
+    q = wide_div(part, d, &rem);
+    if (out != NULL)
+      out->words[i] = (uint32_t)q.lo;
+  }
+  if (out != NULL) {
+    out->count = n->count;
+    row_trim(out);
+  }
+  return rem;
+}
+
+static void row_mul(RowInt *n, uint64_t factor) {
+  uint64_t carry = 0;
+  size_t i;
+  for (i = 0; i < n->count; i++) {
+    Wide p = wide_add(wide_mul(n->words[i], factor), wide(carry));
+    n->words[i] = (uint32_t)p.lo;
+    carry = (p.lo >> 32) | (p.hi << 32);
+  }
+  while (carry != 0) {
+    n->words[n->count++] = (uint32_t)carry;
+    carry >>= 32;
+  }
+  row_trim(n);
+}
+
+static void row_add(RowInt *n, const RowInt *x) {
+  size_t size = n->count > x->count ? n->count : x->count;
+  size_t i;
+  uint64_t carry = 0;
+  for (i = 0; i < size; i++) {
+    uint64_t sum = (uint64_t)(i < n->count ? n->words[i] : 0)
+      + (i < x->count ? x->words[i] : 0) + carry;
+    n->words[i] = (uint32_t)sum;
+    carry = sum >> 32;
+  }
+  n->count = size;
+  if (carry != 0)
+    n->words[n->count++] = (uint32_t)carry;
+}
+
+static int row_cmp(const RowInt *a, const RowInt *b) {
+  size_t i = a->count;
+  if (a->count != b->count)
+    return a->count > b->count ? 1 : -1;
+  while (i != 0) {
+    i--;
+    if (a->words[i] != b->words[i])
+      return a->words[i] > b->words[i] ? 1 : -1;
+  }
+  return 0;
+}
+
+static int row_stochastic_large(Machine *m, const Cell *cells, uint32_t count,
+                                uint32_t nonzero, int *stochastic) {
+  size_t capacity = 2u * (size_t)nonzero + 3u;
+  uint32_t *words = arena_alloc(m->arena, 3u * capacity * sizeof *words);
+  RowInt num;
+  RowInt den;
+  RowInt term;
+  uint32_t i;
+  if (words == NULL)
+    return diag_fail(m->diag, "OOM", m->def, "out of memory for a matrix row sum");
+  num.words = words;
+  num.count = 0;
+  den.words = words + capacity;
+  den.count = 1;
+  den.words[0] = 1;
+  term.words = words + 2u * capacity;
+  term.count = 0;
+  for (i = 0; i < count; i++) {
+    uint64_t g;
+    uint64_t factor;
+    if (cells[i].num == 0)
+      continue;
+    g = gcd_u64(row_div(&den, cells[i].den, NULL), cells[i].den);
+    factor = cells[i].den / g;
+    row_div(&den, g, &term);
+    row_mul(&term, (uint64_t)cells[i].num);
+    row_mul(&num, factor);
+    row_mul(&den, factor);
+    row_add(&num, &term);
+    if (row_cmp(&num, &den) > 0)
+      return 1;
+  }
+  *stochastic = row_cmp(&num, &den) == 0;
+  return 1;
+}
+
+int cell_row_stochastic(Machine *m, const Cell *cells, uint32_t count, int *stochastic) {
+  uint64_t num = 0;
+  uint64_t den = 1;
+  uint32_t i;
+  uint32_t nonzero = 0;
+  *stochastic = 0;
+  for (i = 0; i < count; i++) {
+    if (cells[i].num < 0 || cells[i].den == 0 || (uint64_t)cells[i].num > cells[i].den)
+      return 1;
+    nonzero += cells[i].num != 0;
+  }
+  for (i = 0; i < count; i++) {
+    if (cells[i].num == 0)
+      continue;
+    if (!row_sum_add(&num, &den, cells[i]))
+      return row_stochastic_large(m, cells, count, nonzero, stochastic);
+    if (num > den)
+      return 1;
+  }
+  *stochastic = num == 1 && den == 1;
+  return 1;
+}
+
 /* X * Y: (a / g1) (c / g2) over (b / g2) (d / g1), g1 = gcd(|a|, d) and
    g2 = gcd(|c|, b). */
 static int cell_mul(Cell x, Cell y, Cell *out) {
