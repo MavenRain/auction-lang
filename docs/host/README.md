@@ -27,6 +27,8 @@ No network access or package installation is needed.
 | `langc check PROG` | Checks the program. Prints `ok`. |
 | `langc eval PROG NAME [ARGS...]` | Applies the definition `NAME` to the literal arguments and prints the normal form. An overflow or a division by zero prints `trap`. |
 | `langc build PROG [-o OUT]` | Checks the program, evaluates each instance and writes one JSON document to stdout, or to `OUT` |
+| `langc eval PROG --read DOC NAME [ARGS...]` | Reads `DOC` as `langc read DOC` does, then checks the program and applies its definition `NAME`. Each instance of `DOC` is a definition of the program (see Queries). `--read DOC` comes right after `PROG` |
+| `langc build PROG --read DOC [-o OUT]` | Reads `DOC`, then builds the program. The output document holds the instances of the program only, not the instances of `DOC` |
 | `langc read [--json] DOC` | Reads a JSON document of `langc build` (format version 1). It parses and checks the `type` of each instance, decodes the `value` against that type, and prints one line `name : type = value` for each instance. The value prints as in `langc eval`. With `--json`, it does not check the types, and it writes the document again to stdout, in the format of `langc build` |
 
 Exit 0 is success. Exit 1 is a refused program. Exit 2 is a usage or IO
@@ -101,7 +103,7 @@ for each refusal.
 | `READ_DEPTH` | The document nests more than 2008 arrays and objects |
 | `READ_VERSION` | The first member is not `"auction-lang":1` (format version 1) |
 | `READ_SHAPE` | The second and last member is not `"instances"`, an array of objects with the members `name`, `type` and `value` in this order |
-| `READ_NAME` | Two instances have the same name, or a name contains an ASCII control byte |
+| `READ_NAME` | Two instances have the same name, or a name contains an ASCII control byte. With `--read` (queries), also a name that is not exactly one identifier, for example `a b` or the keyword `def` |
 | `READ_TYPE` | A `type` text is not exactly one type that checks after the domain, or it is a function type, a universe or an equality |
 | `READ_VALUE` | A `value` does not match its type (the table above). For example: a Nat above 2^64-1, a `Fin n` value that is not below n, a Rat that is not in lowest terms, a Matrix with a wrong number of rows, a Matrix row that does not sum to 1, or `null` for an `Eq` type whose two sides are not equal |
 
@@ -110,6 +112,15 @@ universe. With `--json`, only the first 5 codes apply. `test/read` holds a
 document for each refusal, and `test/gate.sh` makes the large documents.
 `test/read-typed.c` checks built documents with higher-universe types and
 wide matrix sums, plus type isolation and name controls, in `make check`.
+
+Queries: with `--read DOC`, `langc eval` and `langc build` read `DOC`
+first. Each instance of `DOC` becomes a definition of the program, with
+its read type and its read value, before the definitions of the program.
+A query is a definition of the program that uses these names. An
+instance name that is a core name, a domain definition or a name of the
+program is `REFUSE_NAME` (rule R4 in `SPEC.md`). With `--read DOC`,
+`langc build` writes the instances of the program only. `test/query` holds
+the query programs, the refusal documents and `expect.txt`.
 
 `langc check` refuses Fin n terms, Rat literals and names outside the allow-list with
 these codes:

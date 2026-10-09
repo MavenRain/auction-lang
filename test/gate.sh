@@ -214,6 +214,31 @@ while read -r file code; do
   esac
 done < test/read/expect.txt
 echo "read refusals: $checked checked"
+# Queries. A line is PROG DOC NAME [ARGS...] => OUTPUT, or
+# PROG DOC NAME => refuse CODE. PROG is a program of test/query.
+queries=0
+while read -r prog doc rest; do
+  name_args=${rest%% => *}
+  want=${rest#* => }
+  status=0
+  got=$(build/langc eval "test/query/$prog.lang" --read "$doc" $name_args 2>"$tmp/err") || status=$?
+  first=$(head -n 1 "$tmp/err")
+  case "$want" in
+  "refuse "*) want_status=1; want_got=""; want_err="langc: ${want#refuse }: " ;;
+  *) want_status=0; want_got=$want; want_err="" ;;
+  esac
+  case "$status|$got|$first" in
+  "$want_status|$want_got|$want_err"*) queries=$((queries + 1)) ;;
+  *) echo "FAIL query $prog $name_args: want $want, got exit $status: $got $first"; fail=$((fail + 1)) ;;
+  esac
+done < test/query/expect.txt
+echo "queries: $queries checked"
+build/langc build test/query/matrix.lang --read test/json/matrix.json -o "$tmp/q.json" 2>/dev/null \
+  && [ "$(build/langc read "$tmp/q.json" | wc -l | tr -d ' ')" = 4 ] \
+  || { echo "FAIL build --read: the document does not hold the 4 program instances only"; fail=$((fail + 1)); }
+status=0
+build/langc eval test/query/plain.lang --read >/dev/null 2>&1 || status=$?
+[ "$status" -eq 2 ] || { echo "FAIL eval --read with no document: want exit 2, got $status"; fail=$((fail + 1)); }
 build/read-typed-test || fail=$((fail + 1))
 
 rm -rf "$tmp"

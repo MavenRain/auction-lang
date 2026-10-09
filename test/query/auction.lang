@@ -1,0 +1,4 @@
+-- Queries over test/json/auction.json. english3Eq3 is the last instance of
+-- the document.
+def firstGap : Rat := ratSub first3 second3
+def lastEq : Flag := english3Eq3

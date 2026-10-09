@@ -18,6 +18,17 @@ typedef struct {
 /* Checks the domain declarations, then the program, into M. Returns 1, or 0
    after a diagnostic. */
 int check_program(Arena *arena, const DeclList *decls, Machine *m, Diag *diag);
+/* An instance of a read document: its name, its checked type and its decoded
+   value (slice C3). */
+typedef struct {
+  const char *name;
+  const Value *type;
+  const Value *value;
+} ReadDef;
+/* As check_program, with the COUNT READS bound as definitions after the domain
+   and before the program. A read name that is a core or domain name, or the
+   name of a program declaration, is REFUSE_NAME (rule R4). */
+int check_program_reads(Arena *arena, const DeclList *decls, const ReadDef *reads, size_t count, Machine *m, Diag *diag);
 /* Checks and evaluates one closed type against the declarations already in M.
    Infers its universe without adding a definition to M. */
 int check_closed_type(Machine *m, const Term *term, const Value **out);

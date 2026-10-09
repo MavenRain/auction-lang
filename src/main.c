@@ -25,6 +25,7 @@ typedef struct {
   int arg_count;
   const char *out_path; /* NULL: stdout */
   int json;             /* read --json: write the parsed tree (slice C1) */
+  const char *read_path; /* eval or build --read DOC (slice C3); NULL: none */
 } Options;
 
 static const struct {
@@ -39,8 +40,8 @@ static const struct {
 
 static int usage(FILE *err) {
   fputs("usage: langc check PROG\n"
-        "       langc eval PROG NAME [ARGS...]\n"
-        "       langc build PROG [-o OUT]\n"
+        "       langc eval PROG [--read DOC] NAME [ARGS...]\n"
+        "       langc build PROG [--read DOC] [-o OUT]\n"
         "       langc read [--json] DOC\n", err);
   return 2;
 }
@@ -55,13 +56,24 @@ static int find_command(const char *word, Command *out) {
   return 0;
 }
 
-static int parse_build_options(int argc, char **argv, Options *opt, Diag *diag) {
-  if (argc == 3) return 1;
-  if (argc == 5 && strcmp(argv[3], "-o") == 0) {
-    opt->out_path = argv[4];
+/* AT is the index of the first word after PROG and its --read DOC. */
+static int parse_build_options(int argc, char **argv, int at, Options *opt, Diag *diag) {
+  if (argc == at) return 1;
+  if (argc == at + 2 && strcmp(argv[at], "-o") == 0) {
+    opt->out_path = argv[at + 1];
     return 1;
   }
-  return diag_fail(diag, "USAGE", NULL, "build takes PROG and an optional -o OUT");
+  return diag_fail(diag, "USAGE", NULL, "build takes PROG, an optional --read DOC and an optional -o OUT");
+}
+
+/* `--read DOC` is valid only as the 2 words right after PROG, so the ARGS of
+   eval keep every later word. Returns the index of the next word. */
+static int parse_read_option(int argc, char **argv, Options *opt) {
+  if (argc >= 5 && strcmp(argv[3], "--read") == 0) {
+    opt->read_path = argv[4];
+    return 5;
+  }
+  return 3;
 }
 
 static int parse_options(int argc, char **argv, Options *opt, Diag *diag) {
@@ -73,14 +85,16 @@ static int parse_options(int argc, char **argv, Options *opt, Diag *diag) {
   switch (opt->command) {
     case CMD_CHECK:
       return argc == 3 ? 1 : diag_fail(diag, "USAGE", NULL, "too many arguments");
-    case CMD_EVAL:
-      if (argc < 4) return diag_fail(diag, "USAGE", NULL, "eval needs a definition name");
-      opt->entry = argv[3];
-      opt->args = argv + 4;
-      opt->arg_count = argc - 4;
+    case CMD_EVAL: {
+      int at = parse_read_option(argc, argv, opt);
+      if (argc <= at || strcmp(argv[at], "--read") == 0) return diag_fail(diag, "USAGE", NULL, "eval needs a definition name");
+      opt->entry = argv[at];
+      opt->args = argv + at + 1;
+      opt->arg_count = argc - at - 1;
       return 1;
+    }
     case CMD_BUILD:
-      return parse_build_options(argc, argv, opt, diag);
+      return parse_build_options(argc, argv, parse_read_option(argc, argv, opt), opt, diag);
     case CMD_READ:
       if (argc == 4 && strcmp(argv[2], "--json") == 0) {
         opt->json = 1;
@@ -138,15 +152,30 @@ static int run_read(const char *path, int json, Arena *arena, Diag *diag) {
   return write_output(NULL, out, out_len, diag) ? 0 : 2;
 }
 
+/* --read DOC: decodes each instance of DOC against the domain (in DOMAIN), for
+   check_program_reads. Returns the exit status: 0, 1 (refused) or 2 (IO). */
+static int load_reads(const char *path, Arena *arena, Machine *domain, const ReadDef **reads, size_t *count, Diag *diag) {
+  char *text = NULL;
+  size_t len = 0;
+  const JsonNode *doc = NULL;
+  if (!read_file(arena, path, READ_MAX_BYTES, &text, &len, diag)) return 2;
+  return read_document(arena, text, len, &doc, diag) && read_defs(arena, doc, domain, reads, count, diag) ? 0 : 1;
+}
+
 static int run(const Options *opt, Arena *arena, Diag *diag) {
   if (opt->command == CMD_READ) return run_read(opt->prog_path, opt->json, arena, diag);
   char *text = NULL;
   size_t len = 0;
   if (!read_source(arena, opt->prog_path, &text, &len, diag)) return 2;
+  Machine domain;
+  const ReadDef *reads = NULL;
+  size_t read_count = 0;
+  int status = opt->read_path == NULL ? 0 : load_reads(opt->read_path, arena, &domain, &reads, &read_count, diag);
+  if (status != 0) return status;
   DeclList decls;
   if (!front_load(arena, opt->prog_path, text, len, &decls, diag)) return 1;
   Machine machine;
-  if (!check_program(arena, &decls, &machine, diag)) return 1;
+  if (!check_program_reads(arena, &decls, reads, read_count, &machine, diag)) return 1;
   switch (opt->command) {
     case CMD_CHECK:
       puts("ok");

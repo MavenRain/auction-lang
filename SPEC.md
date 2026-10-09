@@ -1,8 +1,8 @@
 # auction-lang specification
 
 Status: milestones M0 and M1 are done, 2026-10-09. M2 is in progress
-(sections 9 and 10): slice C1 adds the JSON reader, and slice C2 adds
-the typed read.
+(sections 9 and 10): slice C1 adds the JSON reader, slice C2 adds the
+typed read, and slice C3 adds the queries.
 
 ## 1. Purpose
 
@@ -378,8 +378,8 @@ the instances that it reads.
 | Slice | Commit | Content |
 |---|---|---|
 | C1 | a96d772 | The JSON reader: `langc read DOC` reads a document of format version 1 and writes it again. Each of the 22 JSON goldens reads and writes back with no change. New read refusals for syntax, depth, size, version and shape |
-| C2 | This commit | The typed read: the reader parses and checks each `type` field and decodes each `value` against its type (section 7). The read value of each instance of the 22 examples equals its value from `langc eval`. `langc read DOC` prints one line `name : type = value` for each instance, and `langc read --json DOC` keeps the output of C1. New read refusals for names, types and values |
-| C3 | Not started | The queries (O10 b): `langc eval PROG NAME --read DOC` and `langc build PROG --read DOC`. The instances of the document become definitions of the program, and a query is a definition of the program |
+| C2 | 3a1397a | The typed read: the reader parses and checks each `type` field and decodes each `value` against its type (section 7). The read value of each instance of the 22 examples equals its value from `langc eval`. `langc read DOC` prints one line `name : type = value` for each instance, and `langc read --json DOC` keeps the output of C1. New read refusals for names, types and values |
+| C3 | This commit | The queries (O10 b): `langc eval PROG --read DOC NAME [ARGS...]` and `langc build PROG --read DOC [-o OUT]`. The 2 words `--read DOC` come right after `PROG`. Each instance of the document becomes a definition of the program, with its read type and value, before the definitions of the program. A query is a definition of the program. With `--read`, each instance name must be one identifier, else `READ_NAME`. An instance name that is a core name, a domain name or a name of the program is `REFUSE_NAME`. `langc build` with `--read` writes the instances of the program only. The query tests are in `test/query/` |
 | C4 | Not started | Close M2: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `docs/host/README.md`, `probe/CAPABILITY.md` and `README.md`. No test changes |
 
 M3 is not started. With O12 (a), M3 also holds the two open choices of

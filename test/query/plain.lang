@@ -1,0 +1,3 @@
+-- A program with no use of a read document. The refusal documents of
+-- test/query read with this program.
+def one : Nat := 1

@@ -12,6 +12,7 @@
 
 #include <stddef.h>
 
+#include "front/check.h"
 #include "json.h"
 
 /* 16 MiB. The largest JSON golden is 5,587 bytes. */
@@ -61,5 +62,11 @@ int read_write(Arena *arena, const JsonNode *doc, const char **text, size_t *len
    instance, with the value as `langc eval` prints it. Returns 1 and sets
    TEXT and LEN, or 0 after a diagnostic. */
 int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag);
+
+/* The checks of read_typed, plus: each name is one identifier of the language
+   (READ_NAME), so a program can name the instance. Checks the domain into M
+   and sets READS to COUNT instances in document order, for
+   check_program_reads (slice C3). Returns 1, or 0 after a diagnostic. */
+int read_defs(Arena *arena, const JsonNode *doc, Machine *m, const ReadDef **reads, size_t *count, Diag *diag);
 
 #endif

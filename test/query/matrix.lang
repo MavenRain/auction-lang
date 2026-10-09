@@ -1,0 +1,7 @@
+-- Queries over test/json/matrix.json: langc eval PROG --read DOC NAME.
+-- Each instance of the document is a definition before this program.
+-- kronAssoc is the last instance of the document.
+def corner : Rat := matEntry skewTwice 0 1
+def back : Flag := matEq skewTwice (matComp 2 2 2 skew skew)
+def coinBack : Flag := matEq coinThenSkew (matComp 1 2 2 coin skew)
+def last : Flag := kronAssoc

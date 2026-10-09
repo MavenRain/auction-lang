@@ -737,28 +737,32 @@ static int parse_type(Arena *arena, const JsonNode *type, size_t index, const Te
   return 1;
 }
 
-int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag) {
+/* Returns 1 when NAME lexes as exactly one identifier token. */
+static int one_identifier(Arena *arena, const JsonNode *name) {
+  TokenList toks;
+  Diag scratch;
+  diag_init(&scratch);
+  return lex_source(arena, "name", name->text, name->len, &toks, &scratch) && toks.count == 2u
+         && toks.items[0].kind == TOK_IDENT && toks.items[0].len == name->len;
+}
+
+/* The checks of read_typed. With IDENT, each name must also be an identifier. */
+static int typed_defs(Arena *arena, const JsonNode *doc, int ident, Machine *machine, const ReadDef **reads, size_t *out_count,
+                      Diag *diag) {
   const JsonNode *list = doc->first->next;
   const JsonNode *inst;
   const JsonNode **names;
-  const char **lines;
-  char *type_buf;
-  char *value_buf;
-  char *buf;
+  ReadDef *defs;
   size_t count = 0;
-  size_t total = 0;
   size_t i;
   DeclList decls;
-  Machine machine;
   Diag check;
   Typed t;
   for (inst = list->first; inst != NULL; inst = inst->next)
     count++;
   names = arena_alloc(arena, (count + 1u) * sizeof *names);
-  lines = arena_alloc(arena, (count + 1u) * sizeof *lines);
-  type_buf = arena_alloc(arena, READ_PRINT_MAX);
-  value_buf = arena_alloc(arena, READ_PRINT_MAX);
-  if (names == NULL || lines == NULL || type_buf == NULL || value_buf == NULL)
+  defs = arena_alloc(arena, (count + 1u) * sizeof *defs);
+  if (names == NULL || defs == NULL)
     return oom(diag);
   for (inst = list->first, i = 0; inst != NULL; inst = inst->next, i++) {
     size_t j;
@@ -766,43 +770,78 @@ int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len
     for (j = 0; j < names[i]->len; j++)
       if ((unsigned char)names[i]->text[j] < 0x20 || names[i]->text[j] == 0x7f)
         return diag_fail(diag, "READ_NAME", NULL, "instance %zu has a control byte in its name", i + 1u);
+    if (ident && !one_identifier(arena, names[i]))
+      return diag_fail(diag, "READ_NAME", NULL, "the name \"%.*s\" of instance %zu is not one identifier", (int)names[i]->len,
+                       names[i]->text, i + 1u);
   }
   qsort(names, count, sizeof *names, name_order);
   for (i = 1; i < count; i++)
     if (name_order(&names[i - 1u], &names[i]) == 0)
       return diag_fail(diag, "READ_NAME", NULL, "2 instances have the name \"%.*s\"", (int)names[i]->len, names[i]->text);
   diag_init(&check);
-  if (!front_load(arena, "type", "", 0, &decls, &check) || !check_program(arena, &decls, &machine, &check))
+  if (!front_load(arena, "type", "", 0, &decls, &check) || !check_program(arena, &decls, machine, &check))
     return diag_fail(diag, "INTERNAL", NULL, "the domain does not load: %s: %s", check.code, check.msg);
-  t.m = &machine;
+  t.m = machine;
   t.diag = diag;
   for (inst = list->first, i = 0; inst != NULL; inst = inst->next, i++) {
     const Term *term = NULL;
     const Value *type;
     const Value *value = NULL;
-    size_t n;
     t.name = arena_strndup(arena, inst->first->text, inst->first->len);
     if (t.name == NULL)
       return oom(diag);
-    machine.def = t.name;
+    machine->def = t.name;
     diag_init(&check);
-    machine.diag = &check;
-    if (!parse_type(arena, inst->first->next, i + 1u, &term, &check) || !check_closed_type(&machine, term, &type))
+    machine->diag = &check;
+    if (!parse_type(arena, inst->first->next, i + 1u, &term, &check) || !check_closed_type(machine, term, &type))
       return diag_fail(diag, strcmp(check.code, "OOM") == 0 ? "OOM" : "READ_TYPE", t.name,
                        "the type does not parse or check: %s: %s", check.code, check.msg);
-    machine.diag = diag;
+    machine->diag = diag;
     if (!instance_type(type))
       return diag_fail(diag, "READ_TYPE", t.name, "the type is a function type, a universe or an equality, not an instance");
     if (!decode(&t, type, inst->first->next->next, &value))
       return 0;
-    value_print(&machine, NULL, 0, type, type_buf, READ_PRINT_MAX);
-    if (!print_read_value(&machine, type, value, &value_buf))
+    defs[i].name = t.name;
+    defs[i].type = type;
+    defs[i].value = value;
+  }
+  machine->def = NULL;
+  *reads = defs;
+  *out_count = count;
+  return 1;
+}
+
+int read_defs(Arena *arena, const JsonNode *doc, Machine *m, const ReadDef **reads, size_t *count, Diag *diag) {
+  return typed_defs(arena, doc, 1, m, reads, count, diag);
+}
+
+int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag) {
+  const ReadDef *defs;
+  const char **lines;
+  char *type_buf;
+  char *value_buf;
+  char *buf;
+  size_t count = 0;
+  size_t total = 0;
+  size_t i;
+  Machine machine;
+  if (!typed_defs(arena, doc, 0, &machine, &defs, &count, diag))
+    return 0;
+  lines = arena_alloc(arena, (count + 1u) * sizeof *lines);
+  type_buf = arena_alloc(arena, READ_PRINT_MAX);
+  value_buf = arena_alloc(arena, READ_PRINT_MAX);
+  if (lines == NULL || type_buf == NULL || value_buf == NULL)
+    return oom(diag);
+  for (i = 0; i < count; i++) {
+    size_t n;
+    value_print(&machine, NULL, 0, defs[i].type, type_buf, READ_PRINT_MAX);
+    if (!print_read_value(&machine, defs[i].type, defs[i].value, &value_buf))
       return 0;
-    n = strlen(t.name) + strlen(type_buf) + strlen(value_buf) + 7u;
+    n = strlen(defs[i].name) + strlen(type_buf) + strlen(value_buf) + 7u;
     buf = arena_alloc(arena, n + 1u);
     if (buf == NULL)
       return oom(diag);
-    snprintf(buf, n + 1u, "%s : %s = %s\n", t.name, type_buf, value_buf);
+    snprintf(buf, n + 1u, "%s : %s = %s\n", defs[i].name, type_buf, value_buf);
     lines[i] = buf;
     total += n;
   }

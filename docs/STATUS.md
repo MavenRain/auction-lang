@@ -4,8 +4,9 @@ The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`), and the slices B1 to B4 add their tests. M0 and M1 are done.
 `SPEC.md` section 9 records the rulings on O1 to O12. M2 is in progress:
-slice C1 adds the JSON reader, and slice C2 checks each value against its
-type. M3 is not started.
+slice C1 adds the JSON reader, slice C2 checks each value against its
+type, and slice C3 adds the queries over the instances of a read
+document. M3 is not started.
 
 ## Implemented
 
@@ -23,7 +24,9 @@ type. M3 is not started.
 - 22 example programs in `examples/`.
 - The verbs `check`, `eval`, `build` and `read` of `build/langc`. `build`
   writes one JSON document. `read` reads that document and checks each
-  value against its type (`docs/host/README.md`).
+  value against its type. With `--read DOC`, `eval` and `build` make each
+  instance of the document a definition of the program
+  (`docs/host/README.md`).
 - The gate `make check` (`docs/VALIDATION.md`).
 
 ## Remaining work
@@ -33,9 +36,10 @@ to O12, and the rulings on O1 to O8 are done. `SPEC.md` section 10 lists
 the slices of M0 and M1, and the slices C1 to C4 of M2. The rulings on
 O9 to O12 (`SPEC.md` section 9) keep the plan of the proposals. M2 is
 queries and reads: a reader for the JSON document of `langc build`, and
-queries over the instances that it reads. The slices C1 and C2 are done.
-The queries (slice C3) are not done, thus no program uses the instances of
-that document now (`probe/CAPABILITY.md`). M3 (hardening) is not started. The ruling
+queries over the instances that it reads. The slices C1 to C3 are done,
+thus a program can use the instances of that document
+(`langc eval PROG --read DOC NAME`). Slice C4 closes M2 with docs only,
+`probe/CAPABILITY.md` too. M3 (hardening) is not started. The ruling
 on O12 moves two choices of slice B4 to M3: the kron of an identity and
 the mechanism in the 3-bidder scores, and the kernels that have eval lines
 at n = 2 only.

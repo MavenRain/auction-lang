@@ -1,0 +1,5 @@
+-- Queries over test/json/revenue.json. payFromAlloc3 is the last instance
+-- of the document.
+def gap : Rat := ratSub fpsbNoRes spsbNoRes
+def payBack : Flag := ratEq vickPay3 (vickreyExpectedPayment 3 (fun (v : Fin 3) => 1/3) 2)
+def lastPay : Flag := payFromAlloc3

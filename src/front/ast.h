@@ -53,7 +53,8 @@ typedef enum {
 /* A family is legal only in the domain file (rule R1). */
 typedef enum {
   ORIGIN_DOMAIN,
-  ORIGIN_PROGRAM
+  ORIGIN_PROGRAM,
+  ORIGIN_READ /* an instance of a document from `--read DOC` (slice C3) */
 } Origin;
 
 typedef struct {

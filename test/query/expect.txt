@@ -1,0 +1,14 @@
+matrix test/json/matrix.json corner => 4/9
+matrix test/json/matrix.json back => 1
+matrix test/json/matrix.json coinBack => 1
+matrix test/json/matrix.json last => 1
+revenue test/json/revenue.json gap => 1/2
+revenue test/json/revenue.json payBack => 1
+revenue test/json/revenue.json lastPay => 1
+auction test/json/auction.json firstGap => 8/9
+auction test/json/auction.json lastEq => 1
+clash test/json/matrix.json skew => refuse REFUSE_NAME
+plain test/query/core.json one => refuse REFUSE_NAME
+plain test/query/domain.json one => refuse REFUSE_NAME
+plain test/query/ident.json one => refuse READ_NAME
+plain test/query/keyword.json one => refuse READ_NAME

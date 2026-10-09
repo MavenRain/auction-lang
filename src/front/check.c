@@ -1705,7 +1705,15 @@ static const char *name_owner(const Checker *c, const char *name) {
   i = find_def(m, name);
   if (i == NO_DEF)
     return NULL;
-  return m->defs[i].origin == ORIGIN_DOMAIN ? "a domain definition" : "already defined";
+  switch (m->defs[i].origin) {
+  case ORIGIN_DOMAIN:
+    return "a domain definition";
+  case ORIGIN_READ:
+    return "an instance of the read document";
+  case ORIGIN_PROGRAM:
+    return "already defined";
+  }
+  return "already defined";
 }
 
 static int name_free(Checker *c, const char *name) {
@@ -1816,9 +1824,46 @@ static int check_decl(Checker *c, const Decl *d) {
   return d->kind == DECL_FAMILY ? check_family(c, d) : check_def(c, d);
 }
 
+static int check_decls(Checker *c, size_t from, size_t to) {
+  size_t i;
+  for (i = from; i < to; i++) {
+    c->decl_index = i;
+    c->scope = NULL;
+    c->env = NULL;
+    c->level = 0;
+    c->depth = 0;
+    c->self = NO_FAMILY;
+    c->m->def = c->decls->items[i].name;
+    if (!check_decl(c, &c->decls->items[i]))
+      return 0;
+  }
+  return 1;
+}
+
+/* The read value is already a value, so the definition has no body. */
+static int bind_read(Checker *c, const ReadDef *r) {
+  Machine *m = c->m;
+  DefInfo *info = &m->defs[m->def_count];
+  m->def = r->name;
+  if (!name_free(c, r->name))
+    return 0;
+  info->name = r->name;
+  info->origin = ORIGIN_READ;
+  info->body = NULL;
+  info->type = r->type;
+  info->value = r->value;
+  m->def_count++;
+  return 1;
+}
+
 int check_program(Arena *arena, const DeclList *decls, Machine *m, Diag *diag) {
+  return check_program_reads(arena, decls, NULL, 0, m, diag);
+}
+
+int check_program_reads(Arena *arena, const DeclList *decls, const ReadDef *reads, size_t count, Machine *m, Diag *diag) {
   Checker c;
   size_t ctors = 0;
+  size_t first = 0;
   size_t i;
   memset(m, 0, sizeof *m);
   m->arena = arena;
@@ -1826,28 +1871,28 @@ int check_program(Arena *arena, const DeclList *decls, Machine *m, Diag *diag) {
   m->fuel = EVAL_FUEL_STEPS;
   for (i = 0; i < decls->count; i++)
     ctors += decls->items[i].ctor_count;
-  m->defs = arena_alloc(arena, (decls->count + 1u) * sizeof *m->defs);
+  m->defs = arena_alloc(arena, (decls->count + count + 1u) * sizeof *m->defs);
   m->families = arena_alloc(arena, (decls->count + 1u) * sizeof *m->families);
   m->ctors = arena_alloc(arena, (ctors + 1u) * sizeof *m->ctors);
   if (m->defs == NULL || m->families == NULL || m->ctors == NULL)
     return diag_fail(diag, "OOM", NULL, "out of memory");
-  m->def_cap = (uint32_t)decls->count;
+  m->def_cap = (uint32_t)(decls->count + count);
   m->family_cap = (uint32_t)decls->count;
   m->ctor_cap = (uint32_t)ctors;
   memset(&c, 0, sizeof c);
   c.m = m;
   c.decls = decls;
-  for (i = 0; i < decls->count; i++) {
-    c.decl_index = i;
-    c.scope = NULL;
-    c.env = NULL;
-    c.level = 0;
-    c.depth = 0;
-    c.self = NO_FAMILY;
-    m->def = decls->items[i].name;
-    if (!check_decl(&c, &decls->items[i]))
+  /* front_load puts the domain declarations before the program. */
+  while (first < decls->count && decls->items[first].origin != ORIGIN_PROGRAM)
+    first++;
+  if (!check_decls(&c, 0, first))
+    return 0;
+  for (i = 0; i < count; i++) {
+    if (!bind_read(&c, &reads[i]))
       return 0;
   }
+  if (!check_decls(&c, first, decls->count))
+    return 0;
   m->def = NULL;
   return 1;
 }
