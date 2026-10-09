@@ -3,18 +3,18 @@
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of ed8da0a, the last commit that changes
-`src/`. Slice B1 changes no source file.
+`src/`. Slices B1 and B2 change no source file.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 482 tests with zero failures: 20 examples, 10 parse refusals, 86 check
-refusals, 331 eval lines, 20 JSON builds and 15 build refusals. The gate
+runs 499 tests with zero failures: 21 examples, 10 parse refusals, 86 check
+refusals, 346 eval lines, 21 JSON builds and 15 build refusals. The gate
 also checks a nesting of 1100 parentheses, the usage exit code 2, the `-o`
 file, a `Fin` argument out of range, the absence of em-dashes and en-dashes
 in the kit, and Node `JSON.parse` of each golden. A timed run
-(`/usr/bin/time -l make check`) took 33.18 seconds real and 26.50 seconds
-user. Its maximum resident set size was 258,097,152 bytes (246.1 MiB).
+(`/usr/bin/time -l make check`) took 29.85 seconds real and 26.07 seconds
+user. Its maximum resident set size was 365,248,512 bytes (348.3 MiB).
 Other jobs loaded the machine during this run.
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
@@ -55,3 +55,19 @@ eval lines: 12 for `examples/utility.lang`, 2 for `examples/revenue.lang`,
 2 for `examples/auction.lang` and 6 for `examples/opengame.lang`. They use
 the 22 domain definitions that no example or test used before B1. The JSON
 goldens of these 4 examples get the new instances.
+
+Slice B2 adds the example `examples/finstoch-laws.lang`, its JSON golden
+and 15 eval lines. Each of 12 definitions checks one FinStoch law of
+auction-cat (`MarkovCat/FinStoch.lean`) with `matEq` at a fixed size. The
+laws are: the left identity, the right identity and the associativity of
+`matComp`; the triangle (sizes 2 and 3); the pentagon (sizes 2, 2, 2 and 2,
+with 16 x 16 matrices); the hexagon (sizes 2, 3 and 4, with 24 x 24
+matrices); the braiding symmetry (sizes 3 and 4); the coassociativity, the 2
+counit laws and the cocommutativity of `matCopy` (size 3); and the
+interchange of `matComp` and `matKron`. Each law evaluates to 1. The 3 other
+definitions are the stochastic matrices for the laws that take morphisms
+(2 x 3, 3 x 2 and 2 x 2). These matrices are not identities.
+`examples/matrix.lang` checks some of these laws at other sizes. A pair
+index has the first component as the low digit. Thus each associator is an
+identity matrix, and the pentagon and the triangle check the reindex maps
+and `matKron`, but no permutation.

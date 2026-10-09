@@ -300,11 +300,11 @@ M1 has these planned slices. The rulings on O5 to O8 are in section 9
 | Slice | Content |
 |---|---|
 | B1 | Done 2026-10-09: 22 eval lines for the 22 domain definitions that no example or test used |
-| B2 | The FinStoch laws at fixed sizes, with `matEq` |
+| B2 | Done 2026-10-09: 15 eval lines in the new example `examples/finstoch-laws.lang`: 12 FinStoch laws at fixed sizes, with `matEq`, and 3 stochastic matrices for them |
 | B3 | The auction-cat results of O6 at fixed sizes |
 | B4 | `auctionGame3` at n = 3 (O7) |
 | B5 | Close M1: `SPEC.md`, `docs/STATUS.md`, `docs/VALIDATION.md` and the gate |
 
 Status 2026-10-09: the core operations of M1 exist since M0 (section 6).
-M1 is in progress: B1 is done, and B2 to B5 remain. M2 and M3 are not
+M1 is in progress: B1 and B2 are done, and B3 to B5 remain. M2 and M3 are not
 started.

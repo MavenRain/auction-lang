@@ -3,7 +3,7 @@
 The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`). M0 is done. M1 is in progress: `SPEC.md` section 9 records the
-rulings on O5 to O8, and slice B1 is done. M2 and M3 are not started.
+rulings on O5 to O8, and the slices B1 and B2 are done. M2 and M3 are not started.
 
 ## Implemented
 
@@ -18,7 +18,7 @@ rulings on O5 to O8, and slice B1 is done. M2 and M3 are not started.
   Bayes-Nash pipeline expectations.
 - `domain/domain.lang`: 5 definitions and 4 families. The sample domain of
   lang-template.
-- 20 example programs in `examples/`.
+- 21 example programs in `examples/`.
 - The verbs `check`, `eval` and `build` of `build/langc`. `build` writes one
   JSON document (`docs/host/README.md`).
 - The gate `make check` (`docs/VALIDATION.md`).
@@ -27,7 +27,7 @@ rulings on O5 to O8, and slice B1 is done. M2 and M3 are not started.
 
 No M0 work remains. `SPEC.md` section 9 records the rulings on O1 to O4,
 and each one is done. The M1 plan is in `SPEC.md` section 9 (the rulings
-on O5 to O8) and section 10 (the slices B1 to B5). B1 is done. B2 to B5
+on O5 to O8) and section 10 (the slices B1 to B5). B1 and B2 are done. B3 to B5
 remain.
 
 ## Known limits

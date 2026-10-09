@@ -50,7 +50,7 @@ The output is:
   the host kit.
 - `docs/host/CAPABILITY.md`: the host facts and limits, each with its test.
 - `domain/`: the domain files. Each name in them is a core name.
-- `examples/`: 20 example programs.
+- `examples/`: 21 example programs.
 - `test/`: the test tables and the gate, `test/gate.sh`.
 - `formers/FORMERS.md` and `formers/tcc-json.md`: the type formers and their
   status on this host.

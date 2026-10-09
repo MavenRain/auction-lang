@@ -1,0 +1,25 @@
+-- The FinStoch laws (auction-cat MarkovCat/FinStoch.lean) at fixed sizes.
+-- Each law is a Flag def with matEq. Each law def evaluates to 1.
+-- Lean: id_comp :665, comp_id :673, assoc :687, triangle_FinStoch :1382,
+-- pentagon_FinStoch :1354, hexagon_FinStoch :1533, braiding_symmetry :1442,
+-- copy_coassoc :1679, copy_counit_left :1648, copy_counit_right :1664,
+-- copy_cocomm :1638, StochasticMatrix.kron_comp :621 (interchange).
+-- matComp m k n f g is f, then g, as `f.comp g` in Lean.
+-- kerA, kerB and kerC are stochastic matrices that are not identities.
+-- examples/matrix.lang checks the identity laws at 2 x 2, the braiding
+-- symmetry at 2 and 3 and the left counit law at 2. This file uses other sizes.
+def kerA : Matrix 2 3 := matTabulate 2 3 (fun (i : Fin 2) (j : Fin 3) => flagIf (finEq i 0) (flagIf (finEq j 0) 1/2 1/4) (flagIf (finEq j 1) 1/2 1/4))
+def kerB : Matrix 3 2 := matTabulate 3 2 (fun (i : Fin 3) (j : Fin 2) => flagIf (finEq i 0) (flagIf (finEq j 0) 1/3 2/3) (flagIf (finEq i 1) 1/2 (flagIf (finEq j 0) 1/1 0/1)))
+def kerC : Matrix 2 2 := matTabulate 2 2 (fun (i j : Fin 2) => flagIf (finEq i 0) (flagIf (finEq j 0) 3/4 1/4) (flagIf (finEq j 0) 1/5 4/5))
+def leftId : Flag := matEq (matComp 2 2 3 (matId 2) kerA) kerA
+def rightId : Flag := matEq (matComp 2 3 3 kerA (matId 3)) kerA
+def compAssoc : Flag := matEq (matComp 2 2 2 (matComp 2 3 2 kerA kerB) kerC) (matComp 2 3 2 kerA (matComp 3 2 2 kerB kerC))
+def triangle : Flag := matEq (matComp 6 6 6 (matAssociator 2 1 3) (matKron 2 2 3 3 (matId 2) (matLeftUnitor 3))) (matKron 2 2 3 3 (matRightUnitor 2) (matId 3))
+def pentagon : Flag := matEq (matComp 16 16 16 (matKron 8 8 2 2 (matAssociator 2 2 2) (matId 2)) (matComp 16 16 16 (matAssociator 2 4 2) (matKron 2 2 8 8 (matId 2) (matAssociator 2 2 2)))) (matComp 16 16 16 (matAssociator 4 2 2) (matAssociator 2 2 4))
+def hexagon : Flag := matEq (matComp 24 24 24 (matAssociator 2 3 4) (matComp 24 24 24 (matBraiding 2 12) (matAssociator 3 4 2))) (matComp 24 24 24 (matKron 6 6 4 4 (matBraiding 2 3) (matId 4)) (matComp 24 24 24 (matAssociator 3 2 4) (matKron 3 3 8 8 (matId 3) (matBraiding 2 4))))
+def braidSym : Flag := matEq (matComp 12 12 12 (matBraiding 3 4) (matBraiding 4 3)) (matId 12)
+def copyCoassoc : Flag := matEq (matComp 3 9 27 (matCopy 3) (matKron 3 3 3 9 (matId 3) (matCopy 3))) (matComp 3 9 27 (matCopy 3) (matComp 9 27 27 (matKron 3 9 3 3 (matCopy 3) (matId 3)) (matAssociator 3 3 3)))
+def copyCounitL : Flag := matEq (matComp 3 9 3 (matCopy 3) (matComp 9 3 3 (matKron 3 1 3 3 (matDiscard 3) (matId 3)) (matLeftUnitor 3))) (matId 3)
+def copyCounitR : Flag := matEq (matComp 3 9 3 (matCopy 3) (matComp 9 3 3 (matKron 3 3 3 1 (matId 3) (matDiscard 3)) (matRightUnitor 3))) (matId 3)
+def copyCocomm : Flag := matEq (matComp 3 9 9 (matCopy 3) (matBraiding 3 3)) (matCopy 3)
+def interchange : Flag := matEq (matComp 4 6 6 (matKron 2 3 2 2 kerA kerC) (matKron 3 2 2 3 kerB kerA)) (matKron 2 2 2 3 (matComp 2 3 2 kerA kerB) (matComp 2 2 3 kerC kerA))
