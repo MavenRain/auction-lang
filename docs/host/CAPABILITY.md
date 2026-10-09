@@ -98,6 +98,16 @@ kit, or to the root of a generated language.
   `langc build` writes a game as an object of its two fields.
   spsb3Auction 3 has a middle matrix of 5832 rows and columns, a trap
   (`EVAL_MATRIX_SIZE`, `test/emit/opengame-size.lang`).
+- The examples `examples/utility.lang`, `examples/revenue.lang` and
+  `examples/dominance.lang` (slice A5) port decided results of
+  auction-cat Examples.lean: the expected utilities, revenue
+  equivalence, the reserve price results and the dominance of the
+  second price auction with a reserve. They add no domain definition.
+  The literal 0 is a Nat: at the type Rat, write 0/1 (`ratLe 0/1 x`,
+  `test/check/ratadd-nat.lang`). finLe, finLt and finVal do not give a
+  literal the type Fin n (`test/check/finlt-flag.lang`,
+  `test/check/finval-nat.lang`): to compare a Fin value with 0, write
+  `natLe 0 (finVal x)`.
 - `flagIf x a b` is the if-then-else at any result type.
 - `langc check` refuses these names with `REFUSE_ALLOW`, and the message
   gives the allowed form: natMin, natGe, natGt, flagOr, finMin, finGe,

@@ -1,0 +1,25 @@
+-- Slice A5: the expected utility of one bidder in the Vickrey and first price auctions (auction-cat Examples.lean).
+-- All bidders bid truthfully. On Fin 3 the bidder has value 2 and the prior is 1/3 (1/9 for the two other bidders together). On Fin 2 the value is 1 and the prior is 1/2.
+def vickNonneg3 : Flag := ratLe 0/1 (vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def threeVickNonneg3 : Flag := ratLe 0/1 (vickreyExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9))
+def vickPos3 : Flag := ratLt 0/1 (vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def vickBidder2Pos3 : Flag := ratLt 0/1 (vickreyBidder2ExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def threeVickBidder3Pos3 : Flag := ratLt 0/1 (vickreyBidder3ExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9))
+def threeVickBidder2Pos3 : Flag := ratLt 0/1 (vickreyBidder2ExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9))
+-- In the first price auction a truthful bid pays the full value: the utility is 0, less than the Vickrey utility.
+def threeFpsbZero3 : Rat := fpsbExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)
+def threeFpsbBelow3 : Flag := ratLt (fpsbExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)) (vickreyExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9))
+def fpsbBelow3 : Flag := ratLt (fpsbExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)) (vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def fpsbBidder2Below3 : Flag := ratLt (fpsbBidder2ExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)) (vickreyBidder2ExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def vickAbove3 : Flag := ratLe (fpsbExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)) (vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def threeVickAbove3 : Flag := ratLe (fpsbExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)) (vickreyExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9))
+-- The Vickrey utility is a value of Fin 3: it is at least 0 for each value and each other bid.
+def vickUtilNonneg3 : Flag := allFin 3 (fun (v : Fin 3) => allFin 3 (fun (b2 : Fin 3) => natLe 0 (finVal (vickreyUtility 3 v v b2))))
+-- Two bidders on Fin 2, value 1.
+def vickHalf2 : Rat := vickreyExpectedUtility 2 (fun (v : Fin 2) => truthful 2 v) (fun (v : Fin 2) => truthful 2 v) 1 (fun (v : Fin 2) => 1/2)
+def fpsbZero2 : Rat := fpsbExpectedUtility 2 (fun (v : Fin 2) => truthful 2 v) (fun (v : Fin 2) => truthful 2 v) 1 (fun (v : Fin 2) => 1/2)
+def fpsbBelow2 : Flag := ratLt fpsbZero2 vickHalf2
+-- Bidders 1 and 2 get the same Vickrey utility. Bidders 2 and 3 get 0 from truthful first price bids.
+def vickSymmetric3 : Flag := ratEq (vickreyExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3)) (vickreyBidder2ExpectedUtility 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin 3) => 1/3))
+def threeFpsbBidder2Zero3 : Rat := fpsbBidder2ExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)
+def threeFpsbBidder3Zero3 : Rat := fpsbBidder3ExpectedUtility3 3 (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) (fun (v : Fin 3) => truthful 3 v) 2 (fun (v : Fin (natMul 3 3)) => 1/9)

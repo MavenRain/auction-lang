@@ -1,0 +1,43 @@
+-- Slice A5: revenue equivalence and the reserve price results (auction-cat Examples.lean).
+-- Uniform prior, truthful bids. A def refers only to earlier defs of this file, so the A3 reserve values come back under new names.
+-- Expected revenue with a reserve r on Fin 2, for two bidders (spsb, fpsb) and three bidders (spsb3, fpsb3).
+def spsbResAt : (r : Fin 2) -> Rat := fun (r : Fin 2) => expectedRevenue 2 (spsbReserve 2 r) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def fpsbResAt : (r : Fin 2) -> Rat := fun (r : Fin 2) => expectedRevenue 2 (fpsbReserve 2 r) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def spsb3ResAt : (r : Fin 2) -> Rat := fun (r : Fin 2) => expectedRevenue3 2 (spsb3Reserve 2 r) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+def fpsb3ResAt : (r : Fin 2) -> Rat := fun (r : Fin 2) => expectedRevenue3 2 (fpsb3Reserve 2 r) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+-- Revenue equivalence on Fin 3: IsRevenueEquivalent is the equality of the two expected revenues (Revenue.lean:210).
+def englishEquiv3 : Flag := ratEq (expectedRevenue 3 (englishAuction 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v)) (expectedRevenue 3 (secondPriceSealedBid 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v))
+def dutchEquiv3 : Flag := ratEq (expectedRevenue 3 (dutchAuction 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v)) (expectedRevenue 3 (firstPriceSealedBid 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v))
+def shadedEnglish3 : Flag := ratEq (expectedRevenue 3 (biddedMechanism 3 (fun (v : Fin 3) => halfShading 3 v) (fun (v : Fin 3) => halfShading 3 v) (firstPriceSealedBid 3)) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v)) (expectedRevenue 3 (englishAuction 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v))
+def truthGap3 : Rat := ratSub (expectedRevenue 3 (firstPriceSealedBid 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v)) (expectedRevenue 3 (secondPriceSealedBid 3) (fun (v : Fin (natMul 3 3)) => uniformPrior 3 v))
+-- Expected revenue without a reserve, and with the reserve r = 0 or r = 1.
+def spsbNoRes : Rat := expectedRevenue 2 (secondPriceSealedBid 2) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def fpsbNoRes : Rat := expectedRevenue 2 (firstPriceSealedBid 2) (fun (v : Fin (natMul 2 2)) => uniformPrior 2 v)
+def spsb3NoRes : Rat := expectedRevenue3 2 (secondPriceSealedBid3 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+def fpsb3NoRes : Rat := expectedRevenue3 2 (firstPriceSealedBid3 2) (fun (v : Fin (natMul (natMul 2 2) 2)) => uniformPrior3 2 v)
+def spsbRes0 : Rat := spsbResAt 0
+def spsbRes1 : Rat := spsbResAt 1
+def fpsbRes0 : Rat := fpsbResAt 0
+def fpsbRes1 : Rat := fpsbResAt 1
+def spsb3Res0 : Rat := spsb3ResAt 0
+def spsb3Res1 : Rat := spsb3ResAt 1
+def fpsb3Res0 : Rat := fpsb3ResAt 0
+def fpsb3Res1 : Rat := fpsb3ResAt 1
+-- The reserve r = 1 raises the second price revenue and does not change the first price revenue. At r = 1 the two formats are the same mechanism.
+def resRaisesSpsb : Flag := ratLt spsbNoRes spsbRes1
+def resRaisesSpsb3 : Flag := ratLt spsb3NoRes spsb3Res1
+def resNeutralFpsb : Flag := ratEq fpsbRes1 fpsbNoRes
+def resNeutralFpsb3 : Flag := ratEq fpsb3Res1 fpsb3NoRes
+def resFnSame : Flag := allFin (natMul 2 2) (fun (i : Fin (natMul 2 2)) => finEq (spsbReserveFn 2 1 i) (fpsbReserveFn 2 1 i))
+def resMatSame : Flag := matEq (spsbReserve 2 1) (fpsbReserve 2 1)
+def resFormatsSame : Flag := ratEq spsbRes1 fpsbRes1
+def resFormatsSame3 : Flag := ratEq spsb3Res1 fpsb3Res1
+def reserveMain : Flag := flagAnd (ratEq spsbRes1 3/4) (flagAnd (ratEq spsb3Res1 7/8) (flagAnd resRaisesSpsb (flagAnd resRaisesSpsb3 (flagAnd resNeutralFpsb (flagAnd resNeutralFpsb3 (flagAnd resFormatsSame resFormatsSame3))))))
+-- The reserve r = 1 gives the highest revenue in the four formats.
+def resOneAboveZero : Flag := ratLt spsbRes0 spsbRes1
+def resOneAboveZero3 : Flag := ratLt spsb3Res0 spsb3Res1
+def spsbResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (spsbResAt r) (spsbResAt 1))
+def fpsbResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (fpsbResAt r) (fpsbResAt 1))
+def spsb3ResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (spsb3ResAt r) (spsb3ResAt 1))
+def fpsb3ResOptimal : Flag := allFin 2 (fun (r : Fin 2) => ratLe (fpsb3ResAt r) (fpsb3ResAt 1))
+def optimalMain : Flag := flagAnd spsbResOptimal (flagAnd fpsbResOptimal (flagAnd spsb3ResOptimal fpsb3ResOptimal))

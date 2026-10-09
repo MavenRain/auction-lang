@@ -1,0 +1,3 @@
+-- Slice A5: the dominance of the second price auction with a reserve, for bidder 2 (auction-cat Examples.lean).
+-- Two bidders at n = 3 (prior 1/3, v = 2), reserve r = 1: the form of bayesnash domRes1 for bidder 2. The json golden is the only pin (no eval row).
+def domRes2 : Flag := ratLe (auctionExpectedBidder2Util 3 (fpsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2) (auctionExpectedBidder2Util 3 (spsbReserveAuction 3 1) (fun (v : Fin 3) => 1/3) 2)
