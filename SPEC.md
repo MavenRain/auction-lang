@@ -13,7 +13,7 @@ document.
 The host is the TinyCC JSON host kit (tcc-json) of lang-template. The
 target is JSON. The type formers are F1 to F15 of `formers/FORMERS.md`. The
 core types and the core operations are only those of sections 5 and 6: the
-built-ins of `src/front/check.c` and the 186 definitions in `domain/`. They
+built-ins of `src/front/check.c` and the 190 definitions in `domain/`. They
 port auction-cat (Lean 4). `design/DESIGN.md` gives the design.
 
 ## 2. Programs
@@ -119,9 +119,9 @@ the Meaning column is a section of `design/DESIGN.md`.
 An overflow or a division by 0 traps: `EVAL_OVERFLOW`
 (`test/emit/trap.lang`) and `EVAL_DIV_ZERO` (`test/emit/divzero.lang`).
 
-The domain files hold 186 definitions: `domain/domain.lang` 5,
+The domain files hold 190 definitions: `domain/domain.lang` 5,
 `domain/finstoch.lang` 10, `domain/auction.lang` 81 and
-`domain/opengame.lang` 90. The Type column gives the place of the
+`domain/opengame.lang` 94. The Type column gives the place of the
 definitions.
 
 | Operation | Type | Meaning (design section) |
@@ -139,8 +139,8 @@ definitions.
 | `makeBidder`, `truthfulBidder`, `deviatorBidder`, `halfShadeBidder` | See `domain/opengame.lang:24` | A bidder as an open game (auction-cat `Bidder.lean:49`) (section 6) |
 | `auctionGame`, `auctionScore`, `spsbAuction`, `fpsbAuction`, the reserve forms and the deviator forms | See `domain/opengame.lang:34` | The 2-bidder auction games (auction-cat `Auction.lean:38-160`) (section 6) |
 | `auctionGame3`, `auctionScore3`, `spsb3Auction`, `fpsb3Auction`, the reserve forms and the deviator forms | See `domain/opengame.lang:72` | The 3-bidder auction games (auction-cat `Auction.lean:201-318`) (section 6) |
-| The `Fn` and `Util` forms, for example `spsbAuctionFn` and `auctionBidder1Util` | See `domain/opengame.lang:110` | The deterministic function of each auction score and game (section 6) |
-| `auctionExpectedBidder1Util`, `vickreyReserveExpectedUtility` and the forms for bidders 2 and 3 | See `domain/opengame.lang:176` | The Bayes-Nash pipeline expectations (auction-cat `BayesNashPipeline.lean`) (sections 5 and 6) |
+| The `Fn` and `Util` forms, for example `spsbAuctionFn` and `auctionBidder1Util` | See `domain/opengame.lang:137` | The deterministic function of each auction score and game (section 6) |
+| `auctionExpectedBidder1Util`, `vickreyReserveExpectedUtility` and the forms for bidders 2 and 3 | See `domain/opengame.lang:191` | The Bayes-Nash pipeline expectations (auction-cat `BayesNashPipeline.lean`) (sections 5 and 6) |
 
 ## 7. Target and instance encoding
 
@@ -221,9 +221,10 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   `test/emit/auction3-size.lang`). This limit applies to intermediate
   matrices too. Ordinary 3-bidder mechanisms work at n = 3 and n = 5;
   `test/emit/auction3-size.lang` checks their size refusal at n = 13.
-  The current 3-bidder open-game construction (`auctionGame3`) still
-  exceeds the limit at n = 3 (`test/emit/opengame-size.lang`); its score
-  kernels run at n = 2. A higher limit needs a larger arena, and that is
+  The kron form of the 3-bidder open game (`auctionGame3`) exceeds the
+  limit at n = 3. The 3-bidder scores use the factored games of slice B4
+  (O7), so they work at n = 3; `test/emit/opengame-size.lang` checks their
+  refusal at n = 4. A higher limit needs a larger arena, and that is
   not free.
 - O5. The scope of M1. The core operations of `design/DESIGN.md` section 8
   exist since M0 (section 6). What must M1 add? Options: (a) checks of the
@@ -257,14 +258,22 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   `fpsbKernel4` and `fpsb3ResKernel2`). B1 checks the Dutch and English
   results (`examples/auction.lang`: `dutch3Eq3` and `english3Eq3`).
   `design/DESIGN.md` section 7 has a row for each result.
-- O7. `auctionGame3` at n = 3. It exceeds the matrix limit of O4
-  (`test/emit/opengame-size.lang`), and its score kernels run at n = 2.
+- O7. `auctionGame3` at n = 3. Its kron form exceeds the matrix limit of
+  O4, and before slice B4 its score kernels ran at n = 2 only.
   Options: (a) a factored construction: build each 3-bidder kernel as the
   `matOfFn` of a function, so that no intermediate matrix has more than
   1 << 25 cells; (b) keep the limit, and move this item to M3; (c) a larger
   arena (O4: not free). Proposal: (a) if a size count shows that it fits,
   else (b). RULED 2026-10-09 (USER): "a if the size count fits, else b".
   Slice B4 makes the size count first.
+  DONE 2026-10-09 (slice B4): the size count fits, so (a). At n = 3 the
+  kron form has a 5,832 x 5,832 matrix (34,012,224 cells). The factored
+  games (`auctionGame3Det` and the 3 deviator forms in
+  `domain/opengame.lang`) build the view and the update as the `matOfFn`
+  of their Fns. Their largest matrix is the kron of the identity of size
+  27 and the 27 x 216 mechanism: 729 x 5,832 (4,251,528 cells). The score
+  kernels run at n = 3. At n = 4 this kron has 134,217,728 cells and
+  refuses.
 - O8. The place of the new checks. Options: (a) new example files, for
   example `examples/finstoch-laws.lang` and `examples/truthful.lang`
   (`examples/laws.lang` exists already). Each new file adds 1 example and
@@ -307,9 +316,9 @@ M1 has these planned slices. The rulings on O5 to O8 are in section 9
 | B1 | Done 2026-10-09: 22 eval lines for the 22 domain definitions that no example or test used |
 | B2 | Done 2026-10-09: 15 eval lines in the new example `examples/finstoch-laws.lang`: 12 FinStoch laws at fixed sizes, with `matEq`, and 3 stochastic matrices for them |
 | B3 | Done 2026-10-09: 11 eval lines in the new example `examples/truthful.lang`: the auction-cat results of O6 at fixed sizes, with `allFin`, `natLe`, `ratLe` and `matEq` |
-| B4 | `auctionGame3` at n = 3 (O7) |
+| B4 | Done 2026-10-09: `auctionGame3` at n = 3 (O7 a): the factored games in `domain/opengame.lang`, 4 eval lines in `examples/opengame.lang`, and the size refusal at n = 4 |
 | B5 | Close M1: `SPEC.md`, `docs/STATUS.md`, `docs/VALIDATION.md` and the gate |
 
 Status 2026-10-09: the core operations of M1 exist since M0 (section 6).
-M1 is in progress: B1 to B3 are done, and B4 and B5 remain. M2 and M3 are not
+M1 is in progress: B1 to B4 are done, and B5 remains. M2 and M3 are not
 started.

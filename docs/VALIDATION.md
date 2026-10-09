@@ -3,18 +3,19 @@
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of ed8da0a, the last commit that changes
-`src/`. Slices B1 to B3 change no source file.
+`src/`. Slices B1 to B3 change no source file. Slice B4 changes no file in `src/`,
+but it changes `domain/opengame.lang`, which `build/langc` embeds.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 512 tests with zero failures: 22 examples, 10 parse refusals, 86 check
-refusals, 357 eval lines, 22 JSON builds and 15 build refusals. The gate
+runs 516 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+refusals, 361 eval lines, 22 JSON builds and 15 build refusals. The gate
 also checks a nesting of 1100 parentheses, the usage exit code 2, the `-o`
 file, a `Fin` argument out of range, the absence of em-dashes and en-dashes
 in the kit, and Node `JSON.parse` of each golden. A timed run
-(`/usr/bin/time -l make check`) took 42.03 seconds real and 32.05 seconds
-user. Its maximum resident set size was 365,133,824 bytes (348.2 MiB).
+(`/usr/bin/time -l make check`) took 45.92 seconds real and 33.20 seconds
+user. Its maximum resident set size was 771,014,656 bytes (735.3 MiB).
 Other jobs loaded the machine during this run.
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
@@ -91,3 +92,19 @@ reserve at n = 2 for each reserve. No check stops on the evaluation fuel of
 20,000,000 steps. A mutant of each kind of check (the 2 sides swapped, or
 the kernel function of the other auction) evaluates to 0, so no check is
 vacuous.
+
+Slice B4 makes the size count of `auctionGame3` at n = 3 (O7). At n = 3
+the kron form has a 5,832 x 5,832 matrix. That is 34,012,224 cells, over
+the limit of 33,554,432. The factored games `auctionGame3Det` and
+`auctionGame3Deviator1Det` to `auctionGame3Deviator3Det` build the view
+and the update as the `matOfFn` of the Fns of `Vickrey3.lean`. Their
+largest matrix is the kron of the identity of size 27 and the mechanism:
+729 x 5,832, or 4,251,528 cells. The 3-bidder scores use these games. The
+new eval lines `spsb3FnEq 3`, `fpsb3FnEq 3` and `spsb3Dev3FnEq 3` check
+the score kernels at n = 3. `update3DevFnEq 2` checks that the deviator
+games of the kron form have the update of `auctionGame3`. With
+`view3FnEq`, `update3FnEq` and `view3Dev1FnEq` to `view3Dev3FnEq`, it
+links the kron games and the factored games at n = 2. The trap line
+`spsb3FnEq 4` and `test/emit/opengame-size.lang` refuse at n = 4. One
+factored kernel at n = 3 took 11.75 s, with a maximum resident set of
+217,317,376 bytes, and it did not stop on the fuel.

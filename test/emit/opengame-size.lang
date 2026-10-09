@@ -1,1 +1,1 @@
-def bigSpsb3 : Matrix (natMul (natMul 3 3) 3) (natMul (natMul 3 3) 3) := spsb3Auction 3
+def bigSpsb3 : Matrix (natMul (natMul 4 4) 4) (natMul (natMul 4 4) 4) := spsb3Auction 4

@@ -3,7 +3,7 @@
 The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`). M0 is done. M1 is in progress: `SPEC.md` section 9 records the
-rulings on O5 to O8, and the slices B1 to B3 are done. M2 and M3 are not started.
+rulings on O5 to O8, and the slices B1 to B4 are done. M2 and M3 are not started.
 
 ## Implemented
 
@@ -27,8 +27,8 @@ rulings on O5 to O8, and the slices B1 to B3 are done. M2 and M3 are not started
 
 No M0 work remains. `SPEC.md` section 9 records the rulings on O1 to O4,
 and each one is done. The M1 plan is in `SPEC.md` section 9 (the rulings
-on O5 to O8) and section 10 (the slices B1 to B5). B1 to B3 are done. B4 and B5
-remain.
+on O5 to O8) and section 10 (the slices B1 to B5). B1 to B4 are done. B5
+remains.
 
 ## Known limits
 
@@ -53,9 +53,9 @@ remain.
   (`test/emit/mat-size.lang`). The limit also applies to intermediate
   matrices. Ordinary 3-bidder mechanisms work at n = 3 and n = 5;
   `test/emit/auction3-size.lang` checks their refusal at n = 13. The
-  current 3-bidder open-game construction (`auctionGame3`) still exceeds
-  the limit at n = 3 (`test/emit/opengame-size.lang`); its score kernels
-  run at n = 2.
+  3-bidder open-game scores use the factored games of slice B4, so they
+  work at n = 3; `test/emit/opengame-size.lang` checks their refusal at
+  n = 4. The kron form of `auctionGame3` exceeds the limit at n = 3.
 - The JSON `type` field of an instance is at most 4096 bytes.
 
 ## Internal boundaries

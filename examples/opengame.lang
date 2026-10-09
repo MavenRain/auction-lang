@@ -1,6 +1,6 @@
 -- Slice A4: the open-game kernels of auction-cat (KernelTruth, FirstPrice, ReserveTruth, Reserve3Truth, Vickrey3).
 -- Each Flag says that a kernel matrix of the domain equals the matOfFn of its entry function (D98).
--- Two bidders at n = 2 and 3. Three bidders at n = 2 only: at n = 3 a matrix is over the 2^25 cap (D97).
+-- Two bidders at n = 2 and 3. Three bidders at n = 2, and at n = 3 with the factored games of slice B4. At n = 4 a matrix is over the 2^25 cap.
 def spsbFnEq : (n : Nat) -> Flag :=
   fun (n : Nat) => matEq (spsbAuction n) (matOfFn (natMul n n) (natMul n n) (fun (v : Fin (natMul n n)) => spsbAuctionFn n v))
 def fpsbFnEq : (n : Nat) -> Flag :=
@@ -56,3 +56,7 @@ def fpsbDev1Check3 : Flag := flagAnd (matEq (fpsbAuctionDeviator1 3 (fun (v : Fi
 def fpsbDev2Check3 : Flag := flagAnd (matEq (fpsbAuctionDeviator2 3 (fun (v : Fin 3) => truthful 3 v)) (fpsbAuction 3)) (flagNot (matEq (fpsbAuctionDeviator2 3 (fun (v : Fin 3) => halfShading 3 v)) (fpsbAuction 3)))
 def fpsbResDev1Check3 : Flag := flagAnd (matEq (fpsbReserveAuctionDeviator1 3 1 (fun (v : Fin 3) => truthful 3 v)) (auctionScore 3 (fpsbReserve 3 1))) (flagNot (matEq (fpsbReserveAuctionDeviator1 3 1 (fun (v : Fin 3) => halfShading 3 v)) (auctionScore 3 (fpsbReserve 3 1))))
 def fpsbResDev2Check3 : Flag := flagAnd (matEq (fpsbReserveAuctionDeviator2 3 1 (fun (v : Fin 3) => truthful 3 v)) (auctionScore 3 (fpsbReserve 3 1))) (flagNot (matEq (fpsbReserveAuctionDeviator2 3 1 (fun (v : Fin 3) => halfShading 3 v)) (auctionScore 3 (fpsbReserve 3 1))))
+-- Slice B4: the deviator games of the kron form have the update of auctionGame3 (Vickrey3.lean:573, :721, :971).
+-- With update3FnEq and view3Dev1FnEq to view3Dev3FnEq, this links the kron games to the factored games at n = 2.
+def update3DevFnEq : (n : Nat) -> Flag :=
+  fun (n : Nat) => flagAnd (matEq (gameUpdate (auctionGame3Deviator1 n (fun (v : Fin n) => halfShading n v))) (gameUpdate (auctionGame3 n))) (flagAnd (matEq (gameUpdate (auctionGame3Deviator2 n (fun (v : Fin n) => halfShading n v))) (gameUpdate (auctionGame3 n))) (matEq (gameUpdate (auctionGame3Deviator3 n (fun (v : Fin n) => halfShading n v))) (gameUpdate (auctionGame3 n))))
