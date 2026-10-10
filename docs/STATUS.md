@@ -5,7 +5,8 @@ commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`), and the slices B1 to B4 add their tests. Milestone M2 (the
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
-section 9 records the rulings on O1 to O12. M3 is not started.
+section 9 records the rulings on O1 to O12 and the open items O13 to O17
+of M3. M3 is not started.
 
 ## Implemented
 
@@ -31,20 +32,33 @@ section 9 records the rulings on O1 to O12. M3 is not started.
 ## Remaining work
 
 No M0, M1 or M2 work remains. `SPEC.md` section 9 records the rulings on
-O1 to O12, and the rulings on O1 to O11 are done. `SPEC.md` section 10
-lists the slices of M0, M1 and M2. M3 (hardening: speed, limits, a
-checked certificate for the output) is not started, and no plan for it
-exists. M3 holds these items:
+O1 to O12, and the rulings on O1 to O11 are done. O13 to O17 are the open
+items of M3 (hardening: speed, limits, a checked certificate for the
+output), and they wait for the rulings. `SPEC.md` section 10 lists the
+slices of M0, M1 and M2 and the planned slices D1 to D6 of M3. M3 is not
+started. The plan follows the proposals:
 
-- The ruling on O12 moves two choices of slice B4 to M3: the kron of an
-  identity and the mechanism in the 3-bidder scores, and the kernels that
-  have eval lines at n = 2 only.
-- The gate time: 43 s for C1, 147 s for C2 on a quiet machine and 85 s
-  for C3 at load 12 to 18. The reads section of `test/gate.sh` calls
-  `langc eval` 254 times, and each call checks the example again.
-- The print buffer of a read line (`READ_PRINT_MAX`, 64 KiB,
-  `src/read.c:274`). The value of a Matrix line has no such limit since
-  slice C2. M3 finds the lines that keep the limit.
+- D1 (O13): `matComp` skips a term when its left cell is 0. Three eval
+  lines of the 3-bidder kernels at n = 3 take 77 s of a 267 s gate at
+  load 27 to 43, and most of their cell products have a left cell of 0.
+- D2 (O15, from O12): a core operation for the kron of an identity in
+  `gameScore`, so that the 3-bidder scores run at n = 4 and n = 5.
+- D3 (O17 and O13): the verb `langc verify PROG DOC`, a checked
+  certificate for the output. The reads section of `test/gate.sh` calls
+  it once for each document, in place of 254 calls of `langc eval`. It
+  keeps the 22 calls of `langc read` and all 254 comparisons of printed
+  instance lines against the verifier's eval output, including line
+  counts. The JSON round trips and existing read refusals stay.
+- D4 (O14): the print buffer of a read line and of an eval line
+  (`READ_PRINT_MAX`, 64 KiB, `src/read.c:274`). A List, product, Sigma,
+  family or Option line longer than 64 KiB prints with a "..." cut.
+  The writer also cuts a long `type` into unreadable JSON with exit 0.
+  D4 sizes value buffers, enforces the 4096-byte decoded type limit in
+  the reader and writer, and makes the writer refuse instead of emitting
+  a cut type. Boundary builds that succeed must read back.
+- D5 (O16, from O12): eval lines at n = 3 for the 6 kernels that have
+  eval lines at n = 2 only.
+- D6: close M3, docs only.
 
 ## Known limits
 
