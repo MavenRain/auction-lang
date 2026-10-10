@@ -31,7 +31,7 @@ static const char *const OP_NAMES[] = {
   [OP_SUM_RAT] = "sumRat", [OP_MATRIX] = "Matrix",
   [OP_MAT_TABULATE] = "matTabulate", [OP_MAT_OF_FN] = "matOfFn",
   [OP_MAT_ENTRY] = "matEntry", [OP_MAT_COMP] = "matComp", [OP_MAT_KRON] = "matKron",
-  [OP_MAT_EQ] = "matEq", [OP_PROJ] = "?"
+  [OP_MAT_ID_KRON_COMP] = "matIdKronComp", [OP_MAT_EQ] = "matEq", [OP_PROJ] = "?"
 };
 
 /* The number of arguments of each operation. VARIES: it comes from the
@@ -54,7 +54,7 @@ static const unsigned char OP_ARITY[] = {
   [OP_RAT_OF_NAT] = 1, [OP_RAT_EQ] = 2, [OP_RAT_LE] = 2, [OP_RAT_LT] = 2,
   [OP_SUM_RAT] = 2, [OP_MATRIX] = 2, [OP_MAT_TABULATE] = 3,
   [OP_MAT_OF_FN] = 3, [OP_MAT_ENTRY] = 3, [OP_MAT_COMP] = 5, [OP_MAT_KRON] = 6,
-  [OP_MAT_EQ] = 2, [OP_PROJ] = 1
+  [OP_MAT_ID_KRON_COMP] = 6, [OP_MAT_EQ] = 2, [OP_PROJ] = 1
 };
 
 typedef enum {
@@ -1452,6 +1452,53 @@ static const Value *reduce_mat_kron(Machine *m, const Value *const *a, uint32_t 
   return val_matrix(m, (uint32_t)rows, (uint32_t)cols, cells);
 }
 
+/* matIdKronComp m y r s K U: the value of matComp (m y) (m r) s (matKron m m
+   y r (matId m) K) U with no kron (O15, D2). In row x the kron has K (x div
+   m, c) at column c m + x mod m and 0 elsewhere (D11, D12), so cell (x, j)
+   is the sum over c of K (x div m, c) * U (c m + x mod m, j). The terms come
+   in the matComp order (c ascending) with the D1 skip of a 0 K cell, so each
+   value and each overflow trap is that of the kron form. The result is the
+   only new matrix: m or the result over 2^25 gives EVAL_MATRIX_SIZE. */
+static const Value *reduce_mat_id_kron_comp(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  const Value *k = a[4];
+  const Value *u = a[5];
+  Cell *cells;
+  uint64_t side;
+  uint64_t x;
+  uint64_t j;
+  uint64_t c;
+  if (!mat_args(m, OP_MAT_ID_KRON_COMP, a, n, 6, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT || k->kind != VAL_MATRIX || u->kind != VAL_MATRIX)
+    return internal(m, "a matIdKronComp of a value that is not a Matrix");
+  side = a[0]->nat;
+  if (side > MATRIX_SIDE_MAX)
+    return val_trap(m, TRAP_MATRIX_SIZE);
+  if (u->rows != side * k->cols)
+    return internal(m, "a matIdKronComp of matrices that do not compose");
+  cells = mat_cells(m, side * k->rows, u->cols, &out);
+  if (cells == NULL)
+    return out;
+  for (x = 0; x < side * k->rows; x++) {
+    const Cell *row = &k->cells[(x / side) * k->cols];
+    for (j = 0; j < u->cols; j++) {
+      Cell sum = {0, 1};
+      for (c = 0; c < k->cols; c++) {
+        Cell p = {0, 1};
+        if (row[c].num == 0)
+          continue;
+        if (!cell_mul(row[c], u->cells[(c * side + x % side) * u->cols + j], &p))
+          return overflow(m);
+        if (p.num != 0 && !cell_add(sum, p, 0, &sum))
+          return overflow(m);
+      }
+      cells[x * u->cols + j] = sum;
+    }
+  }
+  return val_matrix(m, (uint32_t)(side * k->rows), u->cols, cells);
+}
+
 /* matEq M N: flagYes when the sizes and all cells are equal. */
 static const Value *reduce_mat_eq(Machine *m, const Value *const *a, uint32_t n) {
   const Value *out;
@@ -1657,6 +1704,8 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
     return reduce_mat_comp(m, a, n);
   case OP_MAT_KRON:
     return reduce_mat_kron(m, a, n);
+  case OP_MAT_ID_KRON_COMP:
+    return reduce_mat_id_kron_comp(m, a, n);
   case OP_MAT_EQ:
     return reduce_mat_eq(m, a, n);
   case OP_PROJ:

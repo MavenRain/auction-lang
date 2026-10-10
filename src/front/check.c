@@ -83,6 +83,7 @@ typedef enum {
   RULE_MAT_ENTRY,
   RULE_MAT_COMP,
   RULE_MAT_KRON,
+  RULE_MAT_ID_KRON_COMP,
   RULE_MAT_EQ
 } Rule;
 
@@ -171,6 +172,7 @@ static const Builtin BUILTINS[] = {
   {"matEntry", 3, RULE_MAT_ENTRY, OP_MAT_ENTRY, OP_RAT, 0},
   {"matComp", 5, RULE_MAT_COMP, OP_MAT_COMP, OP_MATRIX, 0},
   {"matKron", 6, RULE_MAT_KRON, OP_MAT_KRON, OP_MATRIX, 0},
+  {"matIdKronComp", 6, RULE_MAT_ID_KRON_COMP, OP_MAT_ID_KRON_COMP, OP_MATRIX, 0},
   {"matEq", 2, RULE_MAT_EQ, OP_MAT_EQ, OP_FLAG, 0}
 };
 
@@ -1128,7 +1130,7 @@ static const Core *rule_mat_entry(Call *k) {
   return op3(c, OP_MAT_ENTRY, 0, 3, x, i, j);
 }
 
-/* The size arguments of matComp and matKron: COUNT Nats. */
+/* The size arguments of matComp, matKron and matIdKronComp: COUNT Nats. */
 static int mat_sizes(Call *k, uint32_t count, const Core **args) {
   uint32_t i;
   for (i = 0; i < count; i++) {
@@ -1162,6 +1164,20 @@ static const Core *rule_mat_kron(Call *k) {
   args[5] = args[4] == NULL ? NULL : check(c, k->args[5], matrix_type(c, here(c, args[2]), here(c, args[3])));
   k->type = matrix_type(c, here(c, op3(c, OP_NAT_MUL, 0, 2, args[0], args[2], NULL)), here(c, op3(c, OP_NAT_MUL, 0, 2, args[1], args[3], NULL)));
   return core_op(c, OP_MAT_KRON, 0, 0, args, 6);
+}
+
+/* matIdKronComp m y r s K U: K is a Matrix y r, U a Matrix (natMul m r) s;
+   the result is a Matrix (natMul m y) s, the value of matComp (natMul m y)
+   (natMul m r) s (matKron m m y r (matId m) K) U (O15, D2). */
+static const Core *rule_mat_id_kron_comp(Call *k) {
+  Checker *c = k->c;
+  const Core *args[6];
+  if (!mat_sizes(k, 4, args))
+    return NULL;
+  args[4] = check(c, k->args[4], matrix_type(c, here(c, args[1]), here(c, args[2])));
+  args[5] = args[4] == NULL ? NULL : check(c, k->args[5], matrix_type(c, here(c, op3(c, OP_NAT_MUL, 0, 2, args[0], args[2], NULL)), here(c, args[3])));
+  k->type = matrix_type(c, here(c, op3(c, OP_NAT_MUL, 0, 2, args[0], args[1], NULL)), here(c, args[3]));
+  return core_op(c, OP_MAT_ID_KRON_COMP, 0, 0, args, 6);
 }
 
 /* matEq M N: N checks at the Matrix type of M. */
@@ -1264,6 +1280,8 @@ static const Core *rule(Call *k) {
     return rule_mat_comp(k);
   case RULE_MAT_KRON:
     return rule_mat_kron(k);
+  case RULE_MAT_ID_KRON_COMP:
+    return rule_mat_id_kron_comp(k);
   case RULE_MAT_EQ:
     return rule_mat_eq(k);
   }

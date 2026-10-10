@@ -5,14 +5,16 @@ commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`), and the slices B1 to B4 add their tests. Milestone M2 (the
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
-section 9 records the rulings on O1 to O17. M3 is in progress: slice D1
-is done.
+section 9 records the rulings on O1 to O17. M3 is in progress: slices D1
+and D2 are done.
 
 ## Implemented
 
 - The type formers F1 to F15 on the tcc-json host (`formers/tcc-json.md`).
 - The built-in types `Nat`, `Flag`, `Fin n`, `Rat` and `Matrix m n`, and
-  their operations (`src/front/check.c:99-174`).
+  their operations (`src/front/check.c:100-176`).
+- The core operation `matIdKronComp` (slice D2): the composition with the
+  kron of an identity, with no kron. `gameScore` uses it.
 - `domain/finstoch.lang`: 10 definitions. The structure maps of FinStoch.
 - `domain/auction.lang`: 81 definitions. Bid strategies, utilities,
   mechanisms, expected revenue, expected utility and the envelope objects.
@@ -37,11 +39,11 @@ items of M3 (hardening: speed, limits, a checked certificate for the
 output), and the rulings of 2026-10-09 accept each proposal. `SPEC.md`
 section 10 lists the slices of M0, M1 and M2 and the slices D1 to D6 of
 M3. Slice D1 is done: `matComp` skips a term when its left cell is 0, so
-the 3 slowest eval lines take 3.2 s in place of 19.3 s. The remaining
-slices follow the rulings:
+the 3 slowest eval lines take 3.2 s in place of 19.3 s. Slice D2 is
+done: with the core operation `matIdKronComp`, the 3-bidder scores run
+at n = 4, and the 3 slowest eval lines of D1 take 0.1 s each. The
+remaining slices follow the rulings:
 
-- D2 (O15, from O12): a core operation for the kron of an identity in
-  `gameScore`, so that the 3-bidder scores run at n = 4 and n = 5.
 - D3 (O17 and O13): the verb `langc verify PROG DOC`, a checked
   certificate for the output. The reads section of `test/gate.sh` calls
   it once for each document, in place of 254 calls of `langc eval`. It
@@ -82,9 +84,11 @@ slices follow the rulings:
   (`test/emit/mat-size.lang`). The limit also applies to intermediate
   matrices. Ordinary 3-bidder mechanisms work at n = 3 and n = 5;
   `test/emit/auction3-size.lang` checks their refusal at n = 13. The
-  3-bidder open-game scores use the factored games of slice B4, so they
-  work at n = 3; `test/emit/opengame-size.lang` checks their refusal at
-  n = 4. The kron form of `auctionGame3` exceeds the limit at n = 3.
+  3-bidder open-game scores use the factored games of slice B4 and
+  `matIdKronComp` of slice D2, so they work at n = 4. At n = 5 the size
+  count fits, but the evaluation stops at the arena limit (`langc: OOM`,
+  exit 1). `test/emit/opengame-size.lang` checks their refusal at n = 6.
+  The kron form of `auctionGame3` exceeds the limit at n = 3.
 - The JSON `type` field of an instance is at most 4096 bytes.
 
 ## Internal boundaries

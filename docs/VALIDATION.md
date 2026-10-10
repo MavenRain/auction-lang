@@ -2,16 +2,17 @@
 
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` from the sources of slice D1, the last commit that changes
+`build/langc` from the sources of slice D2, the last commit that changes
 `src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
-`build/langc` embeds.
+`build/langc` embeds. Slice D2 changes `src/` and
+`domain/opengame.lang`.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 834 tests with zero failures: 22 examples, 10 parse refusals, 86 check
-refusals, 361 eval lines, 22 JSON builds, 15 build refusals, 22 round
+runs 844 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+refusals, 371 eval lines, 22 JSON builds, 15 build refusals, 22 round
 trips, 254 reads, 28 read refusals and 14 queries. It also runs
 `build/read-typed-test`: 13 typed reader regressions with zero failures.
 The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
@@ -19,9 +20,9 @@ the `-o` file, a `Fin` argument out of range, the reader on white space,
 escapes, 2008 levels of nesting and a document of 16 MiB, the document of
 `langc build --read`, the absence of em-dashes and en-dashes in the kit,
 and Node `JSON.parse` of each golden. A timed run on the sources of
-slice D1 (`/usr/bin/time -l make check`) took 46.72 seconds real and 23.27
-seconds user. Its maximum resident set size was 765,837,312 bytes (730.4
-MiB). Other jobs loaded the machine during this run (load 13 to 17).
+slice D2 (`/usr/bin/time -l make check`) took 28.51 seconds real and 20.96
+seconds user. Its maximum resident set size was 775,766,016 bytes (739.8
+MiB). Other jobs loaded the machine during this run (load 5 to 6).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -160,3 +161,25 @@ the counts of C3. Each of the 3 slowest eval lines ran alone with
 1.15, `opengame spsb3Dev3FnEq 3` 6.97 and 1.00 (load 12 to 14). The gate
 took 46.72 s at load 13 to 17. The gate of C3 took 85.19 s at load 12 to
 18.
+
+Slice D2 adds the core operation `matIdKronComp m y r s K U` (O15 a). Its
+value is the value of `matComp (natMul m y) (natMul m r) s (matKron m m
+y r (matId m) K) U`, but it makes no kron. Cell (x, j) is the sum over
+c < r of K (x div m, c) times U (c m + x mod m, j), with c in ascending
+order, and a term with a K cell of 0 is skipped as in D1. These are the
+nonzero terms of the kron form in the same order, so each value and each
+`EVAL_OVERFLOW` trap is the same. `gameScore` uses it.
+`examples/matrix.lang` gets 7 eval lines: 4 compare it with the kron
+form (`idKronCompEq` with the sizes 2 2 3 2, 3 2 2 3, 2 3 2 2 and
+1 1 1 1), 1 prints a 4 x 2 result, and 2 check `EVAL_MATRIX_SIZE`. The
+3-bidder scores get eval lines at n = 4 (`spsb3FnEq 4` and
+`spsb3Dev1FnEq 4` to `spsb3Dev3FnEq 4`) in place of the refusal line
+`spsb3FnEq 4`, and `test/emit/opengame-size.lang` checks the refusal at
+n = 6. Thus the eval lines go from 361 to 371. No JSON golden changes.
+Each line ran alone with `/usr/bin/time -p` (seconds real, load 5 to
+6): the 3 slow lines of D1 take 0.10, 0.10 and 0.09 (D1: 1.06, 1.15
+and 1.00), and the 4 lines at n = 4 take 1.10, 1.04, 1.09 and 1.17. At
+n = 5 the size count fits, but `spsb3FnEq 5` stops at the arena limit
+(`langc: OOM`, exit 1, 0.78 s). A mutant that swaps the kron order in
+the U row makes `idKronCompEq 2 2 3 2` 0, and the gate fails on 8
+lines. The gate took 28.51 s at load 5 to 6.

@@ -49,7 +49,8 @@ kit, or to the root of a generated language.
 - `Matrix m n` is a stochastic matrix with m rows and n columns
   (FinStoch.lean:433). Each cell is a Rat. In each row, each cell is
   0/1 or more and the sum of the cells is exactly 1/1. The operations
-  are matTabulate, matOfFn, matEntry, matComp, matKron and matEq.
+  are matTabulate, matOfFn, matEntry, matComp, matKron, matIdKronComp
+  and matEq.
   matTabulate m n f makes the cells f i j and checks each row: a cell
   below 0/1 or a row sum other than 1/1 is a trap (`EVAL_STOCHASTIC`).
   matOfFn m n f puts 1/1 in column f i of row i and 0/1 in the other
@@ -57,7 +58,10 @@ kit, or to the root of a generated language.
   M N is the Kronecker product, with natMul m m' rows and natMul k k'
   columns: cell (x, y) is M (x mod m) (y mod k) times N (x div m)
   (y div k). The first component of a Fin (natMul x y) index is the
-  low digit. matEntry M i j is a cell, and matEq M N compares all the
+  low digit. matIdKronComp m y r s K U is matComp (natMul m y)
+  (natMul m r) s (matKron m m y r (matId m) K) U, with no kron: cell
+  (x, j) is the sum over c < r of K (x div m, c) times U (c m + x mod m,
+  j). matEntry M i j is a cell, and matEq M N compares all the
   cells. A matrix with more than 2^25 rows, columns or cells is a trap
   (`EVAL_MATRIX_SIZE`). A cell that does not fit is a trap
   (`EVAL_OVERFLOW`). `domain/finstoch.lang` defines matId, matCopy,

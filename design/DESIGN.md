@@ -178,8 +178,9 @@ Each core operation comes from the model above.
 
 - The Nat, Flag, Fin and Rat operations give the sizes, the indices and
   the exact weights (sections 2 and 5).
-- `matTabulate`, `matOfFn`, `matEntry`, `matComp`, `matKron` and `matEq`
-  give the kernels and their structure (section 3).
+- `matTabulate`, `matOfFn`, `matEntry`, `matComp`, `matKron`,
+  `matIdKronComp` and `matEq` give the kernels and their structure
+  (section 3).
 - `allFin` and `sumRat` give the finite quantifier and the finite sum
   (sections 5 and 7).
 - The domain definitions give the strategies, the mechanisms, the

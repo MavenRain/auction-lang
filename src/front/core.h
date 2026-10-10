@@ -89,6 +89,7 @@ typedef enum {
   OP_MAT_ENTRY,
   OP_MAT_COMP,
   OP_MAT_KRON,
+  OP_MAT_ID_KRON_COMP,
   OP_MAT_EQ,
   OP_PROJ
 } Op;

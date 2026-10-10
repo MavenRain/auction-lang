@@ -38,3 +38,9 @@ def fineTwice : (k : Nat) -> Matrix 2 2 := fun (k : Nat) => matComp 2 2 2 (fine 
 def finePair : (k : Nat) -> Matrix 4 4 := fun (k : Nat) => matKron 2 2 2 2 (fine k) (fine k)
 def fineCorner : (k : Nat) -> Rat := fun (k : Nat) => matEntry (fine k) 1 0
 def discardSquare : (n : Nat) -> Matrix (natMul n n) 1 := fun (n : Nat) => matKron n 1 n 1 (matDiscard n) (matDiscard n)
+-- matIdKronComp against its kron form (O15, D2). Cell (i, j) of kw y r is
+-- (i r + j + 1) / S, S = r (i r + 1) + r (r - 1) / 2: all cells are
+-- different, so an index in the wrong order (D11, D12) changes the value.
+def kw : (y : Nat) -> (r : Nat) -> Matrix y r := fun (y : Nat) (r : Nat) => matTabulate y r (fun (i : Fin y) (j : Fin r) => ratDiv (ratOfNat (natAdd (natAdd (natMul (finVal i) r) (finVal j)) 1)) (ratOfNat (natAdd (natMul r (natAdd (natMul (finVal i) r) 1)) (natDiv (natMul r (natSub r 1)) 2))))
+def idKronComp : (m : Nat) -> (y : Nat) -> (r : Nat) -> (s : Nat) -> Matrix (natMul m y) s := fun (m : Nat) (y : Nat) (r : Nat) (s : Nat) => matIdKronComp m y r s (kw y r) (kw (natMul m r) s)
+def idKronCompEq : (m : Nat) -> (y : Nat) -> (r : Nat) -> (s : Nat) -> Flag := fun (m : Nat) (y : Nat) (r : Nat) (s : Nat) => matEq (idKronComp m y r s) (matComp (natMul m y) (natMul m r) s (matKron m m y r (matId m) (kw y r)) (kw (natMul m r) s))

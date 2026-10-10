@@ -39,12 +39,12 @@ The compiler refuses these forms in a program:
 | Text, for example `"bolt"` | | `LEX_CHAR` | `test/parse/string.lang` |
 
 The core names are the built-ins of `src/front/check.c`, the reserved names
-`Bool` and `Text` (`src/front/check.c:180`), and each name in a domain file.
+`Bool` and `Text` (`src/front/check.c:182`), and each name in a domain file.
 The Makefile joins `domain/domain.lang`, `domain/finstoch.lang`,
 `domain/auction.lang` and `domain/opengame.lang` in this order
 (`Makefile:15`). The allow-list refusals have 25 names. Each diagnostic
 gives an allowed form or states that no such operation is provided
-(`src/front/check.c:185-210`). For example, write
+(`src/front/check.c:187-212`). For example, write
 `flagIf (natLe x y) x y` for `natMin x y`.
 
 Thus a program cannot add a data type, an unproved fact or general
@@ -82,17 +82,17 @@ A section number in the Meaning column is a section of `design/DESIGN.md`.
 
 | Type | Meaning (design section) | Definition |
 |---|---|---|
-| `Nat` | A count, a size or an index (section 2) | Built-in (`src/front/check.c:99`). An unsigned 64-bit value. |
-| `Flag` | A yes or no decision: `flagYes` or `flagNo` (section 2) | Built-in (`src/front/check.c:100`) |
-| `Fin n` | A value below n: a bid, a valuation, a bidder or an outcome (section 2) | Built-in (`src/front/check.c:147`) |
-| `Rat` | An exact fraction: a probability, a utility or a revenue (section 2) | Built-in (`src/front/check.c:158`). The numerator is above -2^63 and below 2^63; the denominator is a positive unsigned 64-bit value. |
-| `Matrix m n` | A stochastic matrix of `Rat` values with m rows and n columns: a kernel of FinStoch (auction-cat `MarkovCat/FinStoch.lean:433`) (sections 2 and 3) | Built-in (`src/front/check.c:168`). Each entry is nonnegative and each row sums to exactly 1/1. `matTabulate` traps with `EVAL_STOCHASTIC` otherwise. |
+| `Nat` | A count, a size or an index (section 2) | Built-in (`src/front/check.c:100`). An unsigned 64-bit value. |
+| `Flag` | A yes or no decision: `flagYes` or `flagNo` (section 2) | Built-in (`src/front/check.c:101`) |
+| `Fin n` | A value below n: a bid, a valuation, a bidder or an outcome (section 2) | Built-in (`src/front/check.c:148`) |
+| `Rat` | An exact fraction: a probability, a utility or a revenue (section 2) | Built-in (`src/front/check.c:159`). The numerator is above -2^63 and below 2^63; the denominator is a positive unsigned 64-bit value. |
+| `Matrix m n` | A stochastic matrix of `Rat` values with m rows and n columns: a kernel of FinStoch (auction-cat `MarkovCat/FinStoch.lean:433`) (sections 2 and 3) | Built-in (`src/front/check.c:169`). Each entry is nonnegative and each row sums to exactly 1/1. `matTabulate` traps with `EVAL_STOCHASTIC` otherwise. |
 | `OpenGame x s y r m` | An open game over FinStoch (auction-cat `OpenGamesCat/Basic.lean`) (sections 2 and 6) | Family `makeGame (gameView : Matrix x (natMul m y)) (gameUpdate : Matrix (natMul m r) s)` (`domain/opengame.lang:8`) |
 | `Color`, `Item`, `Stack`, `Lot size` | The sample domain of lang-template. It has no auction-cat source. | Families (`domain/domain.lang:4-8`) |
 
 ## 6. Core operations
 
-The built-ins are in `src/front/check.c:135-174`. The Type column gives the
+The built-ins are in `src/front/check.c:136-176`. The Type column gives the
 type, or the number of arguments and the result type. A section number in
 the Meaning column is a section of `design/DESIGN.md`.
 
@@ -114,6 +114,7 @@ the Meaning column is a section of `design/DESIGN.md`.
 | `matTabulate`, `matOfFn` | 3 arguments, `Matrix` | A matrix from a function to `Rat`, or the deterministic kernel of a function on `Fin` (section 3) |
 | `matEntry` | 3 arguments, `Rat` | One entry of a matrix (section 3) |
 | `matComp`, `matKron` | 5 and 6 arguments, `Matrix` | Composition and Kronecker product (section 3) |
+| `matIdKronComp` | 6 arguments, `Matrix` | `matIdKronComp m y r s K U` is `matComp (natMul m y) (natMul m r) s (matKron m m y r (matId m) K) U`, with no kron: cell (x, j) is the sum over c < r of K (x div m, c) times U (c m + x mod m, j). `gameScore` uses it (section 3) |
 | `matEq` | 2 arguments, `Flag` | Matrix equality (section 3) |
 
 An overflow or a division by 0 traps: `EVAL_OVERFLOW`
@@ -363,13 +364,13 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 - O14. The print limit of a value line (M3, limits). `READ_PRINT_MAX` is
   64 KiB (`src/read.c:274`), and `PRINT_MAX` of `langc eval` is 65536
   (`src/front/check.c:15`). A top level Matrix prints with no limit
-  since slice C2 (`src/read.c:688-697`, `src/front/check.c:1990-1991`).
+  since slice C2 (`src/read.c:689-698`, `src/front/check.c:2008-2009`).
   A line of a List, product, Sigma, family or Option value (also one
   that holds a matrix) that is longer than 64 KiB prints with a "..."
-  cut and exit 0, in `read` and in `eval` (`src/front/eval.c:1939-1962`).
+  cut and exit 0, in `read` and in `eval` (`src/front/eval.c:1991-2017`).
   The reads section of the gate does not see a cut, because both
   commands cut a line at the same place. The writer uses a 4096-byte
-  buffer for `type` (`src/json.c:7,375`), including the printer's space
+  buffer for `type` (`src/json.c:7,376`), including the printer's space
   for "..." and NUL. It does not check for a cut, so a checked program
   with a long type can build with exit 0 into JSON that the typed reader
   refuses (`READ_TYPE`). The reader also has no length check for `type`,
@@ -412,6 +413,15 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   1 GiB. This is not free (O4). (d) Close: n = 3 stays the largest size
   of the 3-bidder scores, and `docs/STATUS.md` records it. Proposal: (a).
   RULED 2026-10-09 (USER): "a (fused core operation)".
+  DONE 2026-10-09 (slice D2): the core operation `matIdKronComp m y r s
+  K U` (section 6), and `gameScore` uses it. 4 eval lines compare it
+  with the kron form (3 of them with m and y at least 2, and one with
+  r > y), 1 line prints it, and 2 lines check the size refusal. The 4
+  3-bidder scores at n = 4 print 1, each in about 1.1 s.
+  `test/emit/opengame-size.lang` checks the size refusal at n = 6. At
+  n = 5 the size count fits, but the evaluation stops at the arena
+  limit (`langc: OOM`, exit 1). Thus n = 4 is the largest size of the
+  3-bidder scores.
 - O16. The n = 3 eval lines of the kernels of O12 (O12 a, M3 speed).
   `spsb3Dev1FnEq` and `spsb3Dev2FnEq` have eval lines at n = 2 only
   (`test/eval/expect.txt:236-237`). `res3FnEq2` and `res3Dev1FnEq2` to
@@ -517,11 +527,11 @@ O16). Each slice records the gate time and the load.
 
 | Slice | Commit | Content |
 |---|---|---|
-| D1 | This commit | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after. The 3 slowest eval lines take 3.2 s in place of 19.3 s (load 12 to 14) |
-| D2 | Not started | O15 (a): a core operation for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4. The size refusal moves from n = 4 to n = 6 |
+| D1 | 58e1eaf | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after. The 3 slowest eval lines take 3.2 s in place of 19.3 s (load 12 to 14) |
+| D2 | This commit | O15 (a): the core operation `matIdKronComp` for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4 (about 1.1 s each). The size refusal moves from n = 4 to n = 6. At n = 5 the evaluation stops at the arena limit. The 3 slowest eval lines of D1 take 0.1 s each in place of 1.0 s (load 5 to 6) |
 | D3 | Not started | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. The JSON round trips and existing read refusals stay |
 | D4 | Not started | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back |
 | D5 | Not started | O16 (a): the n = 3 eval lines of the 6 kernels of O12 |
 | D6 | Not started | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
-M3 is in progress. Slice D1 is done.
+M3 is in progress. Slices D1 and D2 are done.

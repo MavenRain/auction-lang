@@ -12,7 +12,7 @@ def gameId : (x : Nat) -> (s : Nat) -> OpenGame x s x s 1 :=
 def gameComp : (x : Nat) -> (s : Nat) -> (y : Nat) -> (r : Nat) -> (z : Nat) -> (q : Nat) -> (m1 : Nat) -> (m2 : Nat) -> (f : OpenGame x s y r m1) -> (g : OpenGame y r z q m2) -> OpenGame x s z q (natMul m1 m2) :=
   fun (x : Nat) (s : Nat) (y : Nat) (r : Nat) (z : Nat) (q : Nat) (m1 : Nat) (m2 : Nat) (f : OpenGame x s y r m1) (g : OpenGame y r z q m2) => makeGame x s z q (natMul m1 m2) (matComp x (natMul m1 y) (natMul (natMul m1 m2) z) (gameView f) (matComp (natMul m1 y) (natMul m1 (natMul m2 z)) (natMul (natMul m1 m2) z) (matKron m1 m1 y (natMul m2 z) (matId m1) (gameView g)) (matAssociatorInv m1 m2 z))) (matComp (natMul (natMul m1 m2) q) (natMul m1 (natMul m2 q)) s (matAssociator m1 m2 q) (matComp (natMul m1 (natMul m2 q)) (natMul m1 r) s (matKron m1 m1 (natMul m2 q) r (matId m1) (gameUpdate g)) (gameUpdate f)))
 def gameScore : (x : Nat) -> (s : Nat) -> (y : Nat) -> (r : Nat) -> (m : Nat) -> (g : OpenGame x s y r m) -> (k : Matrix y r) -> Matrix x s :=
-  fun (x : Nat) (s : Nat) (y : Nat) (r : Nat) (m : Nat) (g : OpenGame x s y r m) (k : Matrix y r) => matComp x (natMul m y) s (gameView g) (matComp (natMul m y) (natMul m r) s (matKron m m y r (matId m) k) (gameUpdate g))
+  fun (x : Nat) (s : Nat) (y : Nat) (r : Nat) (m : Nat) (g : OpenGame x s y r m) (k : Matrix y r) => matComp x (natMul m y) s (gameView g) (matIdKronComp m y r s k (gameUpdate g))
 -- The middle interchange (Basic.lean:80) as one matOfFn of its Fin form
 -- (KernelTruth.lean:155), not the 5-matrix chain (D88), and kron (:104).
 def middleInterchangeFn : (a : Nat) -> (b : Nat) -> (d : Nat) -> (e : Nat) -> (x : Fin (natMul (natMul a b) (natMul d e))) -> Fin (natMul (natMul a d) (natMul b e)) :=

@@ -628,6 +628,7 @@ static int decode_op(Typed *t, const Value *type, const JsonNode *node, const Va
   case OP_MAT_ENTRY:
   case OP_MAT_COMP:
   case OP_MAT_KRON:
+  case OP_MAT_ID_KRON_COMP:
   case OP_MAT_EQ:
   case OP_PROJ:
     return diag_fail(t->diag, "READ_TYPE", t->name, "the type is not a type former");
