@@ -4,7 +4,10 @@
 
 #include <string.h>
 
+/* The depth cut of a type and of a diagnostic, and the depth limit of a value
+   line of eval, read and verify (O18, slice E1). */
 #define PRINT_DEPTH_MAX 200u
+#define PRINT_LINE_DEPTH 2000u
 #define PRINT_NAMES_MAX 64u
 #define VARIES 0xffu
 
@@ -2002,6 +2005,7 @@ typedef struct {
   const char *extra[PRINT_NAMES_MAX];
   uint32_t extra_count;
   unsigned depth;
+  unsigned max;
 } Printer;
 
 static void put(Printer *p, const char *s) {
@@ -2173,7 +2177,7 @@ static void print_other(Printer *p, const Value *v, int atom) {
 static void print_value(Printer *p, const Value *v, int atom) {
   uint32_t open = 0;
   uint32_t i;
-  if (p->depth >= PRINT_DEPTH_MAX) {
+  if (p->depth >= p->max) {
     put(p, "...");
     p->cut = 1;
     return;
@@ -2199,7 +2203,8 @@ static void print_value(Printer *p, const Value *v, int atom) {
   p->depth--;
 }
 
-void value_print(Machine *m, const char *const *names, uint32_t name_count, const Value *v, char *buf, size_t cap) {
+static void print_into(Machine *m, const char *const *names, uint32_t name_count, const Value *v, char *buf, size_t cap,
+                       unsigned max) {
   Printer p;
   if (cap == 0)
     return;
@@ -2212,10 +2217,11 @@ void value_print(Machine *m, const char *const *names, uint32_t name_count, cons
   p.cap = cap;
   p.names = names;
   p.name_count = name_count;
+  p.max = max;
   print_value(&p, v, 0);
 }
 
-size_t value_print_len(Machine *m, const char *const *names, uint32_t name_count, const Value *v, int *cut) {
+static size_t print_len(Machine *m, const char *const *names, uint32_t name_count, const Value *v, unsigned max, int *cut) {
   Printer p;
   uint64_t fuel = m->fuel;
   unsigned depth = m->depth;
@@ -2223,6 +2229,7 @@ size_t value_print_len(Machine *m, const char *const *names, uint32_t name_count
   p.m = m;
   p.names = names;
   p.name_count = name_count;
+  p.max = max;
   print_value(&p, v, 0);
   /* Printing binders evaluates their bodies. Reserve the original budget
      for the render pass, and keep any failure diagnostic from measuring. */
@@ -2233,13 +2240,26 @@ size_t value_print_len(Machine *m, const char *const *names, uint32_t name_count
   return p.len;
 }
 
-char *value_text(Machine *m, const Value *v) {
-  size_t cap = value_print_len(m, NULL, 0, v, NULL) + 4u;
+void value_print(Machine *m, const char *const *names, uint32_t name_count, const Value *v, char *buf, size_t cap) {
+  print_into(m, names, name_count, v, buf, cap, PRINT_DEPTH_MAX);
+}
+
+size_t value_print_len(Machine *m, const char *const *names, uint32_t name_count, const Value *v, int *cut) {
+  return print_len(m, names, name_count, v, PRINT_DEPTH_MAX, cut);
+}
+
+char *value_text(Machine *m, const Value *v, const char *code) {
+  int cut = 0;
+  size_t cap = print_len(m, NULL, 0, v, PRINT_LINE_DEPTH, &cut) + 4u;
   char *buf;
   if (m->diag->set)
     return NULL;
+  if (cut) {
+    diag_fail(m->diag, code, m->def, "the value nests %u levels or more", PRINT_LINE_DEPTH);
+    return NULL;
+  }
   buf = arena_alloc(m->arena, cap);
   if (buf != NULL)
-    value_print(m, NULL, 0, v, buf, cap);
+    print_into(m, NULL, 0, v, buf, cap, PRINT_LINE_DEPTH);
   return m->diag->set ? NULL : buf;
 }

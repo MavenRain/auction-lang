@@ -265,19 +265,24 @@ echo "verify refusals: $verifies checked"
 # of test/limits/long.lang is equal to the awk line in full, and the verify
 # lines are equal to the read lines. The writer refuses a type of more than
 # 4096 bytes or of 200 nested levels. A type of 4096 bytes or of 199 levels
-# builds, reads and verifies.
+# builds, reads and verifies. A value line of 1999 levels prints in full, and
+# eval and read refuse a value line of 2000 levels (O18, slice E1).
 limits=0
 pass() { limits=$((limits + 1)); }
 miss() { echo "FAIL limits: $1"; fail=$((fail + 1)); }
-# build_refused FILE CODE: `langc build FILE` must exit 1 with CODE and no stdout.
-build_refused() {
+# refused CODE VERB ARGS...: `langc VERB ARGS` must exit 1 with CODE and no stdout.
+refused() {
+  code=$1
+  shift
   status=0
-  build/langc build "$1" >"$tmp/out.json" 2>"$tmp/err" || status=$?
-  case "$status:$(head -n 1 "$tmp/err"):$(wc -c <"$tmp/out.json" | tr -d ' ')" in
-  "1:langc: $2: "*":0") pass ;;
-  *) miss "build $1: want exit 1, $2 and no stdout, got exit $status" ;;
+  build/langc "$@" >"$tmp/out" 2>"$tmp/err" || status=$?
+  case "$status:$(head -n 1 "$tmp/err"):$(wc -c <"$tmp/out" | tr -d ' ')" in
+  "1:langc: $code: "*":0") pass ;;
+  *) miss "$*: want exit 1, $code and no stdout, got exit $status" ;;
   esac
 }
+# build_refused FILE CODE: `langc build FILE` must exit 1 with CODE and no stdout.
+build_refused() { refused "$2" build "$1"; }
 # read_back PROG DOC: DOC reads, and `langc verify PROG DOC` prints the read lines.
 read_back() {
   build/langc read "$2" >"$tmp/read.txt" 2>/dev/null \
@@ -314,6 +319,29 @@ nest 200 > "$tmp/nest200.lang"
 build/langc build "$tmp/nest199.lang" -o "$tmp/nest199.json" 2>/dev/null \
   && read_back "$tmp/nest199.lang" "$tmp/nest199.json" && pass || miss "a type of 199 levels does not build and read back"
 build_refused "$tmp/nest200.lang" JSON_TYPE_SIZE
+# Value depth. `fpair N`: a pair of a function and 0, with N levels of `natAdd`
+# in the body, so N + 2 levels. `sdoc K`: a document of `pack K P`, where P has
+# K levels of `pair` (a literal stops at 1000 levels, the parser limit).
+fpair() {
+  printf 'def f : Prod (Nat -> Nat) Nat := pair (fun x => fold (fun a => natAdd a 1) x %s) 0\n' "$1"
+}
+sdoc() {
+  awk -v k="$1" 'BEGIN { s = ""; e = ""; for (i = 0; i < k; i++) { s = s "{\"first\":"; e = e ",\"second\":0}" }
+    printf "{\"auction-lang\":1,\"instances\":[{\"name\":\"s\",\"type\":\"Sigma (n : Nat) (fold (fun t => Prod t Nat) Nat n)\",\"value\":{\"witness\":%d,\"payload\":%s0%s}}]}\n", k, s, e }'
+}
+fpair 1997 > "$tmp/f1999.lang"
+fpair 1998 > "$tmp/f2000.lang"
+awk 'BEGIN { s = ""; e = ""; for (i = 1; i < 1997; i++) { s = s "natAdd ("; e = e ") 1" }
+  printf "pair (fun x => %snatAdd x 1%s) 0\n", s, e }' > "$tmp/f1999.want"
+build/langc eval "$tmp/f1999.lang" f > "$tmp/f1999.got" 2>/dev/null \
+  && cmp -s "$tmp/f1999.got" "$tmp/f1999.want" && pass || miss "eval of 1999 levels: not the full line"
+refused EVAL_PRINT_DEPTH eval "$tmp/f2000.lang" f
+sdoc 1999 > "$tmp/s1999.json"
+sdoc 2000 > "$tmp/s2000.json"
+awk 'BEGIN { s = ""; e = ""; for (i = 0; i < 1999; i++) { s = s "(pair "; e = e " 0)" }
+  printf "s : Sigma (n : Nat) (fold (fun t => Prod t Nat) Nat n) = pack 1999 %s0%s\n", s, e }' > "$tmp/s1999.want"
+build/langc read "$tmp/s1999.json" 2>/dev/null | cmp -s - "$tmp/s1999.want" && pass || miss "read of 1999 levels: not the full line"
+refused READ_PRINT_DEPTH read "$tmp/s2000.json"
 echo "limits: $limits checked"
 # Queries. A line is PROG DOC NAME [ARGS...] => OUTPUT, or
 # PROG DOC NAME => refuse CODE. PROG is a program of test/query.

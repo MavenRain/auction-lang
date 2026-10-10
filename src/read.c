@@ -683,13 +683,14 @@ static int instance_type(const Value *type) {
    entry prints as 0 or 1. Each other value prints with value_print, which
    prints a Nat, a Rat (num/den) and a Matrix (rows of num/den) in the form of
    print_result. value_text sizes the buffer from the value, so a line has no
-   cut (slice D4). */
+   size cut (slice D4), and refuses a value deeper than its depth limit (O18,
+   slice E1). */
 static int print_read_value(Machine *m, const Value *type, const Value *v, const char **out) {
   Entry entry;
   if (entry_of(m, type, &entry) && entry.result_flag)
     *out = val_is(v, OP_FLAG_YES) ? "1" : "0";
   else
-    *out = value_text(m, v);
+    *out = value_text(m, v, "READ_PRINT_DEPTH");
   return *out != NULL ? 1 : oom(m->diag);
 }
 
@@ -823,7 +824,8 @@ static int print_defs(Arena *arena, Machine *machine, const ReadDef *defs, size_
     return oom(diag);
   for (i = 0; i < count; i++) {
     size_t n;
-    type_buf = value_text(machine, defs[i].type);
+    machine->def = defs[i].name;
+    type_buf = value_text(machine, defs[i].type, "READ_PRINT_DEPTH");
     if (type_buf == NULL)
       return oom(diag);
     if (!print_read_value(machine, defs[i].type, defs[i].value, &value_buf))

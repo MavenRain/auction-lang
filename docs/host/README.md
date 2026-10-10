@@ -109,6 +109,7 @@ for each refusal.
 | `READ_TYPE` | A `type` text is not exactly one type that checks after the domain, or it is a function type, a universe or an equality |
 | `READ_TYPE_SIZE` | A decoded `type` text has more than 4096 UTF-8 bytes (the NUL not counted). The reader checks this before it parses the type |
 | `READ_VALUE` | A `value` does not match its type (the table above). For example: a Nat above 2^64-1, a `Fin n` value that is not below n, a Rat that is not in lowest terms, a Matrix with a wrong number of rows, a Matrix row that does not sum to 1, or `null` for an `Eq` type whose two sides are not equal |
+| `READ_PRINT_DEPTH` | In `read` and `verify`, a value line nests 2000 levels or more (`SPEC.md` O18). A line of 1999 levels prints in full. `test/gate.sh` checks a document of 2000 levels |
 
 Typed reads check each type against the domain in isolation and infer its
 universe. With `--json`, only the first 5 codes apply. `test/read` holds a
@@ -156,7 +157,9 @@ these codes:
 `EVAL_ARGS`. `langc eval` does not take a Rat argument. A Rat result
 prints as `N/D`, for example `-1/6`. `langc eval` does not take a
 Matrix argument. A Matrix result prints its rows in brackets, for
-example `[[1/2, 1/2]]`.
+example `[[1/2, 1/2]]`. `langc eval` refuses a result line that nests
+2000 levels or more with `EVAL_PRINT_DEPTH` (exit 1, no stdout,
+`SPEC.md` O18). A line of 1999 levels prints in full.
 
 ## The domain
 
@@ -182,7 +185,7 @@ executable at build time. `domain/README.md` tells how to replace it.
 | Read document size | 16 MiB | `src/read.h:19` |
 | Read nesting | 2008 | `src/read.h:24` |
 | `type` text, writer and reader | 4096 bytes | `src/json.c:10`, `src/read.c:274` |
-| Value line of `read` and `eval` | No size limit. A "..." cut at 200 nested levels | `src/front/eval.c:7` |
+| Value line of `read`, `eval` and `verify` | No size limit. 2000 nested levels, refused past it (`SPEC.md` O18) | `src/front/eval.c:10` |
 
 ## Origin
 

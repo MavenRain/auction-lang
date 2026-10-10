@@ -1969,7 +1969,7 @@ static const Value *entry_arg(Machine *m, const char *text, const Value *dom) {
   if (val_is(dom, OP_FIN)) {
     if (dom->args[0]->kind == VAL_NAT && parse_u64(text, &n) && n < dom->args[0]->nat)
       return val_nat(m, n);
-    buf = value_text(m, dom);
+    buf = value_text(m, dom, "EVAL_PRINT_DEPTH");
     diag_fail(m->diag, "EVAL_ARGS", m->def, "'%s' is not an index of %s", text, buf != NULL ? buf : "Fin");
     return NULL;
   }
@@ -2048,7 +2048,7 @@ int eval_command(Machine *m, const char *name, char *const *args, int arg_count,
     return 2;
   }
   if (!entry_of(m, m->defs[d].type, &entry)) {
-    buf = value_text(m, v);
+    buf = value_text(m, v, "EVAL_PRINT_DEPTH");
     if (buf == NULL)
       return diag_fail(m->diag, "OOM", name, "out of memory") + 1;
     fprintf(out, "%s\n", buf);

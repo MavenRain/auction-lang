@@ -405,7 +405,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   RULED 2026-10-09 (USER): "a (size from value)".
   DONE 2026-10-09 (slice D4). The refs above are to f7f6741.
   `READ_PRINT_MAX` and `PRINT_MAX` are gone. `value_text`
-  (`src/front/eval.c:2236`) counts the text of a value, then prints it
+  (`src/front/eval.c:2251`) counts the text of a value, then prints it
   into an arena buffer of that size, so `read` and `eval` print each
   line in full. The reader refuses a decoded `type` longer than 4096
   bytes with `READ_TYPE_SIZE` (`src/read.c:274,784`). The writer
@@ -567,6 +567,33 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   and 200 levels stay). New tests in the `limits` group: an eval line
   and a read line at the cap (in full) and 1 level over it (refused).
   The smaller form is (b) alone at 200 levels.
+  RULED 2026-10-10 (USER): "a + b" (the proposal).
+  DONE 2026-10-10 (slice E1). The refs above are to 4c04be2. A value
+  line of `eval`, `read` and `verify` has a depth limit of 2000 levels
+  (`PRINT_LINE_DEPTH`, `src/front/eval.c:10`). `value_text`
+  (`src/front/eval.c:2251-2265`) measures the line at that limit. On a
+  cut it refuses the line with the code of its caller and the message
+  "the value nests 2000 levels or more" (`src/front/eval.c:2257-2260`).
+  The codes are `EVAL_PRINT_DEPTH` in `eval`
+  (`src/front/check.c:1972,2051`) and `READ_PRINT_DEPTH` in `read` and
+  `verify` (`src/read.c:693,828`; `verify` prints with the function of
+  `read`, `src/read.c:927`), exit 1. `pair` nested k times is k levels:
+  1999 levels print in full, and 2000 levels are refused. A type and a
+  diagnostic keep the cut at 200 levels (`PRINT_DEPTH_MAX`,
+  `src/front/eval.c:9`, through `value_print` and `value_print_len`).
+  The writer still refuses a type of 200 levels with `JSON_TYPE_SIZE`,
+  and the gate tests of 199 and 200 levels stay. The `limits` group of
+  the gate has 4 new checks (`test/gate.sh:322-344`), so 15: an eval
+  line of 1999 levels (a pair of a function, in full) and of 2000 levels
+  (`EVAL_PRINT_DEPTH`), and a read line of 1999 levels (in full) and of
+  2000 levels (`READ_PRINT_DEPTH`). The read lines come from a
+  hand-written document of a `Sigma` value, because a literal stops at
+  1000 levels. A refused line has no stdout. No gate test calls `verify`
+  at the limit: a program literal cannot write a value of 1999 levels.
+  The type of a read line also prints with `value_text`
+  (`src/read.c:828`), so it has the limit of 2000 levels and not the cut
+  at 200. The reader still refuses a type longer than 4096 bytes
+  (`READ_TYPE_SIZE`).
 
 ## 10. Milestones
 
@@ -637,12 +664,20 @@ O16). Each slice records the gate time and the load.
 | D3 | f7f6741 | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. Each read value also matches an independent eval expectation; review adds the 46 missing expectations. The JSON round trips and existing read refusals stay. The reads loop alone before review: 9.46 s before D3, 2.18 s after (load 9) |
 | D4 | 05905d4 | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back. The codes are `READ_TYPE_SIZE` and `JSON_TYPE_SIZE`, and the gate group `limits` has 11 checks |
 | D5 | 5ddddb9 | O16 (a): the n = 3 eval lines of the 6 kernels of O12. `spsb3Dev1FnEq 3` and `spsb3Dev2FnEq 3`, and the closed definitions `res3FnEq3` and `res3Dev1FnEq3` to `res3Dev3FnEq3` in `examples/opengame.lang` with their eval lines. Each line takes 0.09 s alone. The gate has 423 eval lines and 258 reads (918 tests) |
-| D6 | This commit | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
+| D6 | 4c04be2 | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
 M3 is done (2026-10-09). The slices D1 to D6 give it, and O13 to O17 are
 done. The gate took 267 s at load 27 to 43 before D1, and 27.32 s at a
 load of about 7 after D5 (918 tests). The 3-bidder scores evaluate up to
 n = 4. `read` and `eval` print each value line with no length cut, and
 `langc verify PROG DOC` checks that a document is the output of its
-program. A value line still has the depth cut of the printer at 200
-levels (`docs/STATUS.md`, Known limits).
+program. At the close of M3 a value line had the depth cut of the
+printer at 200 levels. Slice E1 (O18) replaces this cut with a limit of
+2000 levels and a refusal past it.
+
+After M3, slice E1 holds the ruling on O18 (2026-10-10). Commit 1751a96
+adds the text of O18. No milestone holds E1.
+
+| Slice | Commit | Content |
+|---|---|---|
+| E1 | This commit | O18 (a) with a limit, and (b) past it: `eval`, `read` and `verify` print a value line of up to 1999 levels in full, and refuse a line of 2000 levels or more with `EVAL_PRINT_DEPTH` (`eval`) or `READ_PRINT_DEPTH` (`read`, `verify`), exit 1. A type and a diagnostic keep the cut at 200 levels. The gate group `limits` has 15 checks (922 tests) |

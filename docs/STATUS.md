@@ -6,7 +6,8 @@ commit. It also has the core operations of the design (milestone M1 in
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. Milestone M3 (the slices D1 to D6)
 adds speed, limits and a checked certificate for the output. M0, M1, M2
-and M3 are done. `SPEC.md` section 9 records the rulings on O1 to O17.
+and M3 are done. After M3, slice E1 sets the depth limit of a value line
+(O18). `SPEC.md` section 9 records the rulings on O1 to O18.
 
 ## Implemented
 
@@ -14,7 +15,7 @@ and M3 are done. `SPEC.md` section 9 records the rulings on O1 to O17.
 - The built-in types `Nat`, `Flag`, `Fin n`, `Rat` and `Matrix m n`, and
   their operations (`src/front/check.c:99-175`).
 - `matComp` skips a term when its left cell is 0 (slice D1,
-  `src/front/eval.c:1415`). No value and no trap changes.
+  `src/front/eval.c:1418`). No value and no trap changes.
 - The core operation `matIdKronComp` (slice D2): the composition with the
   kron of an identity, with no kron. `gameScore` uses it.
 - The kernels of O12 have eval lines at n = 3 (slice D5), and the 3-bidder
@@ -36,21 +37,26 @@ and M3 are done. `SPEC.md` section 9 records the rulings on O1 to O17.
 - The verb `verify PROG DOC` (slice D3): a checked certificate for the
   output. It compares each instance of DOC with the value of that instance
   in PROG, and the bytes of DOC with the bytes that `build PROG` writes
-  (`src/main.c:165`, `src/read.c:879`). A difference is a refusal with
+  (`src/main.c:165`, `src/read.c:881`). A difference is a refusal with
   exit 1: `VERIFY_MISSING`, `VERIFY_VALUE`, `VERIFY_EXTRA` or
   `VERIFY_BYTES`.
 - Full lines (slice D4): `read` and `eval` print each line in full.
-  `value_print_len` and `value_text` (`src/front/eval.c:2218,2236`) count
+  `value_print_len` and `value_text` (`src/front/eval.c:2247,2251`) count
   the text of a value, then print it into an arena buffer of that size.
   The writer and the reader refuse a JSON `type` longer than 4096 bytes
   with exit 1: `JSON_TYPE_SIZE` (`src/json.c:385-387`) and
-  `READ_TYPE_SIZE` (`src/read.c:784`).
+  `READ_TYPE_SIZE` (`src/read.c:785`).
+- Value depth (slice E1, O18): `read`, `eval` and `verify` print a value
+  line of up to 1999 levels in full. A line of 2000 levels or more is
+  refused with exit 1: `EVAL_PRINT_DEPTH` in `eval`, `READ_PRINT_DEPTH`
+  in `read` and `verify` (`src/front/eval.c:10,2257-2260`). A type and a
+  diagnostic keep the cut at 200 levels.
 - The gate `make check` (`docs/VALIDATION.md`).
 
 ## Remaining work
 
 No M0, M1, M2 or M3 work remains. `SPEC.md` section 9 records the rulings
-on O1 to O17, and each ruling is done. O13 to O17 are the items of M3
+on O1 to O18, and each ruling is done. O13 to O17 are the items of M3
 (hardening: speed, limits, a checked certificate for the output), and the
 rulings of 2026-10-09 accept each proposal. `SPEC.md` section 10 lists
 the slices of M0 to M3. Slice D1 is done: `matComp` skips a term when
@@ -70,12 +76,11 @@ longer than 4096 bytes, and each boundary build that passes reads back.
 Slice D5 is done: the 6 kernels of O16 have eval lines at n = 3, and each
 line takes 0.09 s alone. Slice D6 closes M3 and changes docs only.
 
-One finding of slice D4 waits for a ruling (`SPEC.md` O18). A value
-line of `read`, `eval` or `verify` that nests 200 levels in arguments
-that are not the last prints a "..." cut with exit 0 (Known limits).
-The options are: (a) size the depth from the value, as D4 sizes the
-length; (b) refuse such a line with a new code; (c) keep the cut as a
-Known limit.
+Slice E1 is done (`SPEC.md` O18, ruled 2026-10-10: the proposal, a limit
+of 2000 levels and a refusal past it). Before E1, a value line of
+`read`, `eval` or `verify` that nested 200 levels in arguments that are
+not the last printed a "..." cut with exit 0. Now it prints in full up
+to 1999 levels, and a deeper line is refused (Known limits).
 
 ## Known limits
 
@@ -111,12 +116,17 @@ Known limit.
   (exit 1). The writer also refuses a type that nests 200 levels, because
   the printer cuts it (`JSON_TYPE_SIZE`). The gate group `limits` checks
   types of 4096 and 4097 bytes and of 199 and 200 levels.
-- A value line of `read` or `eval` has no size limit, but the printer
-  stops at 200 nested levels (`src/front/eval.c:7`). The printer prints
-  the last argument of each operation in a loop, so a long list does not
-  add levels. A value that nests 200 levels in the other arguments prints
-  with a "..." cut and exit 0, for example `pair (pair (pair 0 0) 0) 0`
-  with 200 levels of `pair`. D4 keeps this cut (`SPEC.md` O14).
+- A value line of `read`, `eval` or `verify` has no size limit, and its
+  depth limit is 2000 levels (`src/front/eval.c:10`, `SPEC.md` O18). The
+  printer prints the last argument of each operation in a loop, so a
+  long list does not add levels. A value that nests 2000 levels in the
+  other arguments, for example `pair (pair (... 0) 0) 0` with 2000
+  levels of `pair`, is refused with exit 1 and no stdout:
+  `EVAL_PRINT_DEPTH` in `eval`, `READ_PRINT_DEPTH` in `read` and
+  `verify`. The gate group `limits` checks lines of 1999 and 2000 levels.
+  The cut at 200 levels stays for a type (`src/front/eval.c:9`; the
+  writer refuses such a type, see above) and for a value in a diagnostic,
+  which prints "..." past 200 levels.
 
 ## Internal boundaries
 

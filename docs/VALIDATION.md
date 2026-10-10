@@ -1,32 +1,34 @@
 # Validation
 
-Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
+Date: 2026-10-10. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` from the sources of slice D4, the last commit that changes
+`build/langc` from the sources of slice E1, the last commit that changes
 `src/`. Slices B1 to B3, B5, C4, D5 and D6 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `build/langc` embeds. Slice D2 changes `src/` and
 `domain/opengame.lang`. Slice D3 changes the host sources `src/main.c`,
 `src/read.c` and `src/read.h`. Slice D4 changes the host sources
-`src/front/eval.c:2218,2236`, `src/front/core.h`, `src/front/check.c`,
-`src/read.c:274,784` and `src/json.c:10,381-387`.
+`src/front/eval.c:2247,2251`, `src/front/core.h`, `src/front/check.c`,
+`src/read.c:274,785` and `src/json.c:10,381-387`. Slice E1 changes
+`src/front/eval.c`, `src/front/core.h`, `src/front/check.c` and
+`src/read.c`.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 918 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+runs 922 tests with zero failures: 22 examples, 10 parse refusals, 86 check
 refusals, 423 eval lines, 22 JSON builds, 15 build refusals, 22 round
-trips, 258 reads, 29 read refusals, 6 verify refusals, 11 limits checks
+trips, 258 reads, 29 read refusals, 6 verify refusals, 15 limits checks
 and 14 queries. It also runs
 `build/read-typed-test`: 16 typed reader and printing regressions with zero failures.
 The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
 the `-o` file, a `Fin` argument out of range, the reader on white space,
 escapes, 2008 levels of nesting and a document of 16 MiB, the document of
 `langc build --read`, the absence of em-dashes and en-dashes in the kit,
-and Node `JSON.parse` of each golden. A timed run of the D5 gate
-(`/usr/bin/time -l make check`) took 27.32 seconds real and 19.45
-seconds user. Its maximum resident set size was 775,962,624 bytes (740.0
-MiB). Other jobs loaded the machine during this run (load 6.9 to 6.7).
+and Node `JSON.parse` of each golden. A timed run of the E1 gate
+(`/usr/bin/time -l make check`) took 29.62 seconds real and 19.76
+seconds user. Its maximum resident set size was 775,946,240 bytes (740.0
+MiB). Other jobs loaded the machine before this run (load 4.3 to 5.4).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -227,7 +229,7 @@ Slice D4 makes `langc read` and `langc eval` print each line in full
 printed with a "..." cut and exit 0, and the writer could cut a long
 `type`. `value_print_len` counts the text of a value, and `value_text`
 prints it into an arena buffer of that size
-(`src/front/eval.c:2218,2236`). The writer measures the type before it
+(`src/front/eval.c:2247,2251`). The writer measures the type before it
 evaluates the instance. A type longer than 4096 bytes, or a type that
 nests 200 levels, is `JSON_TYPE_SIZE` (exit 1, `src/json.c:10,381-387`).
 The reader refuses a decoded `type` longer than 4096 bytes with
@@ -282,3 +284,16 @@ Slice D6 adds no test and changes no source file. It closes M3 in
 gate time went from 267 s at load 27 to 43 (the M3 plan, `SPEC.md` O13)
 to 27.32 s at load 6.7 to 6.9 (D5). The loads differ, so the two times
 do not give one ratio.
+
+Slice E1 sets the depth limit of a value line (`SPEC.md` O18). The gate
+group `limits` has 4 new checks, so 15 (922 tests; typed regressions
+stay 16). An eval line of a pair of a function with 1999 levels prints in
+full, and at 2000 levels it is refused with `EVAL_PRINT_DEPTH`. A read
+line of a hand-written `Sigma` document with 1999 levels of `pair` prints
+in full, and at 2000 levels it is refused with `READ_PRINT_DEPTH`. The
+other groups do not change. The timed run of E1 is above (29.62 s real,
+D5 27.32 s; the loads differ). Three mutants fail the gate (outside the
+sandbox, each reverted from a copy and compared with `cmp`): a depth
+limit of 200 in place of 2000 (2 failures, the 2 lines of 1999 levels);
+no refusal on a cut (2 failures, the 2 refusals); and `EVAL_PRINT_DEPTH`
+in place of `READ_PRINT_DEPTH` for a read value line (1 failure).
