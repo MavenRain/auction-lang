@@ -359,7 +359,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   each example and all of its eval lines: a form of `eval` with more
   than one name. (d) No change: `docs/VALIDATION.md` records the time of
   each section. Proposal: (a). Each M3 slice records the gate time and
-  the load.
+  the load. RULED 2026-10-09 (USER): "a + a" (O13 a with O17 a).
 - O14. The print limit of a value line (M3, limits). `READ_PRINT_MAX` is
   64 KiB (`src/read.c:274`), and `PRINT_MAX` of `langc eval` is 65536
   (`src/front/check.c:15`). A top level Matrix prints with no limit
@@ -387,6 +387,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   boundary build must read back. (b) Keep the limit, and refuse a line that does not fit
   (a new refusal code) in place of the cut with exit 0. (c) Keep the
   cut, and record it in `docs/STATUS.md` (Known limits). Proposal: (a).
+  RULED 2026-10-09 (USER): "a (size from value)".
 - O15. A mechanism step with no kron of an identity (O12 a, M3 limits).
   `gameScore` (`domain/opengame.lang:15`) composes the view, the kron of
   the identity of size m and the mechanism k (y x r), and the update. In
@@ -410,6 +411,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   alone takes 134,217,728 x 16 bytes = 2 GiB at n = 4, and the arena has
   1 GiB. This is not free (O4). (d) Close: n = 3 stays the largest size
   of the 3-bidder scores, and `docs/STATUS.md` records it. Proposal: (a).
+  RULED 2026-10-09 (USER): "a (fused core operation)".
 - O16. The n = 3 eval lines of the kernels of O12 (O12 a, M3 speed).
   `spsb3Dev1FnEq` and `spsb3Dev2FnEq` have eval lines at n = 2 only
   (`test/eval/expect.txt:236-237`). `res3FnEq2` and `res3Dev1FnEq2` to
@@ -422,6 +424,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   Options: (a) add the 6 lines after the slices of O13 and O15, and
   record their time; (b) add them to the slow target of O13 (b); (c) add
   the 4 res3 lines only; (d) close: the n = 2 lines stay. Proposal: (a).
+  RULED 2026-10-09 (USER): "a (add all 6)".
 - O17. The checked certificate for the output (row M3 of section 10).
   The target is one JSON document (sections 7 and 8), and the document
   holds no proof. The checker refuses `axiom` (`REFUSE_AXIOM`), so a
@@ -447,7 +450,8 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   (c) A Lean certificate that Lean checks against auction-cat, as in
   ledger-lang and mechanism-lang. This is a new host tool, and sections
   7 and 8 do not include it. (d) Move the certificate out of M3, because
-  the target holds no proof. Proposal: (a).
+  the target holds no proof. Proposal: (a). RULED 2026-10-09 (USER):
+  "a + a" (O17 a with O13 a).
 
 ## 10. Milestones
 
@@ -506,17 +510,18 @@ ruled. A program can use the instances of a JSON document of
 `langc build` (`langc eval PROG --read DOC NAME`).
 
 M3 has these planned slices (2026-10-09). They follow the proposals of
-O13 to O17 (section 9), and the rulings on O13 to O17 can change them.
+O13 to O17 (section 9). The rulings on O13 to O17 (2026-10-09) accept
+each proposal, so the plan does not change.
 With O12 (a), M3 also holds the two open choices of slice B4 (O15 and
 O16). Each slice records the gate time and the load.
 
 | Slice | Commit | Content |
 |---|---|---|
-| D1 | Not started | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after |
+| D1 | This commit | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after. The 3 slowest eval lines take 3.2 s in place of 19.3 s (load 12 to 14) |
 | D2 | Not started | O15 (a): a core operation for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4. The size refusal moves from n = 4 to n = 6 |
 | D3 | Not started | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. The JSON round trips and existing read refusals stay |
 | D4 | Not started | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back |
 | D5 | Not started | O16 (a): the n = 3 eval lines of the 6 kernels of O12 |
 | D6 | Not started | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
-M3 is not started.
+M3 is in progress. Slice D1 is done.

@@ -5,8 +5,8 @@ commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`), and the slices B1 to B4 add their tests. Milestone M2 (the
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
-section 9 records the rulings on O1 to O12 and the open items O13 to O17
-of M3. M3 is not started.
+section 9 records the rulings on O1 to O17. M3 is in progress: slice D1
+is done.
 
 ## Implemented
 
@@ -32,15 +32,14 @@ of M3. M3 is not started.
 ## Remaining work
 
 No M0, M1 or M2 work remains. `SPEC.md` section 9 records the rulings on
-O1 to O12, and the rulings on O1 to O11 are done. O13 to O17 are the open
+O1 to O17, and the rulings on O1 to O11 are done. O13 to O17 are the
 items of M3 (hardening: speed, limits, a checked certificate for the
-output), and they wait for the rulings. `SPEC.md` section 10 lists the
-slices of M0, M1 and M2 and the planned slices D1 to D6 of M3. M3 is not
-started. The plan follows the proposals:
+output), and the rulings of 2026-10-09 accept each proposal. `SPEC.md`
+section 10 lists the slices of M0, M1 and M2 and the slices D1 to D6 of
+M3. Slice D1 is done: `matComp` skips a term when its left cell is 0, so
+the 3 slowest eval lines take 3.2 s in place of 19.3 s. The remaining
+slices follow the rulings:
 
-- D1 (O13): `matComp` skips a term when its left cell is 0. Three eval
-  lines of the 3-bidder kernels at n = 3 take 77 s of a 267 s gate at
-  load 27 to 43, and most of their cell products have a left cell of 0.
 - D2 (O15, from O12): a core operation for the kron of an identity in
   `gameScore`, so that the 3-bidder scores run at n = 4 and n = 5.
 - D3 (O17 and O13): the verb `langc verify PROG DOC`, a checked

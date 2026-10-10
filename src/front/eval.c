@@ -1390,7 +1390,8 @@ static const Value *reduce_mat_entry(Machine *m, const Value *const *a, uint32_t
 
 /* matComp m k n M N: cell (i, j) is the sum over l of M (i, l) * N (l, j),
    on the stored cells, O(m k n), exact. The first overflow traps
-   (EVAL_OVERFLOW). */
+   (EVAL_OVERFLOW). A term with M (i, l) = 0 is skipped: cell_mul of 0 is
+   0/1 and never traps, so the skip changes no value and no trap (D1). */
 static const Value *reduce_mat_comp(Machine *m, const Value *const *a, uint32_t n) {
   const Value *out;
   const Value *x = a[3];
@@ -1411,6 +1412,8 @@ static const Value *reduce_mat_comp(Machine *m, const Value *const *a, uint32_t 
       Cell sum = {0, 1};
       for (l = 0; l < x->cols; l++) {
         Cell p = {0, 1};
+        if (x->cells[i * x->cols + l].num == 0)
+          continue;
         if (!cell_mul(x->cells[i * x->cols + l], y->cells[l * y->cols + j], &p))
           return overflow(m);
         if (p.num != 0 && !cell_add(sum, p, 0, &sum))

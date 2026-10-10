@@ -2,8 +2,8 @@
 
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` from the sources of 1c3128f (slice C3), the last commit that
-changes `src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
+`build/langc` from the sources of slice D1, the last commit that changes
+`src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `build/langc` embeds.
 
@@ -19,9 +19,9 @@ the `-o` file, a `Fin` argument out of range, the reader on white space,
 escapes, 2008 levels of nesting and a document of 16 MiB, the document of
 `langc build --read`, the absence of em-dashes and en-dashes in the kit,
 and Node `JSON.parse` of each golden. A timed run on the sources of
-1c3128f (`/usr/bin/time -l make check`) took 85.19 seconds real and 66.45
-seconds user. Its maximum resident set size was 709,115,904 bytes (676.3
-MiB). Other jobs loaded the machine during this run (load 12 to 18).
+slice D1 (`/usr/bin/time -l make check`) took 46.72 seconds real and 23.27
+seconds user. Its maximum resident set size was 765,837,312 bytes (730.4
+MiB). Other jobs loaded the machine during this run (load 13 to 17).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -149,3 +149,14 @@ Slice C4 adds no test and changes no source file. It closes M2 in
 `README.md`. The gate counts are the counts of C3. The reads section
 calls `langc eval` 254 times, and each call checks the example again.
 Thus the gate time is an M3 item.
+
+Slice D1 adds no test (O13 a, first part). `matComp`
+(`reduce_mat_comp` in `src/front/eval.c`) skips a term when its left cell
+is 0. `cell_mul` of 0 and a cell gives 0/1 and never traps, so the skip
+changes no value and removes no `EVAL_OVERFLOW` trap. The gate counts are
+the counts of C3. Each of the 3 slowest eval lines ran alone with
+`/usr/bin/time -p` (seconds real, before and after the skip):
+`opengame spsb3FnEq 3` 5.76 and 1.06, `opengame fpsb3FnEq 3` 6.60 and
+1.15, `opengame spsb3Dev3FnEq 3` 6.97 and 1.00 (load 12 to 14). The gate
+took 46.72 s at load 13 to 17. The gate of C3 took 85.19 s at load 12 to
+18.
