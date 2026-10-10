@@ -78,7 +78,66 @@ static void large_matrix_read(void) {
     " (fun (i : Fin 1) (j : Fin 10000) => 1/10000)\n", expected);
 }
 
+/* A size pass must leave the fuel for rendering, and a failed pass must
+   refuse rather than print a placeholder with exit 0. */
+static void eval_print_budget(const char *name, uint32_t fuel, const char *expected, const char *code) {
+  const char *program = "def f : (Nat -> Nat) -> Nat := fun g => 7\n";
+  Arena arena;
+  Diag diag;
+  DeclList decls;
+  Machine machine;
+  FILE *out = tmpfile();
+  char text[64] = {0};
+  size_t len = 0;
+  int ok;
+  int status = -1;
+  arena_init(&arena, (size_t)1 << 30);
+  diag_init(&diag);
+  ok = out != NULL && front_load(&arena, name, program, strlen(program), &decls, &diag)
+    && check_program(&arena, &decls, &machine, &diag);
+  if (ok) {
+    machine.fuel = fuel;
+    status = eval_command(&machine, "f", NULL, 0, out, stderr);
+    rewind(out);
+    len = fread(text, 1, sizeof text - 1u, out);
+    ok = code == NULL ? status == 0 && !diag.set && len == strlen(expected) && strcmp(text, expected) == 0
+      : status == 1 && diag.set && strcmp(diag.code, code) == 0 && len == 0;
+  }
+  result(name, ok, &diag);
+  if (out != NULL)
+    fclose(out);
+  arena_release(&arena);
+}
+
+/* json_document resets the instance budget before any type evaluation. */
+static void json_print_budget(void) {
+  const char *program = "def p : Sigma (n : Nat) Nat := pack 0 7\n";
+  const char *expected = "{\"auction-lang\":1,\"instances\":[{\"name\":\"p\",\"type\":\"Sigma (n : Nat) Nat\","
+    "\"value\":{\"witness\":0,\"payload\":7}}]}\n";
+  Arena arena;
+  Diag diag;
+  DeclList decls;
+  Machine machine;
+  const char *text = NULL;
+  size_t len = 0;
+  int ok;
+  arena_init(&arena, (size_t)1 << 30);
+  diag_init(&diag);
+  ok = front_load(&arena, "type print fuel", program, strlen(program), &decls, &diag)
+    && check_program(&arena, &decls, &machine, &diag);
+  if (ok) {
+    machine.fuel = 0;
+    ok = json_document(&machine, &text, &len) && !diag.set
+      && len == strlen(expected) && memcmp(text, expected, len) == 0;
+  }
+  result("type print fuel", ok, &diag);
+  arena_release(&arena);
+}
+
 int main(void) {
+  eval_print_budget("measured print fuel", 2, "fun g => 7\n", NULL);
+  eval_print_budget("measured print refusal", 1, "", "EVAL_FUEL");
+  json_print_budget();
   large_matrix_read();
   built_read("higher universes",
     "def optionUniverse : Option (Type 0) := none\n"

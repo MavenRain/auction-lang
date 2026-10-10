@@ -217,6 +217,14 @@ build/langc read --json "$tmp/big-ok.json" 2>/dev/null | cmp -s - test/json/entr
   || { echo "FAIL read: a document of 16 MiB does not read"; fail=$((fail + 1)); }
 cp "$tmp/big-ok.json" "$tmp/big.json"
 printf ' ' >> "$tmp/big.json"
+# Type length: the typed reader permits a `type` of 4096 bytes (584 x `List (`
+# around `Fin 1000`). With `Fin 10000` the type has 4097 bytes.
+listy() {
+  awk -v n="$1" -v t="$2" 'BEGIN { s = ""; e = ""; for (i = 0; i < n; i++) { s = s "List ("; e = e ")" }
+    printf "%s%s%s", s, t, e }'
+}
+printf '{"auction-lang":1,"instances":[{"name":"t","type":"%s","value":[]}]}\n' "$(listy 584 'Fin 1000')" > "$tmp/type-ok.json"
+printf '{"auction-lang":1,"instances":[{"name":"t","type":"%s","value":[]}]}\n' "$(listy 584 'Fin 10000')" > "$tmp/type.json"
 # Read refusals. A document that test/read does not hold is in $tmp.
 checked=0
 while read -r file code; do
@@ -253,6 +261,60 @@ done < test/verify/expect.txt
 verify_refused 2 USAGE examples/functions.lang
 verify_refused 2 IO examples/functions.lang "$tmp/none.json"
 echo "verify refusals: $verifies checked"
+# Limits (slice D4). A value line has no size cut: each eval line and read line
+# of test/limits/long.lang is equal to the awk line in full, and the verify
+# lines are equal to the read lines. The writer refuses a type of more than
+# 4096 bytes or of 200 nested levels. A type of 4096 bytes or of 199 levels
+# builds, reads and verifies.
+limits=0
+pass() { limits=$((limits + 1)); }
+miss() { echo "FAIL limits: $1"; fail=$((fail + 1)); }
+# build_refused FILE CODE: `langc build FILE` must exit 1 with CODE and no stdout.
+build_refused() {
+  status=0
+  build/langc build "$1" >"$tmp/out.json" 2>"$tmp/err" || status=$?
+  case "$status:$(head -n 1 "$tmp/err"):$(wc -c <"$tmp/out.json" | tr -d ' ')" in
+  "1:langc: $2: "*":0") pass ;;
+  *) miss "build $1: want exit 1, $2 and no stdout, got exit $status" ;;
+  esac
+}
+# read_back PROG DOC: DOC reads, and `langc verify PROG DOC` prints the read lines.
+read_back() {
+  build/langc read "$2" >"$tmp/read.txt" 2>/dev/null \
+    && build/langc verify "$1" "$2" 2>/dev/null | cmp -s - "$tmp/read.txt"
+}
+awk 'BEGIN { printf "["; for (i = 0; i < 128; i++) { printf "%s[", (i ? ", " : "")
+  for (j = 0; j < 128; j++) printf "%s%s/1", (j ? ", " : ""), (i == j ? 1 : 0); printf "]" } printf "]" }' > "$tmp/id"
+{ printf 'cons '; cat "$tmp/id"; printf ' nil\n'; } > "$tmp/wide.want"
+{ printf 'pair '; cat "$tmp/id"; printf ' 7\n'; } > "$tmp/both.want"
+{ printf 'wide : List (Matrix 128 128) = '; cat "$tmp/wide.want"
+  printf 'both : Prod (Matrix 128 128) Nat = '; cat "$tmp/both.want"; } > "$tmp/long.want"
+[ "$(wc -c < "$tmp/wide.want")" -gt 65537 ] && pass || miss "the wide line is not longer than 65536 bytes"
+for name in wide both; do
+  build/langc eval test/limits/long.lang "$name" > "$tmp/$name.got" 2>/dev/null \
+    && cmp -s "$tmp/$name.got" "$tmp/$name.want" && pass || miss "eval $name: not the full line"
+done
+build/langc build test/limits/long.lang -o "$tmp/long.json" 2>/dev/null \
+  && build/langc read "$tmp/long.json" 2>/dev/null | cmp -s - "$tmp/long.want" && pass || miss "read long.json: not the full lines"
+read_back test/limits/long.lang "$tmp/long.json" && pass || miss "verify long.json: not the read lines"
+[ "$(listy 584 'Fin 1000' | wc -c)" -eq 4096 ] && pass || miss "the boundary type does not have 4096 bytes"
+printf 'def t : %s := nil\n' "$(listy 584 'Fin 1000')" > "$tmp/t4096.lang"
+printf 'def t : %s := nil\n' "$(listy 584 'Fin 10000')" > "$tmp/t4097.lang"
+build/langc build "$tmp/t4096.lang" -o "$tmp/t4096.json" 2>/dev/null \
+  && cmp -s "$tmp/t4096.json" "$tmp/type-ok.json" && pass || miss "a type of 4096 bytes does not build"
+read_back "$tmp/t4096.lang" "$tmp/t4096.json" && pass || miss "a type of 4096 bytes does not read back"
+build_refused "$tmp/t4097.lang" JSON_TYPE_SIZE
+# Nesting: n levels of `Prod (...) Nat`. The printer cuts at 200 levels.
+nest() {
+  awk -v n="$1" 'BEGIN { t = "Nat"; v = "0"; for (i = 0; i < n; i++) { t = "Prod (" t ") Nat"; v = "pair (" v ") 0" }
+    printf "def d : %s := %s\n", t, v }'
+}
+nest 199 > "$tmp/nest199.lang"
+nest 200 > "$tmp/nest200.lang"
+build/langc build "$tmp/nest199.lang" -o "$tmp/nest199.json" 2>/dev/null \
+  && read_back "$tmp/nest199.lang" "$tmp/nest199.json" && pass || miss "a type of 199 levels does not build and read back"
+build_refused "$tmp/nest200.lang" JSON_TYPE_SIZE
+echo "limits: $limits checked"
 # Queries. A line is PROG DOC NAME [ARGS...] => OUTPUT, or
 # PROG DOC NAME => refuse CODE. PROG is a program of test/query.
 queries=0

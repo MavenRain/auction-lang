@@ -85,7 +85,7 @@ bound (`docs/host/CAPABILITY.md:31-48`). The evaluator stops at a depth of
 
 `Nat` is an unsigned 64-bit integer (`docs/host/CAPABILITY.md:25`). The
 primitives are natAdd, natSub, natMul, natDiv, natMod, natEq, natLe, natLt
-and natMax (`src/front/check.c:136` and the lines after it). The checker
+and natMax (`src/front/check.c:135` and the lines after it). The checker
 refuses natMin, natGe and natGt with `REFUSE_ALLOW`
 (`test/check/natmin-use.lang`, `test/check/natge-use.lang`,
 `test/check/natgt-use.lang`).

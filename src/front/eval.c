@@ -1988,13 +1988,15 @@ const char *op_name(const Machine *m, Op op, uint32_t inst, uint32_t field) {
   return (size_t)op < sizeof OP_NAMES / sizeof OP_NAMES[0] ? OP_NAMES[op] : "?";
 }
 
-/* The printer keeps len + 4 <= cap, so "..." always fits. */
+/* The printer keeps len + 4 <= cap, so "..." always fits. With no buffer it
+   only counts the bytes (value_print_len). CUT is 1 after a cut "...". */
 typedef struct {
   Machine *m;
   char *buf;
   size_t cap;
   size_t len;
   int full;
+  int cut;
   const char *const *names;
   uint32_t name_count;
   const char *extra[PRINT_NAMES_MAX];
@@ -2006,6 +2008,10 @@ static void put(Printer *p, const char *s) {
   size_t n = strlen(s);
   if (p->full)
     return;
+  if (p->buf == NULL) {
+    p->len += n;
+    return;
+  }
   if (p->len + n + 4u <= p->cap) {
     memcpy(p->buf + p->len, s, n + 1u);
     p->len += n;
@@ -2014,6 +2020,7 @@ static void put(Printer *p, const char *s) {
   memcpy(p->buf + p->len, "...", 4u);
   p->len += 3u;
   p->full = 1;
+  p->cut = 1;
 }
 
 static const char *var_name(const Printer *p, uint64_t level) {
@@ -2168,6 +2175,7 @@ static void print_value(Printer *p, const Value *v, int atom) {
   uint32_t i;
   if (p->depth >= PRINT_DEPTH_MAX) {
     put(p, "...");
+    p->cut = 1;
     return;
   }
   p->depth++;
@@ -2205,4 +2213,33 @@ void value_print(Machine *m, const char *const *names, uint32_t name_count, cons
   p.names = names;
   p.name_count = name_count;
   print_value(&p, v, 0);
+}
+
+size_t value_print_len(Machine *m, const char *const *names, uint32_t name_count, const Value *v, int *cut) {
+  Printer p;
+  uint64_t fuel = m->fuel;
+  unsigned depth = m->depth;
+  memset(&p, 0, sizeof p);
+  p.m = m;
+  p.names = names;
+  p.name_count = name_count;
+  print_value(&p, v, 0);
+  /* Printing binders evaluates their bodies. Reserve the original budget
+     for the render pass, and keep any failure diagnostic from measuring. */
+  m->fuel = fuel;
+  m->depth = depth;
+  if (cut != NULL)
+    *cut = p.cut;
+  return p.len;
+}
+
+char *value_text(Machine *m, const Value *v) {
+  size_t cap = value_print_len(m, NULL, 0, v, NULL) + 4u;
+  char *buf;
+  if (m->diag->set)
+    return NULL;
+  buf = arena_alloc(m->arena, cap);
+  if (buf != NULL)
+    value_print(m, NULL, 0, v, buf, cap);
+  return m->diag->set ? NULL : buf;
 }

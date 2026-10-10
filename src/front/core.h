@@ -272,6 +272,14 @@ const Core *quote_value(Machine *m, uint32_t level, const Value *v);
 /* Writes V in the surface syntax. NAMES gives the names of the levels below
    NAME_COUNT. */
 void value_print(Machine *m, const char *const *names, uint32_t name_count, const Value *v, char *buf, size_t cap);
+/* The length of the text of value_print with no size cut (the NUL not
+   counted). *CUT, when CUT is not NULL, is 1 when the text has a depth cut.
+   Measuring preserves the evaluation fuel; failures set M->diag. */
+size_t value_print_len(Machine *m, const char *const *names, uint32_t name_count, const Value *v, int *cut);
+/* V as value_print writes it, in a buffer of the arena of M that its length
+   fits, so with no size cut (slice D4). NULL on allocation or evaluation
+   failure; evaluation failures set M->diag. */
+char *value_text(Machine *m, const Value *v);
 const char *op_name(const Machine *m, Op op, uint32_t inst, uint32_t field);
 /* The build code and the message of the trap V. */
 const char *trap_code(const Value *v);

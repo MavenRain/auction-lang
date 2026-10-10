@@ -39,12 +39,12 @@ The compiler refuses these forms in a program:
 | Text, for example `"bolt"` | | `LEX_CHAR` | `test/parse/string.lang` |
 
 The core names are the built-ins of `src/front/check.c`, the reserved names
-`Bool` and `Text` (`src/front/check.c:182`), and each name in a domain file.
+`Bool` and `Text` (`src/front/check.c:181`), and each name in a domain file.
 The Makefile joins `domain/domain.lang`, `domain/finstoch.lang`,
 `domain/auction.lang` and `domain/opengame.lang` in this order
 (`Makefile:15`). The allow-list refusals have 25 names. Each diagnostic
 gives an allowed form or states that no such operation is provided
-(`src/front/check.c:187-212`). For example, write
+(`src/front/check.c:186-211`). For example, write
 `flagIf (natLe x y) x y` for `natMin x y`.
 
 Thus a program cannot add a data type, an unproved fact or general
@@ -82,17 +82,17 @@ A section number in the Meaning column is a section of `design/DESIGN.md`.
 
 | Type | Meaning (design section) | Definition |
 |---|---|---|
-| `Nat` | A count, a size or an index (section 2) | Built-in (`src/front/check.c:100`). An unsigned 64-bit value. |
-| `Flag` | A yes or no decision: `flagYes` or `flagNo` (section 2) | Built-in (`src/front/check.c:101`) |
-| `Fin n` | A value below n: a bid, a valuation, a bidder or an outcome (section 2) | Built-in (`src/front/check.c:148`) |
-| `Rat` | An exact fraction: a probability, a utility or a revenue (section 2) | Built-in (`src/front/check.c:159`). The numerator is above -2^63 and below 2^63; the denominator is a positive unsigned 64-bit value. |
-| `Matrix m n` | A stochastic matrix of `Rat` values with m rows and n columns: a kernel of FinStoch (auction-cat `MarkovCat/FinStoch.lean:433`) (sections 2 and 3) | Built-in (`src/front/check.c:169`). Each entry is nonnegative and each row sums to exactly 1/1. `matTabulate` traps with `EVAL_STOCHASTIC` otherwise. |
+| `Nat` | A count, a size or an index (section 2) | Built-in (`src/front/check.c:99`). An unsigned 64-bit value. |
+| `Flag` | A yes or no decision: `flagYes` or `flagNo` (section 2) | Built-in (`src/front/check.c:100`) |
+| `Fin n` | A value below n: a bid, a valuation, a bidder or an outcome (section 2) | Built-in (`src/front/check.c:147`) |
+| `Rat` | An exact fraction: a probability, a utility or a revenue (section 2) | Built-in (`src/front/check.c:158`). The numerator is above -2^63 and below 2^63; the denominator is a positive unsigned 64-bit value. |
+| `Matrix m n` | A stochastic matrix of `Rat` values with m rows and n columns: a kernel of FinStoch (auction-cat `MarkovCat/FinStoch.lean:433`) (sections 2 and 3) | Built-in (`src/front/check.c:168`). Each entry is nonnegative and each row sums to exactly 1/1. `matTabulate` traps with `EVAL_STOCHASTIC` otherwise. |
 | `OpenGame x s y r m` | An open game over FinStoch (auction-cat `OpenGamesCat/Basic.lean`) (sections 2 and 6) | Family `makeGame (gameView : Matrix x (natMul m y)) (gameUpdate : Matrix (natMul m r) s)` (`domain/opengame.lang:8`) |
 | `Color`, `Item`, `Stack`, `Lot size` | The sample domain of lang-template. It has no auction-cat source. | Families (`domain/domain.lang:4-8`) |
 
 ## 6. Core operations
 
-The built-ins are in `src/front/check.c:136-176`. The Type column gives the
+The built-ins are in `src/front/check.c:135-175`. The Type column gives the
 type, or the number of arguments and the result type. A section number in
 the Meaning column is a section of `design/DESIGN.md`.
 
@@ -403,6 +403,20 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   (a new refusal code) in place of the cut with exit 0. (c) Keep the
   cut, and record it in `docs/STATUS.md` (Known limits). Proposal: (a).
   RULED 2026-10-09 (USER): "a (size from value)".
+  DONE 2026-10-09 (slice D4). The refs above are to f7f6741.
+  `READ_PRINT_MAX` and `PRINT_MAX` are gone. `value_text`
+  (`src/front/eval.c:2236`) counts the text of a value, then prints it
+  into an arena buffer of that size, so `read` and `eval` print each
+  line in full. The reader refuses a decoded `type` longer than 4096
+  bytes with `READ_TYPE_SIZE` (`src/read.c:274,784`). The writer
+  measures the full type before it evaluates the instance
+  (`src/json.c:10,381-387`). A type longer than 4096 bytes, or a type
+  that nests 200 levels so that the printer cuts it, is
+  `JSON_TYPE_SIZE` (exit 1). The `limits` group of the gate compares an
+  eval line of 82,185 bytes and read lines of up to 82,218 bytes in
+  full, and checks the types of 4096 and 4097 bytes and of 199 and 200
+  levels. A value line still has the depth cut of the printer at 200
+  levels (`docs/STATUS.md`, Known limits).
 - O15. A mechanism step with no kron of an identity (O12 a, M3 limits).
   `gameScore` (`domain/opengame.lang:15`) composes the view, the kron of
   the identity of size m and the mechanism k (y x r), and the update. In
@@ -550,9 +564,9 @@ O16). Each slice records the gate time and the load.
 |---|---|---|
 | D1 | 58e1eaf | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after. The 3 slowest eval lines take 3.2 s in place of 19.3 s (load 12 to 14) |
 | D2 | f8bb3ea | O15 (a): the core operation `matIdKronComp` for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4 (about 1.1 s each). The size refusal moves from n = 4 to n = 6. At n = 5 the evaluation stops at the arena limit. The 3 slowest eval lines of D1 take 0.1 s each in place of 1.0 s (load 5 to 6) |
-| D3 | This commit | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. Each read value also matches an independent eval expectation; review adds the 46 missing expectations. The JSON round trips and existing read refusals stay. The reads loop alone before review: 9.46 s before D3, 2.18 s after (load 9) |
-| D4 | Not started | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back |
+| D3 | f7f6741 | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. Each read value also matches an independent eval expectation; review adds the 46 missing expectations. The JSON round trips and existing read refusals stay. The reads loop alone before review: 9.46 s before D3, 2.18 s after (load 9) |
+| D4 | This commit | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back. The codes are `READ_TYPE_SIZE` and `JSON_TYPE_SIZE`, and the gate group `limits` has 11 checks |
 | D5 | Not started | O16 (a): the n = 3 eval lines of the 6 kernels of O12 |
 | D6 | Not started | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
-M3 is in progress. Slices D1 to D3 are done.
+M3 is in progress. Slices D1 to D4 are done.

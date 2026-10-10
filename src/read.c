@@ -269,9 +269,9 @@ static int check_shape(const JsonNode *doc, Diag *diag) {
    then checked as a closed type against the domain. No temporary declaration
    enters the scope of another type. Values are decoded as in src/json.c. */
 
-/* The default for non-matrix values, as PRINT_MAX of src/front/check.c.
-   Root matrices use a larger buffer because `langc eval` streams them. */
-#define READ_PRINT_MAX 65536u
+/* The longest `type` text after decoding, in UTF-8 bytes (the NUL not
+   counted). The writer has the same limit (JSON_TYPE_MAX, src/json.c). */
+#define READ_TYPE_MAX 4096u
 
 typedef struct {
   Machine *m;
@@ -682,26 +682,15 @@ static int instance_type(const Value *type) {
 /* As `langc eval` (src/front/check.c eval_command and print_result): a Flag
    entry prints as 0 or 1. Each other value prints with value_print, which
    prints a Nat, a Rat (num/den) and a Matrix (rows of num/den) in the form of
-   print_result. */
-static int print_read_value(Machine *m, const Value *type, const Value *v, char **buf) {
+   print_result. value_text sizes the buffer from the value, so a line has no
+   cut (slice D4). */
+static int print_read_value(Machine *m, const Value *type, const Value *v, const char **out) {
   Entry entry;
-  size_t capacity = READ_PRINT_MAX;
-  if (v->kind == VAL_MATRIX) {
-    /* Decoded cell counts are bounded by the input document. A cell has at
-       most 40 decimal characters; allow separators, row brackets and NUL. */
-    size_t needed = (size_t)v->rows * v->cols * 44u + (size_t)v->rows * 4u + 3u;
-    if (needed > capacity) {
-      capacity = needed;
-      *buf = arena_alloc(m->arena, capacity);
-      if (*buf == NULL)
-        return oom(m->diag);
-    }
-  }
   if (entry_of(m, type, &entry) && entry.result_flag)
-    snprintf(*buf, capacity, "%d", val_is(v, OP_FLAG_YES));
+    *out = val_is(v, OP_FLAG_YES) ? "1" : "0";
   else
-    value_print(m, NULL, 0, v, *buf, capacity);
-  return 1;
+    *out = value_text(m, v);
+  return *out != NULL ? 1 : oom(m->diag);
 }
 
 static int name_order(const void *a, const void *b) {
@@ -792,6 +781,9 @@ static int typed_defs(Arena *arena, const JsonNode *doc, int ident, Machine *mac
     if (t.name == NULL)
       return oom(diag);
     machine->def = t.name;
+    if (inst->first->next->len > READ_TYPE_MAX)
+      return diag_fail(diag, "READ_TYPE_SIZE", t.name, "the type has %zu bytes, more than %u", inst->first->next->len,
+                       READ_TYPE_MAX);
     diag_init(&check);
     machine->diag = &check;
     if (!parse_type(arena, inst->first->next, i + 1u, &term, &check) || !check_closed_type(machine, term, &type))
@@ -821,19 +813,19 @@ int read_defs(Arena *arena, const JsonNode *doc, Machine *m, const ReadDef **rea
 static int print_defs(Arena *arena, Machine *machine, const ReadDef *defs, size_t count, const char **text, size_t *len,
                       Diag *diag) {
   const char **lines;
-  char *type_buf;
-  char *value_buf;
+  const char *type_buf;
+  const char *value_buf;
   char *buf;
   size_t total = 0;
   size_t i;
   lines = arena_alloc(arena, (count + 1u) * sizeof *lines);
-  type_buf = arena_alloc(arena, READ_PRINT_MAX);
-  value_buf = arena_alloc(arena, READ_PRINT_MAX);
-  if (lines == NULL || type_buf == NULL || value_buf == NULL)
+  if (lines == NULL)
     return oom(diag);
   for (i = 0; i < count; i++) {
     size_t n;
-    value_print(machine, NULL, 0, defs[i].type, type_buf, READ_PRINT_MAX);
+    type_buf = value_text(machine, defs[i].type);
+    if (type_buf == NULL)
+      return oom(diag);
     if (!print_read_value(machine, defs[i].type, defs[i].value, &value_buf))
       return 0;
     n = strlen(defs[i].name) + strlen(type_buf) + strlen(value_buf) + 7u;

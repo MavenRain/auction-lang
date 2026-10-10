@@ -12,7 +12,6 @@
 #define SHOW_MAX 512u
 #define NAMES_MAX 64u
 #define UNIVERSE_MAX 64u
-#define PRINT_MAX 65536u
 #define NO_FAMILY UINT32_MAX
 #define NO_DEF UINT32_MAX
 
@@ -1970,9 +1969,7 @@ static const Value *entry_arg(Machine *m, const char *text, const Value *dom) {
   if (val_is(dom, OP_FIN)) {
     if (dom->args[0]->kind == VAL_NAT && parse_u64(text, &n) && n < dom->args[0]->nat)
       return val_nat(m, n);
-    buf = arena_alloc(m->arena, PRINT_MAX);
-    if (buf != NULL)
-      value_print(m, NULL, 0, dom, buf, PRINT_MAX);
+    buf = value_text(m, dom);
     diag_fail(m->diag, "EVAL_ARGS", m->def, "'%s' is not an index of %s", text, buf != NULL ? buf : "Fin");
     return NULL;
   }
@@ -2051,10 +2048,9 @@ int eval_command(Machine *m, const char *name, char *const *args, int arg_count,
     return 2;
   }
   if (!entry_of(m, m->defs[d].type, &entry)) {
-    buf = arena_alloc(m->arena, PRINT_MAX);
+    buf = value_text(m, v);
     if (buf == NULL)
       return diag_fail(m->diag, "OOM", name, "out of memory") + 1;
-    value_print(m, NULL, 0, v, buf, PRINT_MAX);
     fprintf(out, "%s\n", buf);
     return 0;
   }

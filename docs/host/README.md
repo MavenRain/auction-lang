@@ -86,6 +86,7 @@ example `Lot 3`), not in `value`.
 |---|---|
 | `JSON_VALUE` | An instance holds a function, a type or a stuck term |
 | `JSON_DEPTH` | An instance nests deeper than 2000 levels. A list spine does not count. |
+| `JSON_TYPE_SIZE` | The type of an instance has more than 4096 bytes, or it nests 200 levels, so the printer cannot print it in full. The writer checks the type before it evaluates the instance |
 | `EVAL_OVERFLOW` | A Nat, Rat or Matrix operation in an instance overflows |
 | `EVAL_DIV_ZERO` | A natDiv, natMod or ratDiv in an instance divides by zero |
 | `EVAL_STOCHASTIC` | A matTabulate row in an instance has a cell below 0/1 or a sum other than 1/1 |
@@ -106,6 +107,7 @@ for each refusal.
 | `READ_SHAPE` | The second and last member is not `"instances"`, an array of objects with the members `name`, `type` and `value` in this order |
 | `READ_NAME` | Two instances have the same name, or a name contains an ASCII control byte. With `--read` (queries), also a name that is not exactly one identifier, for example `a b` or the keyword `def` |
 | `READ_TYPE` | A `type` text is not exactly one type that checks after the domain, or it is a function type, a universe or an equality |
+| `READ_TYPE_SIZE` | A decoded `type` text has more than 4096 UTF-8 bytes (the NUL not counted). The reader checks this before it parses the type |
 | `READ_VALUE` | A `value` does not match its type (the table above). For example: a Nat above 2^64-1, a `Fin n` value that is not below n, a Rat that is not in lowest terms, a Matrix with a wrong number of rows, a Matrix row that does not sum to 1, or `null` for an `Eq` type whose two sides are not equal |
 
 Typed reads check each type against the domain in isolation and infer its
@@ -179,7 +181,8 @@ executable at build time. `domain/README.md` tells how to replace it.
 | JSON nesting | 2000 | `src/json.h:15` |
 | Read document size | 16 MiB | `src/read.h:19` |
 | Read nesting | 2008 | `src/read.h:24` |
-| `type` text | 4096 bytes | `src/json.c:7` |
+| `type` text, writer and reader | 4096 bytes | `src/json.c:10`, `src/read.c:274` |
+| Value line of `read` and `eval` | No size limit. A "..." cut at 200 nested levels | `src/front/eval.c:7` |
 
 ## Origin
 

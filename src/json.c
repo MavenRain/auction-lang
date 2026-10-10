@@ -4,7 +4,11 @@
 
 #include "json.h"
 
+/* The longest `type` text, in UTF-8 bytes (the NUL not counted). The typed
+   reader has the same limit (READ_TYPE_MAX, src/read.c). The buffer also
+   keeps the 3 bytes that value_print reserves for "..." and the NUL. */
 #define JSON_TYPE_MAX 4096u
+#define JSON_TYPE_CAP (JSON_TYPE_MAX + 4u)
 
 /* new-lang.sh replaces the placeholder with the language name. */
 const char json_lang_name[] = "auction-lang";
@@ -366,14 +370,29 @@ static int instance_json(Out *o, uint32_t index, char *type_text, int first) {
   Machine *m = o->m;
   const DefInfo *d = &m->defs[index];
   const Value *v;
+  size_t type_len;
+  int cut = 0;
   o->def = d->name;
   m->def = d->name;
+  m->fuel = EVAL_FUEL_STEPS;
+  m->depth = 0;
+  /* The full type first (slice D4): a type that does not fit is a refusal,
+     not a cut type that the typed reader refuses. */
+  type_len = value_print_len(m, NULL, 0, d->type, &cut);
+  if (m->diag->set)
+    return 0;
+  if (type_len > JSON_TYPE_MAX)
+    return diag_fail(m->diag, "JSON_TYPE_SIZE", d->name, "the type has %zu bytes, more than %u", type_len, JSON_TYPE_MAX);
+  if (cut)
+    return diag_fail(m->diag, "JSON_TYPE_SIZE", d->name, "the type nests too deep to print in full");
+  value_print(m, NULL, 0, d->type, type_text, JSON_TYPE_CAP);
+  if (m->diag->set)
+    return 0;
   m->fuel = EVAL_FUEL_STEPS;
   m->depth = 0;
   v = def_value(m, index);
   if (v == NULL)
     return 0;
-  value_print(m, NULL, 0, d->type, type_text, JSON_TYPE_MAX);
   return (first || put_text(o, ",")) && put_text(o, "{\"name\":") && put_string(o, d->name)
     && put_text(o, ",\"type\":") && put_string(o, type_text) && put_text(o, ",\"value\":")
     && value_json(o, d->type, v) && put_text(o, "}");
@@ -381,7 +400,7 @@ static int instance_json(Out *o, uint32_t index, char *type_text, int first) {
 
 int json_document(Machine *m, const char **text, size_t *len) {
   Out o;
-  char *type_text = arena_alloc(m->arena, JSON_TYPE_MAX);
+  char *type_text = arena_alloc(m->arena, JSON_TYPE_CAP);
   uint32_t i;
   int first = 1;
   int ok;

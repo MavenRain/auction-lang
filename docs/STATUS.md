@@ -6,13 +6,13 @@ commit. It also has the core operations of the design (milestone M1 in
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
 section 9 records the rulings on O1 to O17. M3 is in progress: slices D1
-to D3 are done.
+to D4 are done.
 
 ## Implemented
 
 - The type formers F1 to F15 on the tcc-json host (`formers/tcc-json.md`).
 - The built-in types `Nat`, `Flag`, `Fin n`, `Rat` and `Matrix m n`, and
-  their operations (`src/front/check.c:100-176`).
+  their operations (`src/front/check.c:99-175`).
 - The core operation `matIdKronComp` (slice D2): the composition with the
   kron of an identity, with no kron. `gameScore` uses it.
 - `domain/finstoch.lang`: 10 definitions. The structure maps of FinStoch.
@@ -32,9 +32,15 @@ to D3 are done.
 - The verb `verify PROG DOC` (slice D3): a checked certificate for the
   output. It compares each instance of DOC with the value of that instance
   in PROG, and the bytes of DOC with the bytes that `build PROG` writes
-  (`src/main.c:165`, `src/read.c:887`). A difference is a refusal with
+  (`src/main.c:165`, `src/read.c:879`). A difference is a refusal with
   exit 1: `VERIFY_MISSING`, `VERIFY_VALUE`, `VERIFY_EXTRA` or
   `VERIFY_BYTES`.
+- Full lines (slice D4): `read` and `eval` print each line in full.
+  `value_print_len` and `value_text` (`src/front/eval.c:2218,2236`) count
+  the text of a value, then print it into an arena buffer of that size.
+  The writer and the reader refuse a JSON `type` longer than 4096 bytes
+  with exit 1: `JSON_TYPE_SIZE` (`src/json.c:385-387`) and
+  `READ_TYPE_SIZE` (`src/read.c:784`).
 - The gate `make check` (`docs/VALIDATION.md`).
 
 ## Remaining work
@@ -53,16 +59,12 @@ program. The reads section of `test/gate.sh` calls it once for each
 document, in place of 254 calls of `langc eval`, so the reads loop takes
 2.2 s in place of 9.5 s before review. All 254 read values also match
 no-argument expectations checked independently by the eval group;
-review adds the 46 missing expectations. The remaining slices follow
-the rulings:
+review adds the 46 missing expectations. Slice D4 is done: `read` and
+`eval` print each line in full (before D4, a line longer than 64 KiB
+printed with a "..." cut). The writer and the reader refuse a `type`
+longer than 4096 bytes, and each boundary build that passes reads back.
+The remaining slices follow the rulings:
 
-- D4 (O14): the print buffer of a read line and of an eval line
-  (`READ_PRINT_MAX`, 64 KiB, `src/read.c:274`). A List, product, Sigma,
-  family or Option line longer than 64 KiB prints with a "..." cut.
-  The writer also cuts a long `type` into unreadable JSON with exit 0.
-  D4 sizes value buffers, enforces the 4096-byte decoded type limit in
-  the reader and writer, and makes the writer refuse instead of emitting
-  a cut type. Boundary builds that succeed must read back.
 - D5 (O16, from O12): eval lines at n = 3 for the 6 kernels that have
   eval lines at n = 2 only.
 - D6: close M3, docs only.
@@ -95,7 +97,18 @@ the rulings:
   count fits, but the evaluation stops at the arena limit (`langc: OOM`,
   exit 1). `test/emit/opengame-size.lang` checks their refusal at n = 6.
   The kron form of `auctionGame3` exceeds the limit at n = 3.
-- The JSON `type` field of an instance is at most 4096 bytes.
+- The JSON `type` field of an instance is at most 4096 bytes
+  (`src/json.c:10`, `src/read.c:274`). The writer refuses a longer type
+  with `JSON_TYPE_SIZE`, and the reader refuses it with `READ_TYPE_SIZE`
+  (exit 1). The writer also refuses a type that nests 200 levels, because
+  the printer cuts it (`JSON_TYPE_SIZE`). The gate group `limits` checks
+  types of 4096 and 4097 bytes and of 199 and 200 levels.
+- A value line of `read` or `eval` has no size limit, but the printer
+  stops at 200 nested levels (`src/front/eval.c:7`). The printer prints
+  the last argument of each operation in a loop, so a long list does not
+  add levels. A value that nests 200 levels in the other arguments prints
+  with a "..." cut and exit 0, for example `pair (pair (pair 0 0) 0) 0`
+  with 200 levels of `pair`. D4 keeps this cut (`SPEC.md` O14).
 
 ## Internal boundaries
 

@@ -20,6 +20,7 @@ twice.json READ_NAME
 defs.json READ_TYPE
 unknown.json READ_TYPE
 function.json READ_TYPE
+type.json READ_TYPE_SIZE
 large.json READ_VALUE
 bound.json READ_VALUE
 lowest.json READ_VALUE

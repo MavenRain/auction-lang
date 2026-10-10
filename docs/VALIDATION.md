@@ -2,29 +2,31 @@
 
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` from the sources of slice D3, the last commit that changes
+`build/langc` from the sources of slice D4, the last commit that changes
 `src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `build/langc` embeds. Slice D2 changes `src/` and
 `domain/opengame.lang`. Slice D3 changes the host sources `src/main.c`,
-`src/read.c` and `src/read.h`.
+`src/read.c` and `src/read.h`. Slice D4 changes the host sources
+`src/front/eval.c:2218,2236`, `src/front/core.h`, `src/front/check.c`,
+`src/read.c:274,784` and `src/json.c:10,381-387`.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 896 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+runs 908 tests with zero failures: 22 examples, 10 parse refusals, 86 check
 refusals, 417 eval lines, 22 JSON builds, 15 build refusals, 22 round
-trips, 254 reads, 28 read refusals, 6 verify refusals and 14 queries. It also runs
-`build/read-typed-test`: 13 typed reader regressions with zero failures.
+trips, 254 reads, 29 read refusals, 6 verify refusals, 11 limits checks
+and 14 queries. It also runs
+`build/read-typed-test`: 16 typed reader and printing regressions with zero failures.
 The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
 the `-o` file, a `Fin` argument out of range, the reader on white space,
 escapes, 2008 levels of nesting and a document of 16 MiB, the document of
 `langc build --read`, the absence of em-dashes and en-dashes in the kit,
-and Node `JSON.parse` of each golden. A timed run before review restored
-the independent eval expectations (`/usr/bin/time -l make check`) took
-23.90 seconds real and 16.47
-seconds user. Its maximum resident set size was 775,815,168 bytes (739.9
-MiB). Other jobs loaded the machine during this run (load 8 to 10).
+and Node `JSON.parse` of each golden. A timed run of the D4 gate before review
+(`/usr/bin/time -l make check`) took 25.21 seconds real and 18.33
+seconds user. Its maximum resident set size was 775,782,400 bytes (739.8
+MiB). Other jobs loaded the machine during this run (load 3.3 to 4.4).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -219,3 +221,39 @@ that makes `langc eval examples/arith.lang odd` print 999 instead of 1
 passes the initial D3 gate but fails the prior gate. With the restored
 eval expectations it fails the reviewed gate. The reviewed gate passes
 all 896 tests and the 13 typed reader regressions.
+
+Slice D4 makes `langc read` and `langc eval` print each line in full
+(O14 a). Before D4, a read line or an eval line longer than 64 KiB
+printed with a "..." cut and exit 0, and the writer could cut a long
+`type`. `value_print_len` counts the text of a value, and `value_text`
+prints it into an arena buffer of that size
+(`src/front/eval.c:2218,2236`). The writer measures the type before it
+evaluates the instance. A type longer than 4096 bytes, or a type that
+nests 200 levels, is `JSON_TYPE_SIZE` (exit 1, `src/json.c:10,381-387`).
+The reader refuses a decoded `type` longer than 4096 bytes with
+`READ_TYPE_SIZE` (exit 1, `src/read.c:274,784`), and
+`test/read/expect.txt` adds 1 read refusal. The new gate group `limits`
+has 11 checks. `test/limits/long.lang` has a List and a product that
+each hold `matId 128`. Their eval lines (82,185 bytes for the List) and
+their read lines (up to 82,218 bytes) must be equal in full to the lines
+that awk writes, and `langc verify` must print the read lines. The group
+builds and reads back a type of 4096 bytes and refuses a type of 4097
+bytes. It does the same for types of 199 and 200 levels. Thus there are
+908 tests. The group ran alone in 0.47 s real. Two mutants fail the
+gate: a `value_text` that caps the buffer at 65536 bytes (4 failures)
+and a writer with no type length check (1 failure). The gate took 25.21
+s at load 3.3 to 4.4. A value line still has the depth cut of the
+printer at 200 levels (`docs/STATUS.md`, Known limits).
+Review of D4 adds three C regressions for printing fuel. With two steps
+remaining, evaluating `def f : (Nat -> Nat) -> Nat := fun g => 7` must
+print `fun g => 7`, as on f7f6741. The initial D4 size pass consumed
+the fuel first and the render pass printed `fun g => ?` with exit 0.
+Measuring now preserves the fuel for rendering. With only one step,
+the command refuses with `EVAL_FUEL` and no output instead of printing
+a placeholder. For `def p : Sigma (n : Nat) Nat := pack 0 7`, the
+writer starts with exhausted fuel to check its instance budget reset.
+The initial D4 writer emitted `Sigma (n : Nat) ?` with exit 0; the
+reviewed writer resets the budget before measuring the type and emits
+the complete type, as on f7f6741. Measurement and rendering failures
+propagate their diagnostics. All three tests fail on the initial D4
+tree and pass with the fixes. There are now 16 C regressions.

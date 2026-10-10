@@ -1,0 +1,2 @@
+def wide : List (Matrix 128 128) := cons (matId 128) nil
+def both : Prod (Matrix 128 128) Nat := pair (matId 128) 7
