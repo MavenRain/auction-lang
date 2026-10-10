@@ -463,6 +463,18 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   record their time; (b) add them to the slow target of O13 (b); (c) add
   the 4 res3 lines only; (d) close: the n = 2 lines stay. Proposal: (a).
   RULED 2026-10-09 (USER): "a (add all 6)".
+  DONE 2026-10-09 (slice D5). The `test/eval/expect.txt` refs above are
+  from before D3. `test/eval/expect.txt:274-275` holds
+  `spsb3Dev1FnEq 3` and `spsb3Dev2FnEq 3`. `examples/opengame.lang:49-52`
+  holds the closed definitions `res3FnEq3` and `res3Dev1FnEq3` to
+  `res3Dev3FnEq3` (the n = 2 definitions with n = 3 and the reserve 1),
+  and `test/eval/expect.txt:255-258` holds their eval lines. Each value is
+  1, because the auction-cat theorems give the equality of each kernel and
+  the `matOfFn` of its Fn for each n (`domain/opengame.lang:137-141`).
+  After D1 and D2, each of the 6 lines takes 0.09 s alone (load 12), in
+  place of about 115 s for the 6 lines. The golden
+  `test/json/opengame.json` has 18 instances in place of 14, so the gate
+  has 423 eval lines and 258 reads (918 tests).
 - O17. The checked certificate for the output (row M3 of section 10).
   The target is one JSON document (sections 7 and 8), and the document
   holds no proof. The checker refuses `axiom` (`REFUSE_AXIOM`), so a
@@ -565,8 +577,8 @@ O16). Each slice records the gate time and the load.
 | D1 | 58e1eaf | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after. The 3 slowest eval lines take 3.2 s in place of 19.3 s (load 12 to 14) |
 | D2 | f8bb3ea | O15 (a): the core operation `matIdKronComp` for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4 (about 1.1 s each). The size refusal moves from n = 4 to n = 6. At n = 5 the evaluation stops at the arena limit. The 3 slowest eval lines of D1 take 0.1 s each in place of 1.0 s (load 5 to 6) |
 | D3 | f7f6741 | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. Each read value also matches an independent eval expectation; review adds the 46 missing expectations. The JSON round trips and existing read refusals stay. The reads loop alone before review: 9.46 s before D3, 2.18 s after (load 9) |
-| D4 | This commit | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back. The codes are `READ_TYPE_SIZE` and `JSON_TYPE_SIZE`, and the gate group `limits` has 11 checks |
-| D5 | Not started | O16 (a): the n = 3 eval lines of the 6 kernels of O12 |
+| D4 | 05905d4 | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back. The codes are `READ_TYPE_SIZE` and `JSON_TYPE_SIZE`, and the gate group `limits` has 11 checks |
+| D5 | This commit | O16 (a): the n = 3 eval lines of the 6 kernels of O12. `spsb3Dev1FnEq 3` and `spsb3Dev2FnEq 3`, and the closed definitions `res3FnEq3` and `res3Dev1FnEq3` to `res3Dev3FnEq3` in `examples/opengame.lang` with their eval lines. Each line takes 0.09 s alone. The gate has 423 eval lines and 258 reads (918 tests) |
 | D6 | Not started | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
-M3 is in progress. Slices D1 to D4 are done.
+M3 is in progress. Slices D1 to D5 are done.

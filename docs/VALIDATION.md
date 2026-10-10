@@ -3,7 +3,7 @@
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of slice D4, the last commit that changes
-`src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
+`src/`. Slices B1 to B3, B5, C4 and D5 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `build/langc` embeds. Slice D2 changes `src/` and
 `domain/opengame.lang`. Slice D3 changes the host sources `src/main.c`,
@@ -14,19 +14,19 @@ changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 908 tests with zero failures: 22 examples, 10 parse refusals, 86 check
-refusals, 417 eval lines, 22 JSON builds, 15 build refusals, 22 round
-trips, 254 reads, 29 read refusals, 6 verify refusals, 11 limits checks
+runs 918 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+refusals, 423 eval lines, 22 JSON builds, 15 build refusals, 22 round
+trips, 258 reads, 29 read refusals, 6 verify refusals, 11 limits checks
 and 14 queries. It also runs
 `build/read-typed-test`: 16 typed reader and printing regressions with zero failures.
 The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
 the `-o` file, a `Fin` argument out of range, the reader on white space,
 escapes, 2008 levels of nesting and a document of 16 MiB, the document of
 `langc build --read`, the absence of em-dashes and en-dashes in the kit,
-and Node `JSON.parse` of each golden. A timed run of the D4 gate before review
-(`/usr/bin/time -l make check`) took 25.21 seconds real and 18.33
-seconds user. Its maximum resident set size was 775,782,400 bytes (739.8
-MiB). Other jobs loaded the machine during this run (load 3.3 to 4.4).
+and Node `JSON.parse` of each golden. A timed run of the D5 gate
+(`/usr/bin/time -l make check`) took 27.32 seconds real and 19.45
+seconds user. Its maximum resident set size was 775,962,624 bytes (740.0
+MiB). Other jobs loaded the machine during this run (load 6.9 to 6.7).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -257,3 +257,21 @@ reviewed writer resets the budget before measuring the type and emits
 the complete type, as on f7f6741. Measurement and rendering failures
 propagate their diagnostics. All three tests fail on the initial D4
 tree and pass with the fixes. There are now 16 C regressions.
+
+Slice D5 adds the n = 3 eval lines of the 6 kernels of O16. It changes no
+file in `src/` and no file in `domain/`. `test/eval/expect.txt` adds
+`spsb3Dev1FnEq 3` and `spsb3Dev2FnEq 3` (lines 274-275). Slice D5 adds 4
+closed definitions to `examples/opengame.lang` (lines 49-52):
+`res3FnEq3` and `res3Dev1FnEq3` to `res3Dev3FnEq3`. They are the n = 2
+definitions with n = 3 and the reserve 1. The eval lines of these
+definitions are at `test/eval/expect.txt:255-258`. Each expected value is
+1. Each line says that a kernel matrix of the domain equals the `matOfFn`
+of its Fn. The auction-cat theorems give this equality for each n (the
+comment at `domain/opengame.lang:137-141`). Each of the 6 lines took 0.09
+s alone (sandbox, `/usr/bin/time -p`, load 12). Before D1 and D2, O16
+gave about 115 s for the 6 lines. `test/json/opengame.json` is written
+again with `langc build` and has 18 instances in place of 14. Thus the
+counts are 423 eval lines and 258 reads (918 tests). Two mutants fail the
+gate: an expected value of 0 for `res3Dev2FnEq3` (2 failures), and a
+`res3Dev1FnEq3` with the Fn of `truthful` in place of `halfShading`. This
+definition has the value 0 (5 failures).

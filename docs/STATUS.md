@@ -6,7 +6,7 @@ commit. It also has the core operations of the design (milestone M1 in
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
 section 9 records the rulings on O1 to O17. M3 is in progress: slices D1
-to D4 are done.
+to D5 are done.
 
 ## Implemented
 
@@ -63,10 +63,9 @@ review adds the 46 missing expectations. Slice D4 is done: `read` and
 `eval` print each line in full (before D4, a line longer than 64 KiB
 printed with a "..." cut). The writer and the reader refuse a `type`
 longer than 4096 bytes, and each boundary build that passes reads back.
-The remaining slices follow the rulings:
+Slice D5 is done: the 6 kernels of O16 have eval lines at n = 3, and each
+line takes 0.09 s alone. The remaining slice follows the rulings:
 
-- D5 (O16, from O12): eval lines at n = 3 for the 6 kernels that have
-  eval lines at n = 2 only.
 - D6: close M3, docs only.
 
 ## Known limits
