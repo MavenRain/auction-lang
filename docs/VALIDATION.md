@@ -2,21 +2,26 @@
 
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` from the sources of ed8da0a, the last commit that changes
-`src/`. Slices B1 to B3 and B5 change no source file. Slice B4 changes no file in `src/`,
-but it changes `domain/opengame.lang`, which `build/langc` embeds.
+`build/langc` from the sources of 1c3128f (slice C3), the last commit that
+changes `src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
+changes no file in `src/`, but it changes `domain/opengame.lang`, which
+`build/langc` embeds.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 516 tests with zero failures: 22 examples, 10 parse refusals, 86 check
-refusals, 361 eval lines, 22 JSON builds and 15 build refusals. The gate
-also checks a nesting of 1100 parentheses, the usage exit code 2, the `-o`
-file, a `Fin` argument out of range, the absence of em-dashes and en-dashes
-in the kit, and Node `JSON.parse` of each golden. A timed run
-(`/usr/bin/time -l make check`) took 39.89 seconds real and 31.52 seconds
-user. Its maximum resident set size was 765,116,416 bytes (729.7 MiB).
-Other jobs loaded the machine during this run.
+runs 834 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+refusals, 361 eval lines, 22 JSON builds, 15 build refusals, 22 round
+trips, 254 reads, 28 read refusals and 14 queries. It also runs
+`build/read-typed-test`: 13 typed reader regressions with zero failures.
+The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
+the `-o` file, a `Fin` argument out of range, the reader on white space,
+escapes, 2008 levels of nesting and a document of 16 MiB, the document of
+`langc build --read`, the absence of em-dashes and en-dashes in the kit,
+and Node `JSON.parse` of each golden. A timed run on the sources of
+1c3128f (`/usr/bin/time -l make check`) took 85.19 seconds real and 66.45
+seconds user. Its maximum resident set size was 709,115,904 bytes (676.3
+MiB). Other jobs loaded the machine during this run (load 12 to 18).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -111,3 +116,36 @@ factored kernel at n = 3 took 11.75 s, with a maximum resident set of
 
 Slice B5 adds no test. It closes M1 in `SPEC.md`, `docs/STATUS.md` and
 this file. The gate counts are the counts of B4.
+
+Slice C1 (a96d772) adds the reader `src/read.c` and the verb `langc
+read`. It adds 19 test files in `test/read/` and 2 count lines (O11 a):
+22 round trips, one for each JSON golden, and 18 read refusals. The gate
+makes the large documents in a temporary directory. Two mutants of the
+reader fail the gate: a write loop that drops the last item of an array,
+and a version test that also takes version 2. The gate took 43 s.
+
+Slice C2 (3a1397a) adds the typed read. It adds 10 refusal documents in
+`test/read/` and 10 read refusals (28 in all). The new count line `reads`
+checks 254 instances: for each instance of each JSON golden, the read
+value equals the value from `langc eval`. `test/read-typed.c` adds 13
+typed reader regressions: higher-universe types, wide matrix sums, type
+isolation and name controls. Two mutants fail the gate: a Rat cell with no
+lowest-terms test, and a Matrix decode that drops one row. The gate took
+146.89 s on a quiet machine and 341.75 s at load 73.
+
+Slice C3 (1c3128f) adds the queries. It adds 10 test files in
+`test/query/`: 5 programs, 4 refusal documents and `expect.txt`. The
+count line `queries` checks 14 lines: 9 query values over
+`test/json/matrix.json`, `test/json/revenue.json` and
+`test/json/auction.json`, 3 `REFUSE_NAME` refusals and 2 `READ_NAME`
+refusals. Two checks have no count: `langc build --read` writes the 4
+instances of the program only, and `langc eval PROG --read` with no
+document exits 2. Two mutants fail the gate: a bind loop that drops the
+last instance, and a name test that ignores the read names. The gate took
+85.19 s at load 12 to 18.
+
+Slice C4 adds no test and changes no source file. It closes M2 in
+`SPEC.md`, `docs/STATUS.md`, this file, `probe/CAPABILITY.md` and
+`README.md`. The gate counts are the counts of C3. The reads section
+calls `langc eval` 254 times, and each call checks the example again.
+Thus the gate time is an M3 item.

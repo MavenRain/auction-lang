@@ -2,11 +2,10 @@
 
 The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
-`SPEC.md`), and the slices B1 to B4 add their tests. M0 and M1 are done.
-`SPEC.md` section 9 records the rulings on O1 to O12. M2 is in progress:
-slice C1 adds the JSON reader, slice C2 checks each value against its
-type, and slice C3 adds the queries over the instances of a read
-document. M3 is not started.
+`SPEC.md`), and the slices B1 to B4 add their tests. Milestone M2 (the
+slices C1 to C4) adds the JSON reader, the typed read and the queries over
+the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
+section 9 records the rulings on O1 to O12. M3 is not started.
 
 ## Implemented
 
@@ -31,18 +30,21 @@ document. M3 is not started.
 
 ## Remaining work
 
-No M0 or M1 work remains. `SPEC.md` section 9 records the rulings on O1
-to O12, and the rulings on O1 to O8 are done. `SPEC.md` section 10 lists
-the slices of M0 and M1, and the slices C1 to C4 of M2. The rulings on
-O9 to O12 (`SPEC.md` section 9) keep the plan of the proposals. M2 is
-queries and reads: a reader for the JSON document of `langc build`, and
-queries over the instances that it reads. The slices C1 to C3 are done,
-thus a program can use the instances of that document
-(`langc eval PROG --read DOC NAME`). Slice C4 closes M2 with docs only,
-`probe/CAPABILITY.md` too. M3 (hardening) is not started. The ruling
-on O12 moves two choices of slice B4 to M3: the kron of an identity and
-the mechanism in the 3-bidder scores, and the kernels that have eval lines
-at n = 2 only.
+No M0, M1 or M2 work remains. `SPEC.md` section 9 records the rulings on
+O1 to O12, and the rulings on O1 to O11 are done. `SPEC.md` section 10
+lists the slices of M0, M1 and M2. M3 (hardening: speed, limits, a
+checked certificate for the output) is not started, and no plan for it
+exists. M3 holds these items:
+
+- The ruling on O12 moves two choices of slice B4 to M3: the kron of an
+  identity and the mechanism in the 3-bidder scores, and the kernels that
+  have eval lines at n = 2 only.
+- The gate time: 43 s for C1, 147 s for C2 on a quiet machine and 85 s
+  for C3 at load 12 to 18. The reads section of `test/gate.sh` calls
+  `langc eval` 254 times, and each call checks the example again.
+- The print buffer of a read line (`READ_PRINT_MAX`, 64 KiB,
+  `src/read.c:274`). The value of a Matrix line has no such limit since
+  slice C2. M3 finds the lines that keep the limit.
 
 ## Known limits
 
@@ -79,7 +81,8 @@ at n = 2 only.
 refusals, and it checks the types. `eval.c` evaluates a term. `core.h` holds
 the shared types and the evaluation limits.
 
-`src/json.c` writes the JSON document of `build`. `src/main.c` holds the
+`src/json.c` writes the JSON document of `build`. `src/read.c` reads that
+document again for `read` and for `--read`. `src/main.c` holds the
 command line verbs and the arena. The Makefile joins the 4 domain files into
 `build/domain.c` with `gen/embed.c` (`Makefile:15`). Thus each domain name is
 a core name.
@@ -88,6 +91,9 @@ a core name.
 refusals. `test/check/expect.txt` lists the check refusals.
 `test/emit/expect.txt` lists the build refusals. `test/eval/expect.txt`
 lists the eval lines. `test/json/` holds the JSON golden of each example.
+`test/read/expect.txt` lists the read refusals. `test/query/expect.txt`
+lists the queries. `test/read-typed.c` holds the typed reader
+regressions.
 
 A program cannot declare a family (rule R1, `REFUSE_DATA`). It can use core
 names, but cannot declare a definition with a core name (rule R4,

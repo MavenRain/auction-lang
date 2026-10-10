@@ -2,7 +2,8 @@
 
 auction-lang is a small checked language for auctions over finite values.
 It ports the auction results of auction-cat (Lean 4) to programs. The
-compiler checks a program, evaluates it and writes JSON.
+compiler checks a program, evaluates it and writes JSON. It also reads
+that JSON again, and a program can use the instances of a read document.
 
 The host is the TinyCC JSON host kit of lang-template. The compiler is
 `build/langc`, a C99 program.
@@ -40,6 +41,23 @@ The output is:
 ```json
 {"auction-lang":1,"instances":[{"name":"domRes2","type":"Flag","value":true}]}
 ```
+
+Read a JSON document again. Each instance prints as one line
+`name : type = value`. The output is `domRes2 : Flag = 1`.
+
+```
+build/langc read test/json/dominance.json
+```
+
+Use the instances of a document in a program (a query). Each instance
+becomes a definition before the definitions of the program. The output is
+`4/9`.
+
+```
+build/langc eval test/query/matrix.lang --read test/json/matrix.json corner
+```
+
+Each line of `test/query/expect.txt` gives one such query and its result.
 
 ## Files
 

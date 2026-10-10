@@ -50,7 +50,12 @@ below. An answer sets the status of a former in `formers/tcc-json.md`.
 - `langc eval` of an instance that traps prints `trap` on stdout and the
   trap on stderr, and exits 0. `langc build` refuses that instance with
   exit 1 (section 4).
-- Not probed: a program that reads the JSON document.
+- Not probed on 2026-10-08: a program that reads the JSON document.
+  Milestone M2 adds this (`SPEC.md` section 10, slices C1 to C3).
+  `langc read DOC` reads the document and prints each instance. With
+  `--read DOC`, `langc eval` and `langc build` make each instance of the
+  document a definition of the program. Thus a program can use the
+  instances of a read document (`docs/host/README.md`, Queries).
 
 ## 2. Several files
 

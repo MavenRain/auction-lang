@@ -1,8 +1,6 @@
 # auction-lang specification
 
-Status: milestones M0 and M1 are done, 2026-10-09. M2 is in progress
-(sections 9 and 10): slice C1 adds the JSON reader, slice C2 adds the
-typed read, and slice C3 adds the queries.
+Status: milestones M0, M1 and M2 are done, 2026-10-09 (section 10).
 
 ## 1. Purpose
 
@@ -300,6 +298,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   and sections 7 and 8 do not include it; (c) no M2 slices: M2 closes now,
   and M3 starts. Proposal: (a).
   RULED 2026-10-09 (USER): "a (queries and reads)".
+  DONE 2026-10-09 (slice C4): C1 to C3 are done, and C4 closes M2.
 - O10. The form of a query (only with O9 a). Options: (a) a verb
   `langc query DOC NAME` that prints the value of one instance of the
   document. The language does not change. (b) The instances of a document
@@ -309,6 +308,9 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   Proposal: (b). Then the tests of a query are programs in this language
   with eval lines, and a query can use each domain operation.
   RULED 2026-10-09 (USER): "b (read instances become definitions)".
+  DONE 2026-10-09 (slice C3): the forms are `langc eval PROG --read DOC
+  NAME [ARGS...]` and `langc build PROG --read DOC [-o OUT]`. The 2 words
+  `--read DOC` come right after `PROG`.
 - O11. The gate counts for M2 (only with O9 a). The gate prints 7 counts
   (`test/gate.sh`). Options: (a) 2 new count lines: the round trips of the
   JSON goldens and the read refusals; (b) count the round trips with the
@@ -316,6 +318,9 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   gate keeps 7 count lines; (c) a separate target `make check-read`.
   Proposal: (a).
   RULED 2026-10-09 (USER): "a (2 new count lines)".
+  DONE 2026-10-09: slice C1 adds the 2 count lines `round trips` and
+  `read refusals`. Slice C2 adds `reads` and `typed reader regressions`,
+  and slice C3 adds `queries`. The gate prints 12 counts.
 - O12. Two open choices of slice B4. First, the 3-bidder scores keep the
   kron of the identity of size 27 and the mechanism: 729 x 5,832
   (4,251,528 cells) at n = 3 (O7). At n = 4 this kron has 134,217,728
@@ -379,8 +384,12 @@ the instances that it reads.
 |---|---|---|
 | C1 | a96d772 | The JSON reader: `langc read DOC` reads a document of format version 1 and writes it again. Each of the 22 JSON goldens reads and writes back with no change. New read refusals for syntax, depth, size, version and shape |
 | C2 | 3a1397a | The typed read: the reader parses and checks each `type` field and decodes each `value` against its type (section 7). The read value of each instance of the 22 examples equals its value from `langc eval`. `langc read DOC` prints one line `name : type = value` for each instance, and `langc read --json DOC` keeps the output of C1. New read refusals for names, types and values |
-| C3 | This commit | The queries (O10 b): `langc eval PROG --read DOC NAME [ARGS...]` and `langc build PROG --read DOC [-o OUT]`. The 2 words `--read DOC` come right after `PROG`. Each instance of the document becomes a definition of the program, with its read type and value, before the definitions of the program. A query is a definition of the program. With `--read`, each instance name must be one identifier, else `READ_NAME`. An instance name that is a core name, a domain name or a name of the program is `REFUSE_NAME`. `langc build` with `--read` writes the instances of the program only. The query tests are in `test/query/` |
-| C4 | Not started | Close M2: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `docs/host/README.md`, `probe/CAPABILITY.md` and `README.md`. No test changes |
+| C3 | 1c3128f | The queries (O10 b): `langc eval PROG --read DOC NAME [ARGS...]` and `langc build PROG --read DOC [-o OUT]`. The 2 words `--read DOC` come right after `PROG`. Each instance of the document becomes a definition of the program, with its read type and value, before the definitions of the program. A query is a definition of the program. With `--read`, each instance name must be one identifier, else `READ_NAME`. An instance name that is a core name, a domain name or a name of the program is `REFUSE_NAME`. `langc build` with `--read` writes the instances of the program only. The query tests are in `test/query/` |
+| C4 | This commit | Close M2: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. `docs/host/README.md` has the text of C1 to C3 and does not change. No test changes and no source changes |
+
+M2 is done (2026-10-09). The slices C1 to C4 give it, and O9 to O12 are
+ruled. A program can use the instances of a JSON document of
+`langc build` (`langc eval PROG --read DOC NAME`).
 
 M3 is not started. With O12 (a), M3 also holds the two open choices of
 slice B4.
