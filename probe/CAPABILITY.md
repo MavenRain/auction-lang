@@ -45,7 +45,9 @@ below. An answer sets the status of a former in `formers/tcc-json.md`.
 
 - `build/langc` with no command prints
   `langc: USAGE: -: expected a command and a program path` and the usage
-  of the three commands.
+  of the commands, with exit 2. On 2026-10-08 there were three commands.
+  Since slice D3 there are five: `check`, `eval`, `build`, `read` and
+  `verify`.
 - One program file for each run.
 - `langc eval` of an instance that traps prints `trap` on stdout and the
   trap on stderr, and exits 0. `langc build` refuses that instance with
@@ -56,6 +58,11 @@ below. An answer sets the status of a former in `formers/tcc-json.md`.
   `--read DOC`, `langc eval` and `langc build` make each instance of the
   document a definition of the program. Thus a program can use the
   instances of a read document (`docs/host/README.md`, Queries).
+- Not probed on 2026-10-08: a check of a document against its program.
+  Milestone M3 adds this (`SPEC.md` section 10, slice D3).
+  `langc verify PROG DOC` exits 0 when the document is the output of
+  `langc build PROG`, and prints each instance. A difference is a refusal
+  with exit 1 (`docs/STATUS.md`, Implemented).
 
 ## 2. Several files
 

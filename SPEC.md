@@ -1,6 +1,6 @@
 # auction-lang specification
 
-Status: milestones M0, M1 and M2 are done, 2026-10-09 (section 10).
+Status: milestones M0, M1, M2 and M3 are done, 2026-10-09 (section 10).
 
 ## 1. Purpose
 
@@ -296,7 +296,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   contract" (section 10). In lang-template, "the contract" is the M2 of a
   contract host: the contract writer of an EVM target. auction-lang has the
   tcc-json host, and its target is one JSON document (sections 7 and 8).
-  No program reads that document (`probe/CAPABILITY.md:53`). Options:
+  No program reads that document (`probe/CAPABILITY.md:55`). Options:
   (a) queries and reads: a reader for the JSON document of `langc build`,
   and queries over the instances that it reads (the slices C1 to C4 in
   section 10); (b) the contract: a second target, an EVM contract for one
@@ -566,7 +566,7 @@ M2 is done (2026-10-09). The slices C1 to C4 give it, and O9 to O12 are
 ruled. A program can use the instances of a JSON document of
 `langc build` (`langc eval PROG --read DOC NAME`).
 
-M3 has these planned slices (2026-10-09). They follow the proposals of
+M3 has these slices (2026-10-09). They follow the proposals of
 O13 to O17 (section 9). The rulings on O13 to O17 (2026-10-09) accept
 each proposal, so the plan does not change.
 With O12 (a), M3 also holds the two open choices of slice B4 (O15 and
@@ -578,7 +578,13 @@ O16). Each slice records the gate time and the load.
 | D2 | f8bb3ea | O15 (a): the core operation `matIdKronComp` for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4 (about 1.1 s each). The size refusal moves from n = 4 to n = 6. At n = 5 the evaluation stops at the arena limit. The 3 slowest eval lines of D1 take 0.1 s each in place of 1.0 s (load 5 to 6) |
 | D3 | f7f6741 | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. Each read value also matches an independent eval expectation; review adds the 46 missing expectations. The JSON round trips and existing read refusals stay. The reads loop alone before review: 9.46 s before D3, 2.18 s after (load 9) |
 | D4 | 05905d4 | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back. The codes are `READ_TYPE_SIZE` and `JSON_TYPE_SIZE`, and the gate group `limits` has 11 checks |
-| D5 | This commit | O16 (a): the n = 3 eval lines of the 6 kernels of O12. `spsb3Dev1FnEq 3` and `spsb3Dev2FnEq 3`, and the closed definitions `res3FnEq3` and `res3Dev1FnEq3` to `res3Dev3FnEq3` in `examples/opengame.lang` with their eval lines. Each line takes 0.09 s alone. The gate has 423 eval lines and 258 reads (918 tests) |
-| D6 | Not started | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
+| D5 | 5ddddb9 | O16 (a): the n = 3 eval lines of the 6 kernels of O12. `spsb3Dev1FnEq 3` and `spsb3Dev2FnEq 3`, and the closed definitions `res3FnEq3` and `res3Dev1FnEq3` to `res3Dev3FnEq3` in `examples/opengame.lang` with their eval lines. Each line takes 0.09 s alone. The gate has 423 eval lines and 258 reads (918 tests) |
+| D6 | This commit | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
-M3 is in progress. Slices D1 to D5 are done.
+M3 is done (2026-10-09). The slices D1 to D6 give it, and O13 to O17 are
+done. The gate took 267 s at load 27 to 43 before D1, and 27.32 s at a
+load of about 7 after D5 (918 tests). The 3-bidder scores evaluate up to
+n = 4. `read` and `eval` print each value line with no length cut, and
+`langc verify PROG DOC` checks that a document is the output of its
+program. A value line still has the depth cut of the printer at 200
+levels (`docs/STATUS.md`, Known limits).

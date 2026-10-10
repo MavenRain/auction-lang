@@ -4,17 +4,21 @@ The build implements milestone M0 in the slices A1 to A6 and the post-A6
 commit. It also has the core operations of the design (milestone M1 in
 `SPEC.md`), and the slices B1 to B4 add their tests. Milestone M2 (the
 slices C1 to C4) adds the JSON reader, the typed read and the queries over
-the instances of a read document. M0, M1 and M2 are done. `SPEC.md`
-section 9 records the rulings on O1 to O17. M3 is in progress: slices D1
-to D5 are done.
+the instances of a read document. Milestone M3 (the slices D1 to D6)
+adds speed, limits and a checked certificate for the output. M0, M1, M2
+and M3 are done. `SPEC.md` section 9 records the rulings on O1 to O17.
 
 ## Implemented
 
 - The type formers F1 to F15 on the tcc-json host (`formers/tcc-json.md`).
 - The built-in types `Nat`, `Flag`, `Fin n`, `Rat` and `Matrix m n`, and
   their operations (`src/front/check.c:99-175`).
+- `matComp` skips a term when its left cell is 0 (slice D1,
+  `src/front/eval.c:1415`). No value and no trap changes.
 - The core operation `matIdKronComp` (slice D2): the composition with the
   kron of an identity, with no kron. `gameScore` uses it.
+- The kernels of O12 have eval lines at n = 3 (slice D5), and the 3-bidder
+  scores have eval lines at n = 4 (slice D2), in `test/eval/expect.txt`.
 - `domain/finstoch.lang`: 10 definitions. The structure maps of FinStoch.
 - `domain/auction.lang`: 81 definitions. Bid strategies, utilities,
   mechanisms, expected revenue, expected utility and the envelope objects.
@@ -45,13 +49,13 @@ to D5 are done.
 
 ## Remaining work
 
-No M0, M1 or M2 work remains. `SPEC.md` section 9 records the rulings on
-O1 to O17, and the rulings on O1 to O11 are done. O13 to O17 are the
-items of M3 (hardening: speed, limits, a checked certificate for the
-output), and the rulings of 2026-10-09 accept each proposal. `SPEC.md`
-section 10 lists the slices of M0, M1 and M2 and the slices D1 to D6 of
-M3. Slice D1 is done: `matComp` skips a term when its left cell is 0, so
-the 3 slowest eval lines take 3.2 s in place of 19.3 s. Slice D2 is
+No M0, M1, M2 or M3 work remains. `SPEC.md` section 9 records the rulings
+on O1 to O17, and each ruling is done. O13 to O17 are the items of M3
+(hardening: speed, limits, a checked certificate for the output), and the
+rulings of 2026-10-09 accept each proposal. `SPEC.md` section 10 lists
+the slices of M0 to M3. Slice D1 is done: `matComp` skips a term when
+its left cell is 0, so the 3 slowest eval lines take 3.2 s in place of
+19.3 s. Slice D2 is
 done: with the core operation `matIdKronComp`, the 3-bidder scores run
 at n = 4, and the 3 slowest eval lines of D1 take 0.1 s each. Slice D3
 is done: the verb `langc verify PROG DOC` checks a document against its
@@ -64,9 +68,14 @@ review adds the 46 missing expectations. Slice D4 is done: `read` and
 printed with a "..." cut). The writer and the reader refuse a `type`
 longer than 4096 bytes, and each boundary build that passes reads back.
 Slice D5 is done: the 6 kernels of O16 have eval lines at n = 3, and each
-line takes 0.09 s alone. The remaining slice follows the rulings:
+line takes 0.09 s alone. Slice D6 closes M3 and changes docs only.
 
-- D6: close M3, docs only.
+One finding of slice D4 waits for a ruling, and `SPEC.md` section 9 does
+not have it yet. A value line of `read` or `eval` that nests 200 levels
+in arguments that are not the last prints a "..." cut with exit 0 (Known
+limits). The options are: (a) size the depth from the value, as D4 sizes
+the length; (b) refuse such a line with a new code; (c) keep the cut as a
+Known limit.
 
 ## Known limits
 

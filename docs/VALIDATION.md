@@ -3,7 +3,7 @@
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of slice D4, the last commit that changes
-`src/`. Slices B1 to B3, B5, C4 and D5 change no source file. Slice B4
+`src/`. Slices B1 to B3, B5, C4, D5 and D6 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `build/langc` embeds. Slice D2 changes `src/` and
 `domain/opengame.lang`. Slice D3 changes the host sources `src/main.c`,
@@ -275,3 +275,10 @@ counts are 423 eval lines and 258 reads (918 tests). Two mutants fail the
 gate: an expected value of 0 for `res3Dev2FnEq3` (2 failures), and a
 `res3Dev1FnEq3` with the Fn of `truthful` in place of `halfShading`. This
 definition has the value 0 (5 failures).
+
+Slice D6 adds no test and changes no source file. It closes M3 in
+`SPEC.md`, `docs/STATUS.md`, this file, `probe/CAPABILITY.md` and
+`README.md`. The gate counts and the timed run are those of D5. In M3 the
+gate time went from 267 s at load 27 to 43 (the M3 plan, `SPEC.md` O13)
+to 27.32 s at load 6.7 to 6.9 (D5). The loads differ, so the two times
+do not give one ratio.
