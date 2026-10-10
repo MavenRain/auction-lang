@@ -2,27 +2,29 @@
 
 Date: 2026-10-09. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
-`build/langc` from the sources of slice D2, the last commit that changes
+`build/langc` from the sources of slice D3, the last commit that changes
 `src/`. Slices B1 to B3, B5 and C4 change no source file. Slice B4
 changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `build/langc` embeds. Slice D2 changes `src/` and
-`domain/opengame.lang`.
+`domain/opengame.lang`. Slice D3 changes the host sources `src/main.c`,
+`src/read.c` and `src/read.h`.
 
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 844 tests with zero failures: 22 examples, 10 parse refusals, 86 check
-refusals, 371 eval lines, 22 JSON builds, 15 build refusals, 22 round
-trips, 254 reads, 28 read refusals and 14 queries. It also runs
+runs 896 tests with zero failures: 22 examples, 10 parse refusals, 86 check
+refusals, 417 eval lines, 22 JSON builds, 15 build refusals, 22 round
+trips, 254 reads, 28 read refusals, 6 verify refusals and 14 queries. It also runs
 `build/read-typed-test`: 13 typed reader regressions with zero failures.
 The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
 the `-o` file, a `Fin` argument out of range, the reader on white space,
 escapes, 2008 levels of nesting and a document of 16 MiB, the document of
 `langc build --read`, the absence of em-dashes and en-dashes in the kit,
-and Node `JSON.parse` of each golden. A timed run on the sources of
-slice D2 (`/usr/bin/time -l make check`) took 28.51 seconds real and 20.96
-seconds user. Its maximum resident set size was 775,766,016 bytes (739.8
-MiB). Other jobs loaded the machine during this run (load 5 to 6).
+and Node `JSON.parse` of each golden. A timed run before review restored
+the independent eval expectations (`/usr/bin/time -l make check`) took
+23.90 seconds real and 16.47
+seconds user. Its maximum resident set size was 775,815,168 bytes (739.9
+MiB). Other jobs loaded the machine during this run (load 8 to 10).
 
 The base commit cdc754e (2026-10-07) makes the language from lang-template.
 It has 10 examples, 9 parse refusals, 19 check refusals, 2 build refusals,
@@ -183,3 +185,37 @@ n = 5 the size count fits, but `spsb3FnEq 5` stops at the arena limit
 (`langc: OOM`, exit 1, 0.78 s). A mutant that swaps the kron order in
 the U row makes `idKronCompEq 2 2 3 2` 0, and the gate fails on 8
 lines. The gate took 28.51 s at load 5 to 6.
+
+Slice D3 adds the verb `langc verify PROG DOC` (O17 a; `run_verify` in
+`src/main.c`, `read_verify` in `src/read.c`). It reads DOC with the
+checks of `langc read`, and it evaluates each instance of PROG once. For
+each instance of PROG, in program order, it compares the read type and
+value with the eval type and value. Then it looks for a read instance
+that PROG does not have, and it compares the bytes of DOC with the bytes
+that `langc build PROG` writes. A difference is a refusal with exit 1
+and one of 4 codes, in this order: `VERIFY_MISSING`, `VERIFY_VALUE`,
+`VERIFY_EXTRA` and `VERIFY_BYTES`. When each comparison holds, it prints
+the lines of `langc read`. The new group `test/verify/` has 4 fixtures.
+Each is `test/json/functions.json` with one change: a changed value, a
+removed instance, an added instance and 1 added space.
+`test/verify/expect.txt` gives the code of each. The gate also runs
+`langc verify` with no DOC (exit 2, `USAGE`) and with a DOC that does
+not exist (exit 2, `IO`). Thus there are 6 verify refusals and 896
+tests. The reads section (O13 a, second part) calls `langc read` and
+`langc verify` once for each of the 22 goldens, in place of 254 calls of
+`langc eval`. Each output must have one line for each instance, and each
+read line must be equal to the verify line at the same position. Thus
+the gate compares the full line (name, type and value), and the count
+stays at 254 reads. Each read value must also match a no-argument eval
+expectation in `test/eval/expect.txt`, checked independently by the eval
+group. Review adds the 46 missing expectations, bringing that group to
+417 lines. The reads loop before review ran alone with `/usr/bin/time -p`:
+9.46 s real before D3 and 2.18 s after it (load 9). Two mutants fail
+the gate: a verify with no value comparison gives `VERIFY_BYTES` in
+place of `VERIFY_VALUE` for the changed value (1 failure), and a gate
+that removes the first read line from the comparison fails on 40 lines.
+The gate before review took 23.90 s at load 8 to 10. A review mutant
+that makes `langc eval examples/arith.lang odd` print 999 instead of 1
+passes the initial D3 gate but fails the prior gate. With the restored
+eval expectations it fails the reviewed gate. The reviewed gate passes
+all 896 tests and the 13 typed reader regressions.

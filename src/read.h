@@ -63,6 +63,18 @@ int read_write(Arena *arena, const JsonNode *doc, const char **text, size_t *len
    TEXT and LEN, or 0 after a diagnostic. */
 int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag);
 
+/* langc verify (slice D3, O17 a). BYTES and BYTES_LEN are the text of DOC; PROG
+   is the checked program. Reads DOC with the checks of read_typed, builds the
+   document of PROG (json_document evaluates each instance once), and compares:
+   each program instance is in DOC (VERIFY_MISSING), its read type and value
+   equal its type and value in PROG (VERIFY_VALUE), each instance of DOC is a
+   program instance (VERIFY_EXTRA), and BYTES are the built bytes
+   (VERIFY_BYTES). Then writes one line `name : type = value` for each program
+   instance, in the format of read_typed. Returns 1 and sets TEXT and LEN, or 0
+   after a diagnostic. */
+int read_verify(Arena *arena, const JsonNode *doc, const char *bytes, size_t bytes_len, Machine *prog, const char **text,
+                size_t *len, Diag *diag);
+
 /* The checks of read_typed, plus: each name is one identifier of the language
    (READ_NAME), so a program can name the instance. Checks the domain into M
    and sets READS to COUNT instances in document order, for

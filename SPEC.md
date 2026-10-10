@@ -156,6 +156,10 @@ definitions of the 4 domain files. `langc build` writes one document. For
 {"auction-lang":1,"instances":[{"name":"domRes2","type":"Flag","value":true}]}
 ```
 
+`langc verify PROG DOC` (slice D3) checks that DOC is this document for
+PROG. It compares each instance of DOC with its value in PROG, and the
+bytes of DOC with the output of `langc build PROG`.
+
 Each instance has a `name`, a `type` and a `value`. The `type` field is at
 most 4096 bytes. An index of a family is in `type`, not in `value`.
 
@@ -199,9 +203,10 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   stops at 0. The evaluator has a depth limit and a fuel limit. One arena
   holds all memory. Item O4 gives the matrix limit.
 - Output check: `make check` builds each example and compares the output
-  with its golden in `test/json/` (`cmp`). Node parses each golden with
-  `JSON.parse`. There is no axiom report, because the target holds no
-  proof.
+  with its golden in `test/json/` (`cmp`). `langc verify` compares each
+  golden with its example again: each instance, each value and the bytes
+  (slice D3). Node parses each golden with `JSON.parse`. There is no
+  axiom report, because the target holds no proof.
 
 ## 9. Open items
 
@@ -216,7 +221,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   is free. A matrix has at most 1 << 25 rows or columns, and 1 << 25
   cells (`src/front/eval.c:1100-1101`). A cell is 16 bytes, so a matrix
   at the limit takes 512 MiB. This is half of the 1 GiB arena
-  (`src/main.c:10`). 1 << 26 cells take 1 GiB and 16 bytes, so they do
+  (`src/main.c:11`). 1 << 26 cells take 1 GiB and 16 bytes, so they do
   not fit. The size check runs before the allocation
   (`src/front/eval.c:1127-1131`), so a refusal uses no memory. A larger
   matrix refuses with `EVAL_MATRIX_SIZE` (`test/emit/mat-size.lang`,
@@ -361,6 +366,15 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   than one name. (d) No change: `docs/VALIDATION.md` records the time of
   each section. Proposal: (a). Each M3 slice records the gate time and
   the load. RULED 2026-10-09 (USER): "a + a" (O13 a with O17 a).
+  DONE 2026-10-09 (slices D1 and D3): D1 makes `matComp` skip a term
+  when its left cell is 0. In D3 the reads section calls `langc verify`
+  once for each golden (22 calls in place of 254 calls of `langc eval`),
+  keeps the 22 calls of `langc read`, and requires that each read line
+  is equal to the verify line at the same position. The reads loop alone
+  took 9.46 s before D3 and 2.18 s after it (load 9). The gate took
+  23.90 s at load 8 to 10 before review. Review adds 46 eval
+  expectations and requires that every read value matches a no-argument
+  expectation checked independently by the eval group.
 - O14. The print limit of a value line (M3, limits). `READ_PRINT_MAX` is
   64 KiB (`src/read.c:274`), and `PRINT_MAX` of `langc eval` is 65536
   (`src/front/check.c:15`). A top level Matrix prints with no limit
@@ -462,6 +476,13 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   7 and 8 do not include it. (d) Move the certificate out of M3, because
   the target holds no proof. Proposal: (a). RULED 2026-10-09 (USER):
   "a + a" (O17 a with O13 a).
+  DONE 2026-10-09 (slice D3): `langc verify PROG DOC` refuses with
+  `VERIFY_MISSING`, `VERIFY_VALUE`, `VERIFY_EXTRA` and `VERIFY_BYTES`
+  (exit 1), in this order: for each program instance, missing and then
+  value; then extra; then bytes. A different type is `VERIFY_VALUE`. The
+  read checks are those of `langc read DOC`. It prints its lines only
+  when each comparison holds. `test/verify` holds a document for each
+  code.
 
 ## 10. Milestones
 
@@ -528,10 +549,10 @@ O16). Each slice records the gate time and the load.
 | Slice | Commit | Content |
 |---|---|---|
 | D1 | 58e1eaf | O13 (a), first part: `matComp` skips a term when its left cell is 0. No value changes. The gate time before and after. The 3 slowest eval lines take 3.2 s in place of 19.3 s (load 12 to 14) |
-| D2 | This commit | O15 (a): the core operation `matIdKronComp` for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4 (about 1.1 s each). The size refusal moves from n = 4 to n = 6. At n = 5 the evaluation stops at the arena limit. The 3 slowest eval lines of D1 take 0.1 s each in place of 1.0 s (load 5 to 6) |
-| D3 | Not started | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. The JSON round trips and existing read refusals stay |
+| D2 | f8bb3ea | O15 (a): the core operation `matIdKronComp` for the `matComp` of the kron of an identity and a matrix, with no kron. `gameScore` uses it. Eval lines for the new operation and for the 3-bidder scores at n = 4 (about 1.1 s each). The size refusal moves from n = 4 to n = 6. At n = 5 the evaluation stops at the arena limit. The 3 slowest eval lines of D1 take 0.1 s each in place of 1.0 s (load 5 to 6) |
+| D3 | This commit | O17 (a) and O13 (a), second part: the verb `langc verify PROG DOC`, its eval lines and its refusals. The reads section of the gate calls `langc verify` once for each document (22 calls in place of 254 calls of `langc eval`), keeps the 22 calls of `langc read`, and retains all 254 printed comparisons and line-count checks. Each read value also matches an independent eval expectation; review adds the 46 missing expectations. The JSON round trips and existing read refusals stay. The reads loop alone before review: 9.46 s before D3, 2.18 s after (load 9) |
 | D4 | Not started | O14 (a): `read` and `eval` size the print buffer of each line from its value. The reader refuses a decoded `type` longer than 4096 UTF-8 bytes, and the writer emits a complete type within that limit or explicitly refuses. Tests for read and eval lines longer than 64 KiB, the type-length boundary and long-type build refusal; successful boundary builds read back |
 | D5 | Not started | O16 (a): the n = 3 eval lines of the 6 kernels of O12 |
 | D6 | Not started | Close M3: this file, `docs/STATUS.md`, `docs/VALIDATION.md`, `probe/CAPABILITY.md` and `README.md`. No test changes and no source changes |
 
-M3 is in progress. Slices D1 and D2 are done.
+M3 is in progress. Slices D1 to D3 are done.

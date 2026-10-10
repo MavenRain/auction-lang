@@ -131,7 +131,7 @@ kit, or to the root of a generated language.
 - The evaluator has a fuel of 20,000,000 steps for each instance
   (`src/front/core.h:18`). `langc build` starts the fuel again for each
   instance.
-- All memory comes from one arena with a limit of 1 GiB (`src/main.c:10`).
+- All memory comes from one arena with a limit of 1 GiB (`src/main.c:11`).
   A run that reaches it stops with `OOM`.
 - Source files are at most 1 MiB (`src/front/front.h:7`).
 

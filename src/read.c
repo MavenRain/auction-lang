@@ -816,18 +816,16 @@ int read_defs(Arena *arena, const JsonNode *doc, Machine *m, const ReadDef **rea
   return typed_defs(arena, doc, 1, m, reads, count, diag);
 }
 
-int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag) {
-  const ReadDef *defs;
+/* Writes one line `name : type = value` for each of the COUNT DEFS, in the
+   format of read_typed (and of read_verify, slice D3). */
+static int print_defs(Arena *arena, Machine *machine, const ReadDef *defs, size_t count, const char **text, size_t *len,
+                      Diag *diag) {
   const char **lines;
   char *type_buf;
   char *value_buf;
   char *buf;
-  size_t count = 0;
   size_t total = 0;
   size_t i;
-  Machine machine;
-  if (!typed_defs(arena, doc, 0, &machine, &defs, &count, diag))
-    return 0;
   lines = arena_alloc(arena, (count + 1u) * sizeof *lines);
   type_buf = arena_alloc(arena, READ_PRINT_MAX);
   value_buf = arena_alloc(arena, READ_PRINT_MAX);
@@ -835,8 +833,8 @@ int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len
     return oom(diag);
   for (i = 0; i < count; i++) {
     size_t n;
-    value_print(&machine, NULL, 0, defs[i].type, type_buf, READ_PRINT_MAX);
-    if (!print_read_value(&machine, defs[i].type, defs[i].value, &value_buf))
+    value_print(machine, NULL, 0, defs[i].type, type_buf, READ_PRINT_MAX);
+    if (!print_read_value(machine, defs[i].type, defs[i].value, &value_buf))
       return 0;
     n = strlen(defs[i].name) + strlen(type_buf) + strlen(value_buf) + 7u;
     buf = arena_alloc(arena, n + 1u);
@@ -857,6 +855,82 @@ int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len
   *text = buf;
   *len = total;
   return 1;
+}
+
+int read_typed(Arena *arena, const JsonNode *doc, const char **text, size_t *len, Diag *diag) {
+  const ReadDef *defs;
+  size_t count = 0;
+  Machine machine;
+  return typed_defs(arena, doc, 0, &machine, &defs, &count, diag) && print_defs(arena, &machine, defs, count, text, len, diag);
+}
+
+/* Index of the read named NAME that is not yet USED, or COUNT. */
+static size_t find_read(const ReadDef *reads, const char *used, size_t count, const char *name) {
+  size_t i;
+  for (i = 0; i < count; i++)
+    if (!used[i] && strcmp(reads[i].name, name) == 0)
+      return i;
+  return count;
+}
+
+/* The program instances, as json_document writes them (src/json.c is_instance). */
+static int program_instance(const DefInfo *d) {
+  return d->origin == ORIGIN_PROGRAM && instance_type(d->type);
+}
+
+static int same_value(Machine *m, const Value *a, const Value *b) {
+  m->fuel = EVAL_FUEL_STEPS;
+  m->depth = 0;
+  return conv_values(m, 0, a, b);
+}
+
+int read_verify(Arena *arena, const JsonNode *doc, const char *bytes, size_t bytes_len, Machine *prog, const char **text,
+                size_t *len, Diag *diag) {
+  const ReadDef *reads;
+  const char *built;
+  ReadDef *evals;
+  char *used;
+  size_t count = 0;
+  size_t built_len = 0;
+  size_t n = 0;
+  size_t at = 0;
+  uint32_t d;
+  Machine domain;
+  if (!typed_defs(arena, doc, 0, &domain, &reads, &count, diag) || !json_document(prog, &built, &built_len))
+    return 0;
+  evals = arena_alloc(arena, (prog->def_count + 1u) * sizeof *evals);
+  used = arena_alloc(arena, count + 1u);
+  if (evals == NULL || used == NULL)
+    return oom(diag);
+  memset(used, 0, count + 1u);
+  for (d = 0; d < prog->def_count; d++) {
+    const DefInfo *def = &prog->defs[d];
+    size_t r;
+    if (!program_instance(def))
+      continue;
+    r = find_read(reads, used, count, def->name);
+    if (r == count)
+      return diag_fail(diag, "VERIFY_MISSING", def->name, "the program instance is not in the document");
+    used[r] = 1;
+    evals[n].name = def->name;
+    evals[n].type = def->type;
+    evals[n].value = def->value; /* evaluated once, by json_document */
+    if (!same_value(prog, reads[r].type, def->type))
+      return diag_fail(diag, "VERIFY_VALUE", def->name, "the type in the document is not the type in the program");
+    if (!same_value(prog, reads[r].value, def->value))
+      return diag_fail(diag, "VERIFY_VALUE", def->name, "the value in the document is not the value of the program");
+    n++;
+  }
+  for (at = 0; at < count; at++)
+    if (!used[at])
+      return diag_fail(diag, "VERIFY_EXTRA", reads[at].name, "the document instance is not an instance of the program");
+  at = 0;
+  while (at < bytes_len && at < built_len && bytes[at] == built[at])
+    at++;
+  if (at != bytes_len || at != built_len)
+    return diag_fail(diag, "VERIFY_BYTES", NULL, "the document is not the output of langc build: the first difference is at byte %zu",
+                     at);
+  return print_defs(arena, prog, evals, n, text, len, diag);
 }
 
 int read_document(Arena *arena, const char *text, size_t len, const JsonNode **doc, Diag *diag) {

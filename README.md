@@ -49,6 +49,14 @@ Read a JSON document again. Each instance prints as one line
 build/langc read test/json/dominance.json
 ```
 
+Compare a JSON document with the program that builds it. The output is
+`domRes2 : Flag = 1`. A document that is not the output of `langc build`
+for the program is refused.
+
+```
+build/langc verify examples/dominance.lang test/json/dominance.json
+```
+
 Use the instances of a document in a program (a query). Each instance
 becomes a definition before the definitions of the program. The output is
 `4/9`.

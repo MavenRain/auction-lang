@@ -14,7 +14,8 @@ typedef enum {
   CMD_CHECK,
   CMD_EVAL,
   CMD_BUILD,
-  CMD_READ
+  CMD_READ,
+  CMD_VERIFY
 } Command;
 
 typedef struct {
@@ -26,6 +27,7 @@ typedef struct {
   const char *out_path; /* NULL: stdout */
   int json;             /* read --json: write the parsed tree (slice C1) */
   const char *read_path; /* eval or build --read DOC (slice C3); NULL: none */
+  const char *doc_path;  /* verify PROG DOC (slice D3) */
 } Options;
 
 static const struct {
@@ -36,13 +38,15 @@ static const struct {
   {"eval", CMD_EVAL},
   {"build", CMD_BUILD},
   {"read", CMD_READ},
+  {"verify", CMD_VERIFY},
 };
 
 static int usage(FILE *err) {
   fputs("usage: langc check PROG\n"
         "       langc eval PROG [--read DOC] NAME [ARGS...]\n"
         "       langc build PROG [--read DOC] [-o OUT]\n"
-        "       langc read [--json] DOC\n", err);
+        "       langc read [--json] DOC\n"
+        "       langc verify PROG DOC\n", err);
   return 2;
 }
 
@@ -102,6 +106,9 @@ static int parse_options(int argc, char **argv, Options *opt, Diag *diag) {
         return 1;
       }
       return argc == 3 ? 1 : diag_fail(diag, "USAGE", NULL, "read takes an optional --json and one DOC");
+    case CMD_VERIFY:
+      opt->doc_path = argc == 4 ? argv[3] : NULL;
+      return argc == 4 ? 1 : diag_fail(diag, "USAGE", NULL, "verify takes PROG and DOC");
   }
   return 0;
 }
@@ -152,6 +159,20 @@ static int run_read(const char *path, int json, Arena *arena, Diag *diag) {
   return write_output(NULL, out, out_len, diag) ? 0 : 2;
 }
 
+/* langc verify PROG DOC (slice D3): PROG is checked in MACHINE. Compares DOC
+   with the instances of PROG and with the bytes of `langc build PROG`, then
+   prints one line `name : type = value` for each instance. */
+static int run_verify(const char *path, Machine *machine, Arena *arena, Diag *diag) {
+  char *text = NULL;
+  size_t len = 0;
+  const JsonNode *doc = NULL;
+  const char *out = NULL;
+  size_t out_len = 0;
+  if (!read_file(arena, path, READ_MAX_BYTES, &text, &len, diag)) return 2;
+  if (!read_document(arena, text, len, &doc, diag) || !read_verify(arena, doc, text, len, machine, &out, &out_len, diag)) return 1;
+  return write_output(NULL, out, out_len, diag) ? 0 : 2;
+}
+
 /* --read DOC: decodes each instance of DOC against the domain (in DOMAIN), for
    check_program_reads. Returns the exit status: 0, 1 (refused) or 2 (IO). */
 static int load_reads(const char *path, Arena *arena, Machine *domain, const ReadDef **reads, size_t *count, Diag *diag) {
@@ -188,6 +209,8 @@ static int run(const Options *opt, Arena *arena, Diag *diag) {
       if (!json_document(&machine, &doc, &doc_len)) return 1;
       return write_output(opt->out_path, doc, doc_len, diag) ? 0 : 2;
     }
+    case CMD_VERIFY:
+      return run_verify(opt->doc_path, &machine, arena, diag);
     case CMD_READ:
       break; /* run_read, above */
   }

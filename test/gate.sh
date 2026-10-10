@@ -153,26 +153,42 @@ for doc in test/json/*.json; do
 done
 echo "round trips: $trips checked"
 # The typed read: one line `name : type = value` for each instance of each
-# golden, and the value equals the value of `langc eval` for the example.
+# golden. `langc verify` compares the golden with the example (each value,
+# each instance and the bytes of `langc build`) and prints its lines with the
+# formatter of `langc eval`. Each read line must equal the verify line at the
+# same position. Each read value must also have a matching no-argument eval
+# expectation, checked independently by the eval group above.
 reads=0
 for doc in test/json/*.json; do
   name=$(basename "$doc" .json)
   status=0
   build/langc read "$doc" > "$tmp/typed.txt" 2>"$tmp/err" || status=$?
   [ "$status" -eq 0 ] || { echo "FAIL read $doc: exit $status: $(head -n 1 "$tmp/err")"; fail=$((fail + 1)); }
+  status=0
+  build/langc verify "examples/$name.lang" "$doc" > "$tmp/verify.txt" 2>"$tmp/err" || status=$?
+  [ "$status" -eq 0 ] || { echo "FAIL verify $doc: exit $status: $(head -n 1 "$tmp/err")"; fail=$((fail + 1)); }
   want=$(awk '{ n += gsub(/\{"name":"/, "") } END { print n + 0 }' "$doc")
   got=$(wc -l < "$tmp/typed.txt" | tr -d ' ')
   [ "$got" -eq "$want" ] || { echo "FAIL read $doc: $got lines for $want instances"; fail=$((fail + 1)); }
-  while IFS= read -r line; do
-    inst=${line%% : *}
-    value=${line##* = }
-    expected=$(build/langc eval "examples/$name.lang" "$inst" 2>/dev/null)
-    if [ "$value" = "$expected" ]; then
-      reads=$((reads + 1))
-    else
-      echo "FAIL read $doc $inst: read $value, eval $expected"; fail=$((fail + 1))
-    fi
-  done < "$tmp/typed.txt"
+  got=$(wc -l < "$tmp/verify.txt" | tr -d ' ')
+  [ "$got" -eq "$want" ] || { echo "FAIL verify $doc: $got lines for $want instances"; fail=$((fail + 1)); }
+  same=$(awk 'FILENAME == ARGV[1] { line[FNR] = $0; next }
+    (FNR in line) && line[FNR] == $0 { n++ } END { print n + 0 }' "$tmp/typed.txt" "$tmp/verify.txt")
+  [ "$same" -eq "$want" ] || { echo "FAIL read $doc: $same of $want read lines equal the verify lines"; fail=$((fail + 1)); }
+  evaluated=$(awk -v file="$name" 'FILENAME == ARGV[1] {
+    if ($1 == file && $3 == "=>") {
+      inst = $2; sub(/^[^ ]+ [^ ]+ => /, ""); expected[inst] = $0
+    }
+    next
+  }
+  {
+    inst = $0; sub(/ : .*/, "", inst)
+    value = $0; sub(/^.* = /, "", value)
+    if ((inst in expected) && "value:" value == "value:" expected[inst]) n++
+  }
+  END { print n + 0 }' test/eval/expect.txt "$tmp/typed.txt")
+  [ "$evaluated" -eq "$want" ] || { echo "FAIL read $doc: $evaluated of $want read values have matching eval expectations"; fail=$((fail + 1)); }
+  reads=$((reads + same))
 done
 echo "reads: $reads checked"
 # White space and escapes read to the format of the writer.
@@ -214,6 +230,29 @@ while read -r file code; do
   esac
 done < test/read/expect.txt
 echo "read refusals: $checked checked"
+# verify_refused STATUS CODE ARGS...: `langc verify ARGS` must exit STATUS,
+# print `langc: CODE: ...` on stderr and print nothing on stdout.
+verify_refused() {
+  want=$1
+  code=$2
+  shift 2
+  status=0
+  build/langc verify "$@" >"$tmp/out" 2>"$tmp/err" || status=$?
+  first=$(head -n 1 "$tmp/err")
+  case "$status:$(wc -c <"$tmp/out" | tr -d ' '):$first" in
+  "$want:0:langc: $code: "*) verifies=$((verifies + 1)) ;;
+  *) echo "FAIL verify $*: want exit $want, $code and no output; got exit $status: $first"; fail=$((fail + 1)) ;;
+  esac
+}
+# Verify refusals. Each line of test/verify/expect.txt is `FILE CODE`: FILE is
+# test/json/functions.json with one change. Then a usage and an IO refusal.
+verifies=0
+while read -r file code; do
+  verify_refused 1 "$code" examples/functions.lang "test/verify/$file"
+done < test/verify/expect.txt
+verify_refused 2 USAGE examples/functions.lang
+verify_refused 2 IO examples/functions.lang "$tmp/none.json"
+echo "verify refusals: $verifies checked"
 # Queries. A line is PROG DOC NAME [ARGS...] => OUTPUT, or
 # PROG DOC NAME => refuse CODE. PROG is a program of test/query.
 queries=0

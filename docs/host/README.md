@@ -30,6 +30,7 @@ No network access or package installation is needed.
 | `langc eval PROG --read DOC NAME [ARGS...]` | Reads `DOC` as `langc read DOC` does, then checks the program and applies its definition `NAME`. Each instance of `DOC` is a definition of the program (see Queries). `--read DOC` comes right after `PROG` |
 | `langc build PROG --read DOC [-o OUT]` | Reads `DOC`, then builds the program. The output document holds the instances of the program only, not the instances of `DOC` |
 | `langc read [--json] DOC` | Reads a JSON document of `langc build` (format version 1). It parses and checks the `type` of each instance, decodes the `value` against that type, and prints one line `name : type = value` for each instance. The value prints as in `langc eval`. With `--json`, it does not check the types, and it writes the document again to stdout, in the format of `langc build` |
+| `langc verify PROG DOC` | Checks the program, evaluates each instance once and compares `DOC` with it: each instance of the program is in `DOC` with the same type and value, `DOC` has no other instance, and the bytes of `DOC` are the bytes that `langc build PROG` writes. Then it prints one line `name : type = value` for each instance, as `langc read DOC` does |
 
 Exit 0 is success. Exit 1 is a refused program. Exit 2 is a usage or IO
 error. A refusal writes one line to stderr: `langc: CODE: NAME: message`.
@@ -113,6 +114,21 @@ document for each refusal, and `test/gate.sh` makes the large documents.
 `test/read-typed.c` checks built documents with higher-universe types and
 wide matrix sums, plus type isolation and name controls, in `make check`.
 
+`langc verify PROG DOC` refuses with the codes of `langc check`,
+`langc build` and `langc read DOC`, and with these codes. It prints
+nothing on stdout when it refuses:
+
+| Code | Cause |
+|---|---|
+| `VERIFY_MISSING` | An instance of the program is not in `DOC` |
+| `VERIFY_VALUE` | The type or the value of an instance in `DOC` is not the type or the value of that instance in the program |
+| `VERIFY_EXTRA` | An instance of `DOC` is not an instance of the program |
+| `VERIFY_BYTES` | The instances agree, but the bytes of `DOC` are not the bytes that `langc build PROG` writes. The message gives the first byte that is different |
+
+The checks run in this order: for each instance of the program, missing
+and then value; then extra; then bytes. `test/verify` holds a document
+for each code.
+
 Queries: with `--read DOC`, `langc eval` and `langc build` read `DOC`
 first. Each instance of `DOC` becomes a definition of the program, with
 its read type and its read value, before the definitions of the program.
@@ -155,14 +171,14 @@ executable at build time. `domain/README.md` tells how to replace it.
 | Limit | Value | Source |
 |---|---|---|
 | Source size | 1 MiB | `src/front/front.h:7` |
-| Arena | 1 GiB | `src/main.c:10` |
+| Arena | 1 GiB | `src/main.c:11` |
 | Parser nesting | 1000 | `src/front/parser.c:16` |
 | Checker depth | 2000 | `src/front/check.c:10` |
-| Evaluator depth | 2000 | `src/front/core.h:16` |
-| Evaluator fuel, for each instance | 20,000,000 steps | `src/front/core.h:17` |
+| Evaluator depth | 2000 | `src/front/core.h:17` |
+| Evaluator fuel, for each instance | 20,000,000 steps | `src/front/core.h:18` |
 | JSON nesting | 2000 | `src/json.h:15` |
-| Read document size | 16 MiB | `src/read.h:16` |
-| Read nesting | 2008 | `src/read.h:21` |
+| Read document size | 16 MiB | `src/read.h:19` |
+| Read nesting | 2008 | `src/read.h:24` |
 | `type` text | 4096 bytes | `src/json.c:7` |
 
 ## Origin
