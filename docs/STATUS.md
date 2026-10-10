@@ -70,11 +70,11 @@ longer than 4096 bytes, and each boundary build that passes reads back.
 Slice D5 is done: the 6 kernels of O16 have eval lines at n = 3, and each
 line takes 0.09 s alone. Slice D6 closes M3 and changes docs only.
 
-One finding of slice D4 waits for a ruling, and `SPEC.md` section 9 does
-not have it yet. A value line of `read` or `eval` that nests 200 levels
-in arguments that are not the last prints a "..." cut with exit 0 (Known
-limits). The options are: (a) size the depth from the value, as D4 sizes
-the length; (b) refuse such a line with a new code; (c) keep the cut as a
+One finding of slice D4 waits for a ruling (`SPEC.md` O18). A value
+line of `read`, `eval` or `verify` that nests 200 levels in arguments
+that are not the last prints a "..." cut with exit 0 (Known limits).
+The options are: (a) size the depth from the value, as D4 sizes the
+length; (b) refuse such a line with a new code; (c) keep the cut as a
 Known limit.
 
 ## Known limits

@@ -509,6 +509,64 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
   read checks are those of `langc read DOC`. It prints its lines only
   when each comparison holds. `test/verify` holds a document for each
   code.
+- O18. The depth cut of a value line (the finding of slice D4, after
+  M3). The printer stops at 200 nested levels (`src/front/eval.c:7`,
+  `src/front/eval.c:2176-2178`). It prints the last argument of each
+  operation in a loop, so a long list adds no level. Each other
+  argument, each binder body and each application head adds one level.
+  `value_text` does not ask for the cut (`src/front/eval.c:2236-2237`),
+  so a value line of `langc eval`, `langc read` or `langc verify` that
+  reaches 200 levels prints "..." with exit 0. The facts below are runs
+  on 4c04be2 (E1 kickoff s1, in the sandbox, scratch programs).
+  Shapes: a program cannot declare a family (rule R1, `REFUSE_DATA`),
+  and `Stack`, the one recursive family of the domain, recurses in its
+  last argument. A value that nests in an argument that is not the last
+  thus comes from a deep type, from a function in the data, or from a
+  payload type that a `fold` computes. `pair (pair (... 0) 0) 0` of type
+  `Prod (Prod (...) Nat) Nat` prints in full at 199 levels and with the
+  cut at 200 (`eval`, exit 0); the writer refuses its type at 200 levels
+  (`JSON_TYPE_SIZE`, `src/json.c:386-387`). `def s : Sigma (n : Nat)
+  (T n) := pack 200 (pair (... 0) 0)`, where `T n` folds `Prod t Nat`
+  n times from `Nat`, has a short type: `langc build` writes it (exit
+  0), and `eval`, `read` and `verify` print its line with the cut (exit
+  0). At 199 levels the 3 commands print it in full. A pair of `fun x
+  => fold (fun a => natAdd a 1) x n` and 0 prints a stuck `natAdd`
+  chain, in full at n = 197 and with the cut at n = 198 (the pair and
+  the binder add 2 levels); `langc build` refuses it (`JSON_VALUE`).
+  Writer and reader: `langc build` writes a value as nested JSON, not
+  with the printer, so it has no depth cut for a value; it stops at 2000
+  levels (`JSON_DEPTH`, `src/json.c:337-338`). The reader reads at most
+  2008 levels (`test/gate.sh:204`). `langc verify` compares values, not
+  text (`src/read.c:910-913`), so the cut changes only the printed
+  line. Depth: a literal stops at the parser limit of 1000
+  (`src/front/parser.c:16`; the Sigma value at 999 levels is
+  `PARSE_DEPTH`). A `fold` on Nat is a loop
+  (`src/front/eval.c:579-580`), so only the fuel limits the depth of an
+  eval line: the function pair at n = 1,000,000 evaluates and prints
+  2198 bytes with the cut, exit 0. C stack: the stack is 8176 KiB
+  (`ulimit -s`). In the TinyCC arm64 build the frame of `print_value` is
+  240 bytes, of `print_other` 288 to 304 and of `print_binder` 272
+  (`objdump` prologues). A scratch build with no depth cut prints the
+  `natAdd` chain at 34,000 levels and stops with SIGSEGV (exit 139) at
+  36,000, about 240 bytes for each level. It prints a chain of `Nat ->
+  t` (a binder at each level) at 10,000 levels and stops with SIGSEGV at
+  11,000, about 800 bytes for each level. Options: (a) size the depth
+  from the value, as D4 sizes the length. The facts show that (a) needs
+  a cap: with no cap, an eval line stops with SIGSEGV. (b) Refuse a
+  line that the printer cuts, with a new code (exit 1) in place of "..."
+  with exit 0, in `eval`, `read` and `verify`. (c) Keep the cut, and
+  keep the Known limits bullet of `docs/STATUS.md` (there since D4).
+  Proposal: (a) with a cap, and (b) past the cap. A value line prints
+  up to 2000 levels, the depth limit of the evaluator, the checker and
+  the writer (`src/front/core.h:17`, `src/front/check.c:10`,
+  `src/json.h:15`). At about 800 bytes for each level this is 1.6 MB of
+  the stack; the no-cut build prints both chains at 2000 levels (exit
+  0). A deeper line is refused with a new code: `EVAL_PRINT_DEPTH` in
+  `eval`, `READ_PRINT_DEPTH` in `read` and `verify`. A type keeps the
+  cut at 200 levels (`JSON_TYPE_SIZE` of D4, and the gate tests of 199
+  and 200 levels stay). New tests in the `limits` group: an eval line
+  and a read line at the cap (in full) and 1 level over it (refused).
+  The smaller form is (b) alone at 200 levels.
 
 ## 10. Milestones
 
