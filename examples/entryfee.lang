@@ -1,0 +1,46 @@
+-- M&M 3.1.4: entry fees. Values Fin 4 = {0, 1, 2, 3}, each with
+-- probability 1/4, truthful bids in a second price auction. A bidder enters
+-- if its value is at least the cutoff c. The fee e(c) makes the cutoff type
+-- indifferent: e(c) = c * P(rival value below c).
+def efPrior : (v : Fin 4) -> Rat := fun (v : Fin 4) => 1/4
+def efVal : (v : Fin 4) -> Rat := fun (v : Fin 4) => ratOfNat (finVal v)
+def efBelow : (c : Fin 4) -> Rat := fun (c : Fin 4) => sumRat 4 (fun (w : Fin 4) => flagIf (finLt w c) (efPrior w) 0/1)
+def efFee : (c : Fin 4) -> Rat := fun (c : Fin 4) => ratMul (efVal c) (efBelow c)
+-- Surplus of a type v that enters when the rival enters if its value is at
+-- least c. An absent rival: the entrant wins at price 0. A rival entrant w:
+-- the entrant wins at price w if w < v. A tie gives surplus 0.
+def efSurplus : (c v : Fin 4) -> Rat := fun (c v : Fin 4) => ratSub (sumRat 4 (fun (w : Fin 4) => ratMul (efPrior w) (flagIf (finLt w c) (efVal v) (flagIf (finLt w v) (ratSub (efVal v) (efVal w)) 0/1)))) (efFee c)
+-- The cutoff rule is an equilibrium of the entry decision: each type at or
+-- above c gains at least 0, and each type below c loses.
+def efEntryEq : Flag := allFin 4 (fun (c : Fin 4) => allFin 4 (fun (v : Fin 4) => flagIf (finLe c v) (ratLe 0/1 (efSurplus c v)) (ratLt (efSurplus c v) 0/1)))
+-- Seller revenue at the values (a, b): reserve c and no fee, or fee e(c) and no reserve.
+def efMin : (a b : Fin 4) -> Rat := fun (a b : Fin 4) => flagIf (finLe a b) (efVal a) (efVal b)
+def efReservePay : (c a b : Fin 4) -> Rat := fun (c a b : Fin 4) => flagIf (flagAnd (finLe c a) (finLe c b)) (efMin a b) (flagIf (finLe c (finMax a b)) (efVal c) 0/1)
+def efFeePay : (c a b : Fin 4) -> Rat := fun (c a b : Fin 4) => ratAdd (flagIf (flagAnd (finLe c a) (finLe c b)) (efMin a b) 0/1) (ratAdd (flagIf (finLe c a) (efFee c) 0/1) (flagIf (finLe c b) (efFee c) 0/1))
+def efReserveRev : (c : Fin 4) -> Rat := fun (c : Fin 4) => sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => ratMul (ratMul (efPrior a) (efPrior b)) (efReservePay c a b)))
+def efFeeRev : (c : Fin 4) -> Rat := fun (c : Fin 4) => sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => ratMul (ratMul (efPrior a) (efPrior b)) (efFeePay c a b)))
+-- A reserve and a fee with the same cutoff give the same expected revenue.
+def efEquiv2 : Flag := allFin 4 (fun (c : Fin 4) => ratEq (efReserveRev c) (efFeeRev c))
+-- The reserve revenue agrees with the library mechanism spsbReserve.
+def efLibEquiv : Flag := allFin 4 (fun (c : Fin 4) => ratEq (efReserveRev c) (expectedRevenue 4 (spsbReserve 4 c) (fun (v : Fin (natMul 4 4)) => uniformPrior 4 v)))
+-- The revenue-maximizing fee on the grid: cutoff 2, fee 1, revenue 25/16.
+def efBestFee : Flag := allFin 4 (fun (c : Fin 4) => ratLe (efFeeRev c) (efFeeRev 2))
+def efBestFeeValue : Rat := efFee 2
+def efBestRevenue : Rat := efFeeRev 2
+-- Three bidders. The fee makes the cutoff type indifferent: it wins only if
+-- both rivals stay out, so e3(c) = c * P(rival below c)^2.
+def efFee3 : (c : Fin 4) -> Rat := fun (c : Fin 4) => ratMul (efVal c) (ratMul (efBelow c) (efBelow c))
+-- The highest rival value. A rival below c stays out, so a rival entrant is
+-- present if and only if this value is at least c.
+def efSurplus3 : (c v : Fin 4) -> Rat := fun (c v : Fin 4) => ratSub (sumRat 4 (fun (w1 : Fin 4) => sumRat 4 (fun (w2 : Fin 4) => ratMul (ratMul (efPrior w1) (efPrior w2)) (flagIf (finLt (finMax w1 w2) c) (efVal v) (flagIf (finLt (finMax w1 w2) v) (ratSub (efVal v) (efVal (finMax w1 w2))) 0/1))))) (efFee3 c)
+def efEntryEq3 : Flag := allFin 4 (fun (c : Fin 4) => allFin 4 (fun (v : Fin 4) => flagIf (finLe c v) (ratLe 0/1 (efSurplus3 c v)) (ratLt (efSurplus3 c v) 0/1)))
+-- The second highest of three values (the median).
+def efMed : (a b d : Fin 4) -> Fin 4 := fun (a b d : Fin 4) => finMax (flagIf (finLe a b) a b) (flagIf (finLe (finMax a b) d) (finMax a b) d)
+def efEntrants : (c a b d : Fin 4) -> Rat := fun (c a b d : Fin 4) => ratAdd (flagIf (finLe c a) 1/1 0/1) (ratAdd (flagIf (finLe c b) 1/1 0/1) (flagIf (finLe c d) 1/1 0/1))
+def efReservePay3 : (c a b d : Fin 4) -> Rat := fun (c a b d : Fin 4) => flagIf (finLe c (finMax (finMax a b) d)) (efVal (finMax c (efMed a b d))) 0/1
+def efFeePay3 : (c a b d : Fin 4) -> Rat := fun (c a b d : Fin 4) => ratAdd (flagIf (finLe c (efMed a b d)) (efVal (efMed a b d)) 0/1) (ratMul (efFee3 c) (efEntrants c a b d))
+def efReserveRev3 : (c : Fin 4) -> Rat := fun (c : Fin 4) => sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => sumRat 4 (fun (d : Fin 4) => ratMul (ratMul (efPrior a) (ratMul (efPrior b) (efPrior d))) (efReservePay3 c a b d))))
+def efFeeRev3 : (c : Fin 4) -> Rat := fun (c : Fin 4) => sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => sumRat 4 (fun (d : Fin 4) => ratMul (ratMul (efPrior a) (ratMul (efPrior b) (efPrior d))) (efFeePay3 c a b d))))
+def efEquiv3 : Flag := allFin 4 (fun (c : Fin 4) => ratEq (efReserveRev3 c) (efFeeRev3 c))
+def efBestFee3 : Flag := allFin 4 (fun (c : Fin 4) => ratLe (efFeeRev3 c) (efFeeRev3 2))
+def efBestRevenue3 : Rat := efFeeRev3 2
