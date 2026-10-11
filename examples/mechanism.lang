@@ -1,0 +1,97 @@
+-- M&M ch. 6: mechanism design on discrete types. Two bidders with i.i.d.
+-- types t in {0, 1, 2, 3}, each with probability 1/4; the value of type t is t.
+-- A symmetric direct mechanism is an interim pair: qi a = probability to get
+-- the object and pi a = expected payment, when the report is a.
+def mcV : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratOfNat (finVal t)
+def mcF : (t : Fin 4) -> Rat := fun (t : Fin 4) => 1/4
+def mcCdf : (t : Fin 4) -> Rat := fun (t : Fin 4) => sumRat 4 (fun (j : Fin 4) => flagIf (finLe j t) (mcF j) 0/1)
+-- Interim utility of type t that reports a.
+def mcUt : (qi : (a : Fin 4) -> Rat) -> (pi : (a : Fin 4) -> Rat) -> (t a : Fin 4) -> Rat := fun (qi : (a : Fin 4) -> Rat) (pi : (a : Fin 4) -> Rat) (t a : Fin 4) => ratSub (ratMul (mcV t) (qi a)) (pi a)
+-- IC: no type gains from a false report. IR: no type has a negative utility.
+def mcIC : (qi : (a : Fin 4) -> Rat) -> (pi : (a : Fin 4) -> Rat) -> Flag := fun (qi : (a : Fin 4) -> Rat) (pi : (a : Fin 4) -> Rat) => allFin 4 (fun (t : Fin 4) => allFin 4 (fun (a : Fin 4) => ratLe (mcUt qi pi t a) (mcUt qi pi t t)))
+def mcIR : (qi : (a : Fin 4) -> Rat) -> (pi : (a : Fin 4) -> Rat) -> Flag := fun (qi : (a : Fin 4) -> Rat) (pi : (a : Fin 4) -> Rat) => allFin 4 (fun (t : Fin 4) => ratLe 0/1 (mcUt qi pi t t))
+def mcRev : (pi : (a : Fin 4) -> Rat) -> Rat := fun (pi : (a : Fin 4) -> Rat) => ratMul 2/1 (sumRat 4 (fun (t : Fin 4) => ratMul (mcF t) (pi t)))
+-- Second price with reserve r and truthful bids: ex post share of report a
+-- against report b (ties split), and the price max(r, b).
+def mcSPq : (r a b : Fin 4) -> Rat := fun (r a b : Fin 4) => flagIf (finLt a r) 0/1 (flagIf (finLt b a) 1/1 (flagIf (finEq a b) 1/2 0/1))
+def mcSPu : (r t a b : Fin 4) -> Rat := fun (r t a b : Fin 4) => ratMul (mcSPq r a b) (ratSub (mcV t) (mcV (finMax r b)))
+-- Truthful bidding is dominant for every reserve, type and rival report.
+def mcSPDominant : Flag := allFin 4 (fun (r : Fin 4) => allFin 4 (fun (t : Fin 4) => allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => ratLe (mcSPu r t a b) (mcSPu r t t b)))))
+def mcSPQ : (r a : Fin 4) -> Rat := fun (r a : Fin 4) => sumRat 4 (fun (b : Fin 4) => ratMul (mcF b) (mcSPq r a b))
+def mcSPP : (r a : Fin 4) -> Rat := fun (r a : Fin 4) => sumRat 4 (fun (b : Fin 4) => ratMul (mcF b) (ratMul (mcSPq r a b) (mcV (finMax r b))))
+def mcSPRev : (r : Fin 4) -> Rat := fun (r : Fin 4) => mcRev (fun (a : Fin 4) => mcSPP r a)
+-- The reserve 2 is the best grid reserve.
+def mcBestReserve : Flag := allFin 4 (fun (r : Fin 4) => ratLe (mcSPRev r) (mcSPRev 2))
+-- M&M ch. 6, revelation principle. First price with bids k/4, k = 0..12.
+-- The direct mechanism "report a, then bid b(a)" has the same outcome. It is
+-- IC and IR when b is an equilibrium of the first price auction.
+def mcBid : (b0 b1 b2 b3 : Fin 13) -> (t : Fin 4) -> Fin 13 := fun (b0 b1 b2 b3 : Fin 13) (t : Fin 4) => flagIf (finEq t 0) b0 (flagIf (finEq t 1) b1 (flagIf (finEq t 2) b2 b3))
+def mcShare : (z r : Fin 13) -> Rat := fun (z r : Fin 13) => flagIf (finLt r z) 1/1 (flagIf (finEq z r) 1/2 0/1)
+def mcFPPay : (b0 b1 b2 b3 : Fin 13) -> (t : Fin 4) -> (z : Fin 13) -> Rat := fun (b0 b1 b2 b3 : Fin 13) (t : Fin 4) (z : Fin 13) => sumRat 4 (fun (u : Fin 4) => ratMul (mcF u) (ratMul (mcShare z (mcBid b0 b1 b2 b3 u)) (ratSub (mcV t) (ratMul 1/4 (ratOfNat (finVal z))))))
+def mcFPEq : (b0 b1 b2 b3 : Fin 13) -> Flag := fun (b0 b1 b2 b3 : Fin 13) => allFin 4 (fun (t : Fin 4) => allFin 13 (fun (z : Fin 13) => ratLe (mcFPPay b0 b1 b2 b3 t z) (mcFPPay b0 b1 b2 b3 t (mcBid b0 b1 b2 b3 t))))
+def mcFPQ : (b0 b1 b2 b3 : Fin 13) -> (a : Fin 4) -> Rat := fun (b0 b1 b2 b3 : Fin 13) (a : Fin 4) => sumRat 4 (fun (u : Fin 4) => ratMul (mcF u) (mcShare (mcBid b0 b1 b2 b3 a) (mcBid b0 b1 b2 b3 u)))
+def mcFPP : (b0 b1 b2 b3 : Fin 13) -> (a : Fin 4) -> Rat := fun (b0 b1 b2 b3 : Fin 13) (a : Fin 4) => ratMul (mcFPQ b0 b1 b2 b3 a) (ratMul 1/4 (ratOfNat (finVal (mcBid b0 b1 b2 b3 a))))
+def mcDirect : (b0 b1 b2 b3 : Fin 13) -> Flag := fun (b0 b1 b2 b3 : Fin 13) => flagAnd (mcIC (fun (a : Fin 4) => mcFPQ b0 b1 b2 b3 a) (fun (a : Fin 4) => mcFPP b0 b1 b2 b3 a)) (mcIR (fun (a : Fin 4) => mcFPQ b0 b1 b2 b3 a) (fun (a : Fin 4) => mcFPP b0 b1 b2 b3 a))
+-- Ex post first price revenue: the high bid, ties split.
+def mcFPRevPost : (b0 b1 b2 b3 : Fin 13) -> Rat := fun (b0 b1 b2 b3 : Fin 13) => sumRat 4 (fun (s : Fin 4) => sumRat 4 (fun (t : Fin 4) => ratMul (ratMul (mcF s) (mcF t)) (ratMul 1/4 (ratOfNat (finVal (finMax (mcBid b0 b1 b2 b3 s) (mcBid b0 b1 b2 b3 t)))))))
+def mcFPRev : (b0 b1 b2 b3 : Fin 13) -> Rat := fun (b0 b1 b2 b3 : Fin 13) => mcRev (fun (a : Fin 4) => mcFPP b0 b1 b2 b3 a)
+-- Three first price equilibria (bids 0, 1/4, 3/4, 5/4; 0, 1/2, 3/4, 5/4;
+-- 0, 1/2, 1, 3/2). Each direct mechanism is IC and IR, and its revenue is the
+-- ex post revenue of the auction.
+def mcReveal : Flag := allFin 3 (fun (k : Fin 3) => flagIf (finEq k 0) (flagAnd (flagAnd (mcFPEq 0 1 3 5) (mcDirect 0 1 3 5)) (ratEq (mcFPRev 0 1 3 5) (mcFPRevPost 0 1 3 5))) (flagIf (finEq k 1) (flagAnd (flagAnd (mcFPEq 0 2 3 5) (mcDirect 0 2 3 5)) (ratEq (mcFPRev 0 2 3 5) (mcFPRevPost 0 2 3 5))) (flagAnd (flagAnd (mcFPEq 0 2 4 6) (mcDirect 0 2 4 6)) (ratEq (mcFPRev 0 2 4 6) (mcFPRevPost 0 2 4 6)))))
+-- Truthful first price bids are not an equilibrium, and their direct
+-- mechanism is not IC.
+def mcTruthFPNotIC : Flag := flagAnd (flagNot (mcFPEq 0 4 8 12)) (flagNot (mcDirect 0 4 8 12))
+def mcFPRev1 : Rat := mcFPRev 0 1 3 5
+def mcFPRev2 : Rat := mcFPRev 0 2 3 5
+def mcFPRev3 : Rat := mcFPRev 0 2 4 6
+-- M&M ch. 6, payment rule. On discrete types, IC gives only a band for the
+-- utility step: (v(t) - v(t-1)) qi(t-1) <= U(t) - U(t-1) <= (v(t) - v(t-1)) qi(t).
+-- The low end (downward adjacent IC binds, U(0) = 0) gives the payment
+-- pi t = v(t) qi(t) - sum over j < t of qi(j), with unit steps. The high end
+-- (upward adjacent IC binds) gives pi t = v(t) qi(t) - sum over 0 < j <= t of qi(j).
+def mcEnvP : (qi : (a : Fin 4) -> Rat) -> (t : Fin 4) -> Rat := fun (qi : (a : Fin 4) -> Rat) (t : Fin 4) => ratSub (ratMul (mcV t) (qi t)) (sumRat 4 (fun (j : Fin 4) => flagIf (finLt j t) (qi j) 0/1))
+def mcUpP : (qi : (a : Fin 4) -> Rat) -> (t : Fin 4) -> Rat := fun (qi : (a : Fin 4) -> Rat) (t : Fin 4) => ratSub (ratMul (mcV t) (qi t)) (sumRat 4 (fun (j : Fin 4) => flagIf (flagAnd (natLt 0 (finVal j)) (finLe j t)) (qi j) 0/1))
+-- For each reserve: both payment rules are IC and IR with the second price
+-- allocation, and the second price revenue lies between their revenues.
+def mcBand : Flag := allFin 4 (fun (r : Fin 4) => flagAnd (flagAnd (mcIC (fun (a : Fin 4) => mcSPQ r a) (fun (a : Fin 4) => mcEnvP (fun (b : Fin 4) => mcSPQ r b) a)) (mcIC (fun (a : Fin 4) => mcSPQ r a) (fun (a : Fin 4) => mcUpP (fun (b : Fin 4) => mcSPQ r b) a))) (flagAnd (ratLe (mcRev (fun (a : Fin 4) => mcUpP (fun (b : Fin 4) => mcSPQ r b) a)) (mcSPRev r)) (ratLe (mcSPRev r) (mcRev (fun (a : Fin 4) => mcEnvP (fun (b : Fin 4) => mcSPQ r b) a)))))
+def mcEnvRev0 : Rat := mcRev (fun (a : Fin 4) => mcEnvP (fun (b : Fin 4) => mcSPQ 0 b) a)
+def mcUpRev0 : Rat := mcRev (fun (a : Fin 4) => mcUpP (fun (b : Fin 4) => mcSPQ 0 b) a)
+-- Revenue equivalence, as found. The three first price equilibria and the
+-- second price auction without reserve have the same allocation and U(0) = 0,
+-- but the revenues are 53/64, 7/8, 17/16 and 7/8. The book's continuous
+-- theorem gives one revenue; on discrete types the band above is not a point.
+def mcSameAlloc : Flag := allFin 4 (fun (a : Fin 4) => flagAnd (flagAnd (ratEq (mcFPQ 0 1 3 5 a) (mcSPQ 0 a)) (ratEq (mcFPQ 0 2 3 5 a) (mcSPQ 0 a))) (flagAnd (ratEq (mcFPQ 0 2 4 6 a) (mcSPQ 0 a)) (ratEq (mcUt (fun (b : Fin 4) => mcFPQ 0 1 3 5 b) (fun (b : Fin 4) => mcFPP 0 1 3 5 b) 0 0) 0/1)))
+def mcRevNotEquiv : Flag := flagAnd (ratLt mcFPRev1 (mcSPRev 0)) (flagAnd (ratEq mcFPRev2 (mcSPRev 0)) (ratLt (mcSPRev 0) mcFPRev3))
+-- M&M ch. 6, optimal auction. Discrete virtual value
+-- phi(t) = v(t) - (v(t+1) - v(t)) (1 - F(t)) / f(t); here -3, -1, 1, 3.
+def mcPhi : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratSub (mcV t) (ratDiv (ratSub 1/1 (mcCdf t)) (mcF t))
+def mcRegular : Flag := allFin 4 (fun (t : Fin 4) => allFin 4 (fun (u : Fin 4) => flagIf (finLt t u) (ratLt (mcPhi t) (mcPhi u)) (natEq 0 0)))
+-- Give the object to the highest positive virtual value, ties split.
+def mcOptq : (a b : Fin 4) -> Rat := fun (a b : Fin 4) => flagIf (ratLt 0/1 (mcPhi a)) (flagIf (ratLt (mcPhi b) (mcPhi a)) 1/1 (flagIf (ratEq (mcPhi a) (mcPhi b)) 1/2 0/1)) 0/1
+def mcMax : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) y x
+-- Pointwise, this allocation gets the largest virtual surplus that any
+-- feasible split (x, y >= 0, x + y <= 1) can get: max(0, phi a, phi b).
+def mcPointwise : Flag := allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => ratEq (ratAdd (ratMul (mcOptq a b) (mcPhi a)) (ratMul (mcOptq b a) (mcPhi b))) (mcMax 0/1 (mcMax (mcPhi a) (mcPhi b)))))
+-- In this regular instance it is the second price allocation with reserve 2.
+def mcOptIsSP2 : Flag := allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => ratEq (mcOptq a b) (mcSPq 2 a b)))
+def mcOptQ : (a : Fin 4) -> Rat := fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => ratMul (mcF b) (mcOptq a b))
+def mcOptP : (a : Fin 4) -> Rat := fun (a : Fin 4) => mcEnvP (fun (b : Fin 4) => mcOptQ b) a
+def mcOptRev : Rat := mcRev (fun (a : Fin 4) => mcOptP a)
+def mcOptICIR : Flag := flagAnd (mcIC (fun (a : Fin 4) => mcOptQ a) (fun (a : Fin 4) => mcOptP a)) (mcIR (fun (a : Fin 4) => mcOptQ a) (fun (a : Fin 4) => mcOptP a))
+-- Expected virtual surplus of an ex post allocation.
+def mcVS : (q : (a b : Fin 4) -> Rat) -> Rat := fun (q : (a b : Fin 4) -> Rat) => ratMul 2/1 (sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => ratMul (ratMul (mcF a) (mcF b)) (ratMul (q a b) (mcPhi a)))))
+-- Revenue of the binding payment rule = expected virtual surplus, for the
+-- optimal allocation and for each second price allocation.
+def mcRevIsVS : Flag := flagAnd (ratEq mcOptRev (mcVS (fun (a b : Fin 4) => mcOptq a b))) (allFin 4 (fun (r : Fin 4) => ratEq (mcRev (fun (a : Fin 4) => mcEnvP (fun (b : Fin 4) => mcSPQ r b) a)) (mcVS (fun (a b : Fin 4) => mcSPq r a b))))
+-- The optimal auction gets at least the second price revenue with each reserve.
+def mcOptBeatsSP : Flag := allFin 4 (fun (r : Fin 4) => ratLe (mcSPRev r) mcOptRev)
+-- As found: with the optimal reserve 2 the second price auction has the
+-- optimal allocation but less revenue (25/16 < 13/8). The book's continuous
+-- result gives equality.
+def mcOptGap : Flag := ratLt (mcSPRev 2) mcOptRev
+-- VCG for one object: the price is the externality on the rival,
+-- v(b) (1 - share of b). It is the second price payment without reserve.
+def mcVCGp : (a b : Fin 4) -> Rat := fun (a b : Fin 4) => ratMul (mcV b) (ratSub 1/1 (mcSPq 0 b a))
+def mcVCGu : (t a b : Fin 4) -> Rat := fun (t a b : Fin 4) => ratSub (ratMul (mcV t) (mcSPq 0 a b)) (mcVCGp a b)
+def mcVCG : Flag := allFin 4 (fun (t : Fin 4) => allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => flagAnd (ratLe (mcVCGu t a b) (mcVCGu t t b)) (ratEq (mcVCGp a b) (ratMul (mcSPq 0 a b) (mcV b))))))
