@@ -1,0 +1,53 @@
+-- M&M 3.4: two bidders, two values vL < vH, P(vH) = p, first price auction.
+-- The low type bids vL. The high type mixes on [vL, bbar], bbar =
+-- vL + p (vH - vL), with the distribution G(b) = (1 - p)(b - vL) / (p (vH - b)).
+-- Its payoff is then the constant U = (vH - vL)(1 - p) on (vL, bbar].
+def dsBbar : (vL vH p : Rat) -> Rat := fun (vL vH p : Rat) => ratAdd vL (ratMul p (ratSub vH vL))
+def dsG : (vL vH p b : Rat) -> Rat := fun (vL vH p b : Rat) => ratDiv (ratMul (ratSub 1/1 p) (ratSub b vL)) (ratMul p (ratSub vH b))
+def dsU : (vL vH p : Rat) -> Rat := fun (vL vH p : Rat) => ratMul (ratSub vH vL) (ratSub 1/1 p)
+-- Payoff of a value v that bids b against this strategy. Below vL it never
+-- wins. At vL it ties with a low rival (probability 1/2 to win). On (vL, bbar]
+-- it wins if the rival is low or bids below b. Above bbar it always wins.
+def dsPay : (vL vH p v b : Rat) -> Rat := fun (vL vH p v b : Rat) => flagIf (ratLt b vL) 0/1 (flagIf (ratEq b vL) (ratMul (ratSub v vL) (ratMul 1/2 (ratSub 1/1 p))) (flagIf (ratLe b (dsBbar vL vH p)) (ratMul (ratSub v b) (ratAdd (ratSub 1/1 p) (ratMul p (dsG vL vH p b)))) (ratSub v b)))
+-- Parameter grid: vL in {0, 1, 2}, vH = vL + {1, 2, 3}, p in {1/4, 1/2, 3/4}.
+def dsAll : (f : (vL vH p : Rat) -> Flag) -> Flag := fun (f : (vL vH p : Rat) -> Flag) => allFin 3 (fun (i : Fin 3) => allFin 3 (fun (j : Fin 3) => allFin 3 (fun (k : Fin 3) => f (ratOfNat (finVal i)) (ratAdd (ratOfNat (finVal i)) (ratOfNat (natAdd (finVal j) 1))) (ratDiv (ratOfNat (natAdd (finVal k) 1)) 4/1))))
+-- Bid samples: x in (0, 1] maps to vL + x (bbar - vL) in (vL, bbar] and to
+-- bbar + x (vH - bbar) in (bbar, vH]. The steps are x = 1/8, 2/8, .., 1.
+def dsIn : (vL vH p x : Rat) -> Rat := fun (vL vH p x : Rat) => ratAdd vL (ratMul x (ratSub (dsBbar vL vH p) vL))
+def dsOut : (vL vH p x : Rat) -> Rat := fun (vL vH p x : Rat) => ratAdd (dsBbar vL vH p) (ratMul x (ratSub vH (dsBbar vL vH p)))
+def dsStep : (m : Fin 8) -> Rat := fun (m : Fin 8) => ratDiv (ratOfNat (natAdd (finVal m) 1)) 8/1
+-- G is a distribution on [vL, bbar]: G(vL) = 0, G(bbar) = 1, G increasing.
+def dsGDist : Flag := dsAll (fun (vL vH p : Rat) => flagAnd (flagAnd (ratEq (dsG vL vH p vL) 0/1) (ratEq (dsG vL vH p (dsBbar vL vH p)) 1/1)) (allFin 8 (fun (m : Fin 8) => ratLt (dsG vL vH p (dsIn vL vH p (ratSub (dsStep m) 1/8))) (dsG vL vH p (dsIn vL vH p (dsStep m))))))
+-- The high type is indifferent on (vL, bbar] and loses by any other bid.
+def dsHighFlat : Flag := dsAll (fun (vL vH p : Rat) => allFin 8 (fun (m : Fin 8) => ratEq (dsPay vL vH p vH (dsIn vL vH p (dsStep m))) (dsU vL vH p)))
+def dsHighOff : Flag := dsAll (fun (vL vH p : Rat) => flagAnd (flagAnd (ratLt (dsPay vL vH p vH (ratSub vL 1/1)) (dsU vL vH p)) (ratLt (dsPay vL vH p vH vL) (dsU vL vH p))) (allFin 8 (fun (m : Fin 8) => ratLt (dsPay vL vH p vH (dsOut vL vH p (dsStep m))) (dsU vL vH p))))
+-- The low type bid vL is a best response (payoff 0).
+def dsLowBid : (vL vH p : Rat) -> Rat := fun (vL vH p : Rat) => vL
+def dsLowBest : Flag := dsAll (fun (vL vH p : Rat) => flagAnd (ratLe (dsPay vL vH p vL (ratSub vL 1/1)) (dsPay vL vH p vL (dsLowBid vL vH p))) (allFin 8 (fun (m : Fin 8) => flagAnd (ratLe (dsPay vL vH p vL (dsIn vL vH p (dsStep m))) (dsPay vL vH p vL (dsLowBid vL vH p))) (ratLe (dsPay vL vH p vL (dsOut vL vH p (dsStep m))) (dsPay vL vH p vL (dsLowBid vL vH p))))))
+-- Expected revenue. First price: a low type pays vL when it wins (a tie with a
+-- low rival, probability (1 - p)/2). A high type pays vH P(win) - U, with
+-- P(win) = (1 - p) + p/2. Second price: vH if both values are high, else vL.
+def dsRevFP : (vL vH p : Rat) -> Rat := fun (vL vH p : Rat) => ratMul 2/1 (ratAdd (ratMul p (ratSub (ratMul vH (ratAdd (ratSub 1/1 p) (ratMul 1/2 p))) (dsU vL vH p))) (ratMul (ratSub 1/1 p) (ratMul vL (ratMul 1/2 (ratSub 1/1 p)))))
+def dsRevSP : (vL vH p : Rat) -> Rat := fun (vL vH p : Rat) => ratAdd (ratMul (ratMul p p) vH) (ratMul (ratSub 1/1 (ratMul p p)) vL)
+def dsRevEquiv : Flag := dsAll (fun (vL vH p : Rat) => ratEq (dsRevFP vL vH p) (dsRevSP vL vH p))
+-- The case vL = 1, vH = 3, p = 1/3: bbar = 5/3, G(4/3) = 2/5, revenue 11/9.
+def dsBookBbar : Rat := dsBbar 1/1 3/1 1/3
+def dsBookG : Rat := dsG 1/1 3/1 1/3 4/3
+def dsBookRev : Rat := dsRevFP 1/1 3/1 1/3
+-- Discrete bids have no pure equilibrium: vL = 0, vH = 1, p = 1/2, bids
+-- k * tick for k = 0..8. The rival bids bL (low) or bH (high), each with
+-- probability 1/2. A tie gives the object with probability 1/2.
+def dsTick : Rat := 1/8
+def dsShare : (z r : Fin 9) -> Rat := fun (z r : Fin 9) => flagIf (finLt r z) 1/1 (flagIf (finEq z r) 1/2 0/1)
+def dsGridPay : (v : Rat) -> (z bL bH : Fin 9) -> Rat := fun (v : Rat) (z bL bH : Fin 9) => ratMul (ratSub v (ratMul dsTick (ratOfNat (finVal z)))) (ratMul 1/2 (ratAdd (dsShare z bL) (dsShare z bH)))
+def dsGridEq : (bL bH : Fin 9) -> Flag := fun (bL bH : Fin 9) => allFin 9 (fun (z : Fin 9) => flagAnd (ratLe (dsGridPay 0/1 z bL bH) (dsGridPay 0/1 bL bL bH)) (ratLe (dsGridPay 1/1 z bL bH) (dsGridPay 1/1 bH bL bH)))
+def dsNoPureEq : Flag := allFin 9 (fun (bL : Fin 9) => allFin 9 (fun (bH : Fin 9) => flagNot (dsGridEq bL bH)))
+-- M&M 3.1.1: values uniform on [0, 1], n bidders, b(v) = (n - 1) v / n. A
+-- bidder with value v that bids b(z) wins with probability z^(n - 1). On the
+-- grid v, z in {0, 1/8, .., 1} the bid b(v) is a best response.
+def dsEighth : (k : Fin 9) -> Rat := fun (k : Fin 9) => ratDiv (ratOfNat (finVal k)) 8/1
+def dsBid : (n : Nat) -> (z : Rat) -> Rat := fun (n : Nat) (z : Rat) => ratMul (ratDiv (ratOfNat (natSub n 1)) (ratOfNat n)) z
+def dsPay2 : (v z : Rat) -> Rat := fun (v z : Rat) => ratMul (ratSub v (dsBid 2 z)) z
+def dsPay3 : (v z : Rat) -> Rat := fun (v z : Rat) => ratMul (ratSub v (dsBid 3 z)) (ratMul z z)
+def dsBestResp2 : Flag := allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => ratLe (dsPay2 (dsEighth j) (dsEighth i)) (dsPay2 (dsEighth j) (dsEighth j))))
+def dsBestResp3 : Flag := allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => ratLe (dsPay3 (dsEighth j) (dsEighth i)) (dsPay3 (dsEighth j) (dsEighth j))))

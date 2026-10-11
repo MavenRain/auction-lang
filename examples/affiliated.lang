@@ -1,0 +1,63 @@
+-- M&M Ch 5 and Appendix C: affiliated signals in {0, 1, 2}. A prior f is
+-- affiliated if f(x max y) f(x min y) >= f(x) f(y) for all signal profiles
+-- x and y (max and min per coordinate).
+def afMin : (a b : Fin 3) -> Fin 3 := fun (a b : Fin 3) => flagIf (finLe a b) a b
+-- Pair weights 4, 2, 1 for |s - t| = 0, 1, 2 (affiliated), constant
+-- (independent), and 1, 2, 4 (not affiliated). The weights need no normalizing.
+def afCor : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => flagIf (finEq s t) 4/1 (flagIf (natEq (natAdd (finVal s) (finVal t)) 2) 1/1 2/1)
+def afInd : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => 1/1
+def afAnti : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => flagIf (finEq s t) 1/1 (flagIf (natEq (natAdd (finVal s) (finVal t)) 2) 4/1 2/1)
+def afAffil2 : (f : (s t : Fin 3) -> Rat) -> Flag := fun (f : (s t : Fin 3) -> Rat) => allFin 3 (fun (a : Fin 3) => allFin 3 (fun (b : Fin 3) => allFin 3 (fun (c : Fin 3) => allFin 3 (fun (d : Fin 3) => ratLe (ratMul (f a b) (f c d)) (ratMul (f (finMax a c) (finMax b d)) (f (afMin a c) (afMin b d)))))))
+def afPairs : Flag := flagAnd (flagAnd (afAffil2 afCor) (afAffil2 afInd)) (flagNot (afAffil2 afAnti))
+-- Three signals: f3(x1, x2, x3) = w(x1, x2) w(x2, x3) w(x1, x3).
+def afTri : (w : (s t : Fin 3) -> Rat) -> (a b c : Fin 3) -> Rat := fun (w : (s t : Fin 3) -> Rat) (a b c : Fin 3) => ratMul (w a b) (ratMul (w b c) (w a c))
+def afAffil3 : (w : (s t : Fin 3) -> Rat) -> Flag := fun (w : (s t : Fin 3) -> Rat) => allFin 3 (fun (a : Fin 3) => allFin 3 (fun (b : Fin 3) => allFin 3 (fun (c : Fin 3) => allFin 3 (fun (d : Fin 3) => allFin 3 (fun (e : Fin 3) => allFin 3 (fun (g : Fin 3) => ratLe (ratMul (afTri w a b c) (afTri w d e g)) (ratMul (afTri w (finMax a d) (finMax b e) (finMax c g)) (afTri w (afMin a d) (afMin b e) (afMin c g)))))))))
+def afTriples : Flag := flagAnd (afAffil3 afCor) (flagNot (afAffil3 afAnti))
+-- Appendix C: with affiliation, E[g(t) | s] increases in s for each
+-- increasing g. Checked for g(t) = t, t^2, 1(t >= 1), 1(t >= 2).
+def afCondMean : (f : (s t : Fin 3) -> Rat) -> (g : (t : Fin 3) -> Rat) -> (s : Fin 3) -> Rat := fun (f : (s t : Fin 3) -> Rat) (g : (t : Fin 3) -> Rat) (s : Fin 3) => ratDiv (sumRat 3 (fun (t : Fin 3) => ratMul (f s t) (g t))) (sumRat 3 (fun (t : Fin 3) => f s t))
+def afMono : (f : (s t : Fin 3) -> Rat) -> (g : (t : Fin 3) -> Rat) -> Flag := fun (f : (s t : Fin 3) -> Rat) (g : (t : Fin 3) -> Rat) => allFin 3 (fun (s : Fin 3) => allFin 3 (fun (u : Fin 3) => flagIf (finLt s u) (ratLe (afCondMean f g s) (afCondMean f g u)) (natEq 0 0)))
+def afGT : (t : Fin 3) -> Rat := fun (t : Fin 3) => ratOfNat (finVal t)
+def afGSq : (t : Fin 3) -> Rat := fun (t : Fin 3) => ratOfNat (natMul (finVal t) (finVal t))
+def afG1 : (t : Fin 3) -> Rat := fun (t : Fin 3) => flagIf (natLe 1 (finVal t)) 1/1 0/1
+def afG2 : (t : Fin 3) -> Rat := fun (t : Fin 3) => flagIf (natLe 2 (finVal t)) 1/1 0/1
+def afMonotone : Flag := flagAnd (flagAnd (flagAnd (afMono afCor afGT) (afMono afCor afGSq)) (flagAnd (afMono afCor afG1) (afMono afCor afG2))) (flagNot (afMono afAnti afGT))
+-- Second price, three bidders, common value V = x1 + x2 + x3, prior f3. The
+-- book bid is b(x) = E[V | x1 = x, max(x2, x3) = x].
+def afVal : (a b c : Fin 3) -> Rat := fun (a b c : Fin 3) => ratOfNat (natAdd (finVal a) (natAdd (finVal b) (finVal c)))
+def afAtMax : (w : (s t : Fin 3) -> Rat) -> (x a b : Fin 3) -> Rat := fun (w : (s t : Fin 3) -> Rat) (x a b : Fin 3) => flagIf (finEq (finMax a b) x) (afTri w x a b) 0/1
+def afBid : (w : (s t : Fin 3) -> Rat) -> (x : Fin 3) -> Rat := fun (w : (s t : Fin 3) -> Rat) (x : Fin 3) => ratDiv (sumRat 3 (fun (a : Fin 3) => sumRat 3 (fun (b : Fin 3) => ratMul (afAtMax w x a b) (afVal x a b)))) (sumRat 3 (fun (a : Fin 3) => sumRat 3 (fun (b : Fin 3) => afAtMax w x a b)))
+def afRatMax : (p q : Rat) -> Rat := fun (p q : Rat) => flagIf (ratLe p q) q p
+-- Payoff (times P(x)) of signal x that bids z. The winner pays the highest
+-- rival bid m. At z = m the object goes to one of the tied bidders at random.
+def afPay : (w : (s t : Fin 3) -> Rat) -> (x : Fin 3) -> (z : Rat) -> Rat := fun (w : (s t : Fin 3) -> Rat) (x : Fin 3) (z : Rat) => sumRat 3 (fun (a : Fin 3) => sumRat 3 (fun (b : Fin 3) => ratMul (afTri w x a b) (flagIf (ratLt (afRatMax (afBid w a) (afBid w b)) z) (ratSub (afVal x a b) (afRatMax (afBid w a) (afBid w b))) (flagIf (ratEq (afRatMax (afBid w a) (afBid w b)) z) (ratMul (flagIf (ratEq (afBid w a) (afBid w b)) 1/3 1/2) (ratSub (afVal x a b) z)) 0/1))))
+-- The rival bids b(0) < b(1) < b(2) cut the line into 7 regions; the payoff
+-- is constant on each open interval. So these 7 candidate bids cover all bids.
+def afBidUp : (w : (s t : Fin 3) -> Rat) -> Flag := fun (w : (s t : Fin 3) -> Rat) => flagAnd (ratLt (afBid w 0) (afBid w 1)) (ratLt (afBid w 1) (afBid w 2))
+def afCand : (w : (s t : Fin 3) -> Rat) -> (k : Fin 7) -> Rat := fun (w : (s t : Fin 3) -> Rat) (k : Fin 7) => flagIf (natEq (finVal k) 0) (ratSub (afBid w 0) 1/1) (flagIf (natEq (finVal k) 1) (afBid w 0) (flagIf (natEq (finVal k) 2) (ratMul 1/2 (ratAdd (afBid w 0) (afBid w 1))) (flagIf (natEq (finVal k) 3) (afBid w 1) (flagIf (natEq (finVal k) 4) (ratMul 1/2 (ratAdd (afBid w 1) (afBid w 2))) (flagIf (natEq (finVal k) 5) (afBid w 2) (ratAdd (afBid w 2) 1/1))))))
+def afSPEq : (w : (s t : Fin 3) -> Rat) -> Flag := fun (w : (s t : Fin 3) -> Rat) => flagAnd (afBidUp w) (allFin 3 (fun (x : Fin 3) => allFin 7 (fun (k : Fin 7) => ratLe (afPay w x (afCand w k)) (afPay w x (afBid w x)))))
+-- As found: with discrete signals the book bid is not an equilibrium. Ties
+-- matter: under independence a signal 1 bidder gets 8/9 with b(1) = 7/3 and
+-- 1 by a bid just below b(1), where it wins only against (0, 0).
+def afEqPay : Rat := afPay afInd 1 (afBid afInd 1)
+def afDevPay : Rat := afPay afInd 1 (afCand afInd 2)
+def afSPBookFails : Flag := flagAnd (ratLt afEqPay afDevPay) (flagNot (afSPEq afCor))
+def afBidUpBoth : Flag := flagAnd (afBidUp afInd) (afBidUp afCor)
+def afBidCor0 : Rat := afBid afCor 0
+def afBidCor1 : Rat := afBid afCor 1
+def afBidCor2 : Rat := afBid afCor 2
+-- Revenue. Second price: the second highest bid b(x(2)). English auction
+-- with the book strategies (drop out at v(x, x, x) with three bidders, then
+-- at v(x, x, x(3))): the price 2 x(2) + x(3). x(2) is the median signal.
+def afMed : (a b c : Fin 3) -> Fin 3 := fun (a b c : Fin 3) => finMax (afMin a b) (afMin (finMax a b) c)
+def afMass : (w : (s t : Fin 3) -> Rat) -> Rat := fun (w : (s t : Fin 3) -> Rat) => sumRat 3 (fun (a : Fin 3) => sumRat 3 (fun (b : Fin 3) => sumRat 3 (fun (c : Fin 3) => afTri w a b c)))
+def afRevSP : (w : (s t : Fin 3) -> Rat) -> Rat := fun (w : (s t : Fin 3) -> Rat) => ratDiv (sumRat 3 (fun (a : Fin 3) => sumRat 3 (fun (b : Fin 3) => sumRat 3 (fun (c : Fin 3) => ratMul (afTri w a b c) (afBid w (afMed a b c)))))) (afMass w)
+def afRevEng : (w : (s t : Fin 3) -> Rat) -> Rat := fun (w : (s t : Fin 3) -> Rat) => ratDiv (sumRat 3 (fun (a : Fin 3) => sumRat 3 (fun (b : Fin 3) => sumRat 3 (fun (c : Fin 3) => ratMul (afTri w a b c) (ratAdd (ratMul 2/1 (ratOfNat (finVal (afMed a b c)))) (ratOfNat (finVal (afMin a (afMin b c))))))))) (afMass w)
+def afRevSPInd : Rat := afRevSP afInd
+def afRevEngInd : Rat := afRevEng afInd
+def afRevSPCor : Rat := afRevSP afCor
+def afRevEngCor : Rat := afRevEng afCor
+-- As found on this grid: with the book strategies the second price revenue
+-- is above the English price, for both priors. The continuous theory ranks
+-- English at least as high under affiliation, with equality under independence.
+def afRankAsFound : Flag := flagAnd (ratLt afRevEngInd afRevSPInd) (ratLt afRevEngCor afRevSPCor)

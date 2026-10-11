@@ -1,0 +1,46 @@
+-- M&M 3.3: risk averse bidders. Values uniform on [0, 1], the utility
+-- u(x) = sqrt x (constant relative risk aversion 1/2). In the first price
+-- auction the equilibrium bid is b(v) = (n - 1) v / (n - 1 + 1/2): 2v/3 for
+-- n = 2 and 4v/5 for n = 3. The risk neutral bid is (n - 1) v / n.
+def raGrid : (k : Fin 9) -> Rat := fun (k : Fin 9) => ratDiv (ratOfNat (finVal k)) 8/1
+def raBid2 : (v : Rat) -> Rat := fun (v : Rat) => ratMul 2/3 v
+def raBid3 : (v : Rat) -> Rat := fun (v : Rat) => ratMul 4/5 v
+def raBidRN2 : (v : Rat) -> Rat := fun (v : Rat) => ratMul 1/2 v
+-- A bidder with value v that bids b(z) wins with probability z^(n - 1), so its
+-- expected utility is sqrt(v - b(z)) z^(n - 1). For v - b(z) >= 0 this is
+-- maximal where its square (v - b(z)) z^(2(n - 1)) is maximal. A negative
+-- surplus gives a negative utility and a negative square.
+def raSq2 : (b : (x : Rat) -> Rat) -> (v z : Rat) -> Rat := fun (b : (x : Rat) -> Rat) (v z : Rat) => ratMul (ratSub v (b z)) (ratMul z z)
+def raSq3 : (b : (x : Rat) -> Rat) -> (v z : Rat) -> Rat := fun (b : (x : Rat) -> Rat) (v z : Rat) => ratMul (ratSub v (b z)) (ratMul (ratMul z z) (ratMul z z))
+def raBest2 : (b : (x : Rat) -> Rat) -> Flag := fun (b : (x : Rat) -> Rat) => allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => ratLe (raSq2 b (raGrid j) (raGrid i)) (raSq2 b (raGrid j) (raGrid j))))
+def raBestResp2 : Flag := raBest2 raBid2
+def raBestResp3 : Flag := allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => ratLe (raSq3 raBid3 (raGrid j) (raGrid i)) (raSq3 raBid3 (raGrid j) (raGrid j))))
+-- The risk neutral bid v/2 is not a best response for a risk averse bidder.
+def raRNNotBest : Flag := flagNot (raBest2 raBidRN2)
+-- Risk aversion raises the bid: b(v) >= v/2.
+def raHigher : Flag := allFin 9 (fun (k : Fin 9) => ratLe (raBidRN2 (raGrid k)) (raBid2 (raGrid k)))
+-- u is concave: on the points (k^2, u(k^2)) = (k^2, k) the chord slopes decrease.
+def raU : (k : Nat) -> Rat := fun (k : Nat) => ratOfNat k
+def raSlope : (k : Nat) -> Rat := fun (k : Nat) => ratDiv (ratSub (raU (natAdd k 1)) (raU k)) (ratOfNat (natSub (natMul (natAdd k 1) (natAdd k 1)) (natMul k k)))
+def raConcave : Flag := allFin 8 (fun (k : Fin 8) => ratLt (raSlope (natAdd (finVal k) 1)) (raSlope (finVal k)))
+-- A lottery of 0 or 4 with probability 1/2 each has the expected utility
+-- (u(0) + u(4))/2 = u(1). Its certainty equivalent 1 is below its mean 2.
+def raRiskPremium : Flag := flagAnd (ratEq (ratMul 1/2 (ratAdd (raU 0) (raU 2))) (raU 1)) (ratLt 1/1 2/1)
+-- Second price: for each value v, rival bid r and own bid z on the grid, the
+-- truthful bid gives at least the surplus of z, in each outcome. Since u is
+-- increasing with u(0) = 0, this order holds for the expected utility too.
+def raSPSurplus : (v z r : Rat) -> Rat := fun (v z r : Rat) => flagIf (ratLt r z) (ratSub v r) (flagIf (ratEq r z) (ratMul 1/2 (ratSub v r)) 0/1)
+def raSPTruth : Flag := allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => allFin 9 (fun (k : Fin 9) => ratLe (raSPSurplus (raGrid i) (raGrid j) (raGrid k)) (raSPSurplus (raGrid i) (raGrid i) (raGrid k)))))
+-- Revenue. Of n uniform values the highest has mean n/(n + 1) and the second
+-- highest has mean (n - 1)/(n + 1). The bids are linear, so first price
+-- revenue is b(n/(n + 1)). Second price revenue is (n - 1)/(n + 1).
+def raMeanMax : (n : Nat) -> Rat := fun (n : Nat) => ratDiv (ratOfNat n) (ratOfNat (natAdd n 1))
+def raMeanSecond : (n : Nat) -> Rat := fun (n : Nat) => ratDiv (ratOfNat (natSub n 1)) (ratOfNat (natAdd n 1))
+def raRevFP2 : Rat := raBid2 (raMeanMax 2)
+def raRevFP3 : Rat := raBid3 (raMeanMax 3)
+def raRevSP2 : Rat := raMeanSecond 2
+def raRevSP3 : Rat := raMeanSecond 3
+-- With risk neutral bidders the two formats give the same revenue; with
+-- risk averse bidders the first price auction gives more.
+def raRevRN : Flag := ratEq (raBidRN2 (raMeanMax 2)) raRevSP2
+def raRevRank : Flag := flagAnd (ratLt raRevSP2 raRevFP2) (ratLt raRevSP3 raRevFP3)

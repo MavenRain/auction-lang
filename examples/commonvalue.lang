@@ -1,0 +1,68 @@
+-- M&M Ch 4: common values. Two bidders see independent signals s and t,
+-- uniform on [0, 1]. The object has the same value V = s + t for both.
+def cvGrid : (k : Fin 9) -> Rat := fun (k : Fin 9) => ratDiv (ratOfNat (finVal k)) 8/1
+-- First price with the symmetric bid b. A bidder with signal s that bids
+-- b(z) wins if t < z: payoff E[(s + t - b(z)) 1(t < z)] = s z + z^2/2 - b(z) z.
+def cvPayB : (b : (x : Rat) -> Rat) -> (s z : Rat) -> Rat := fun (b : (x : Rat) -> Rat) (s z : Rat) => ratSub (ratAdd (ratMul s z) (ratMul 1/2 (ratMul z z))) (ratMul (b z) z)
+-- The equilibrium bid b(s) = s.
+def cvBidFP : (z : Rat) -> Rat := fun (z : Rat) => z
+def cvBestFP : Flag := allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => ratLe (cvPayB cvBidFP (cvGrid j) (cvGrid i)) (cvPayB cvBidFP (cvGrid j) (cvGrid j))))
+-- Second price with the bid b(t) = c t, c = 2 (the bid v(s, s) = 2s). The
+-- winner pays the rival bid: payoff E[(s + t - c t) 1(t < z)] = s z + z^2/2 - c z^2/2.
+def cvSlopeSP : Rat := 2/1
+def cvPaySP : (s z : Rat) -> Rat := fun (s z : Rat) => ratSub (ratAdd (ratMul s z) (ratMul 1/2 (ratMul z z))) (ratMul cvSlopeSP (ratMul 1/2 (ratMul z z)))
+def cvBestSP : Flag := allFin 9 (fun (i : Fin 9) => allFin 9 (fun (j : Fin 9) => ratLe (cvPaySP (cvGrid j) (cvGrid i)) (cvPaySP (cvGrid j) (cvGrid j))))
+-- Winner's curse: E[V | s] = s + 1/2, but E[V | s, win] = s + E[t | t < s] = s + s/2.
+def cvSig : (k : Fin 8) -> Rat := fun (k : Fin 8) => ratDiv (ratOfNat (finVal k)) 8/1
+def cvMeanWin : (s : Rat) -> Rat := fun (s : Rat) => ratAdd s (ratMul 1/2 s)
+def cvCurse : Flag := allFin 8 (fun (k : Fin 8) => ratLt (cvMeanWin (cvSig k)) (ratAdd (cvSig k) 1/2))
+-- A naive first price bid E[V | s] = s + 1/2 loses money: at z = s the payoff
+-- s^2 + s^2/2 - (s + 1/2) s = (s^2 - s)/2 is negative for 0 < s < 1.
+def cvNaive : (z : Rat) -> Rat := fun (z : Rat) => ratAdd z 1/2
+def cvNaiveLoses : Flag := allFin 7 (fun (k : Fin 7) => ratLt (cvPayB cvNaive (ratDiv (ratOfNat (natAdd (finVal k) 1)) 8/1) (ratDiv (ratOfNat (natAdd (finVal k) 1)) 8/1)) 0/1)
+-- Revenue: first price E[b(max)] = E[max] = 2/3; second price E[c min] = c/3.
+def cvRevFP : Rat := 2/3
+def cvRevSP : Rat := ratMul cvSlopeSP 1/3
+def cvRevEquiv : Flag := ratEq cvRevFP cvRevSP
+-- Discrete model: signals in {0, 1, 2}, bids k/2 for k = 0..8, a tie gives
+-- the object with probability 1/2. pr is the joint prior of (s, t). A
+-- symmetric strategy is the bid triple (b0, b1, b2). The format flag fp is
+-- cvYes for first price and cvNo for second price.
+def cvYes : Flag := natEq 0 0
+def cvNo : Flag := natEq 0 1
+def cvInd : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => 1/9
+-- Correlated prior: weight 4, 2, 1 for |s - t| = 0, 1, 2, divided by 22.
+def cvCor : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => flagIf (finEq s t) 2/11 (flagIf (natEq (natAdd (finVal s) (finVal t)) 2) 1/22 1/11)
+def cvVal : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => ratOfNat (natAdd (finVal s) (finVal t))
+def cvB : (b0 b1 b2 : Fin 9) -> (s : Fin 3) -> Fin 9 := fun (b0 b1 b2 : Fin 9) (s : Fin 3) => flagIf (finEq s 0) b0 (flagIf (finEq s 1) b1 b2)
+def cvShare : (z r : Fin 9) -> Rat := fun (z r : Fin 9) => flagIf (finLt r z) 1/1 (flagIf (finEq z r) 1/2 0/1)
+-- Expected payoff (times P(s)) of signal s that bids z. The winner pays its
+-- own bid (first price) or the rival bid (second price).
+def cvPay : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> (b0 b1 b2 : Fin 9) -> (s : Fin 3) -> (z : Fin 9) -> Rat := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) (b0 b1 b2 : Fin 9) (s : Fin 3) (z : Fin 9) => sumRat 3 (fun (t : Fin 3) => ratMul (ratMul (pr s t) (cvShare z (cvB b0 b1 b2 t))) (ratSub (cvVal s t) (ratMul 1/2 (ratOfNat (finVal (flagIf fp z (cvB b0 b1 b2 t)))))))
+def cvEq : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> (b0 b1 b2 : Fin 9) -> Flag := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) (b0 b1 b2 : Fin 9) => allFin 3 (fun (s : Fin 3) => allFin 9 (fun (z : Fin 9) => ratLe (cvPay fp pr b0 b1 b2 s z) (cvPay fp pr b0 b1 b2 s (cvB b0 b1 b2 s))))
+-- Number of symmetric pure equilibria.
+def cvCount : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> Rat := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) => sumRat 9 (fun (b0 : Fin 9) => sumRat 9 (fun (b1 : Fin 9) => sumRat 9 (fun (b2 : Fin 9) => flagIf (cvEq fp pr b0 b1 b2) 1/1 0/1)))
+-- Revenue: the winner pays the higher bid (first price) or the lower bid (second price).
+def cvRev : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> (b0 b1 b2 : Fin 9) -> Rat := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) (b0 b1 b2 : Fin 9) => sumRat 3 (fun (s : Fin 3) => sumRat 3 (fun (t : Fin 3) => ratMul (pr s t) (ratMul 1/2 (ratOfNat (finVal (flagIf fp (finMax (cvB b0 b1 b2 s) (cvB b0 b1 b2 t)) (flagIf (finLe (cvB b0 b1 b2 s) (cvB b0 b1 b2 t)) (cvB b0 b1 b2 s) (cvB b0 b1 b2 t))))))))
+-- Winner's curse with discrete signals: under an increasing symmetric
+-- strategy, a win tells that t < s (or a tie). E[V | s, win] < E[V | s].
+def cvWinW : (pr : (s t : Fin 3) -> Rat) -> (s t : Fin 3) -> Rat := fun (pr : (s t : Fin 3) -> Rat) (s t : Fin 3) => ratMul (pr s t) (flagIf (finLt t s) 1/1 (flagIf (finEq t s) 1/2 0/1))
+def cvMeanV : (w : (s t : Fin 3) -> Rat) -> (s : Fin 3) -> Rat := fun (w : (s t : Fin 3) -> Rat) (s : Fin 3) => ratDiv (sumRat 3 (fun (t : Fin 3) => ratMul (w s t) (cvVal s t))) (sumRat 3 (fun (t : Fin 3) => w s t))
+def cvDCurse : Flag := allFin 3 (fun (s : Fin 3) => flagAnd (ratLt (cvMeanV (cvWinW cvInd) s) (cvMeanV cvInd s)) (ratLt (cvMeanV (cvWinW cvCor) s) (cvMeanV cvCor s)))
+-- The naive bid s + 1 = E[V | s] is not an equilibrium, and signal 2 loses money with it.
+def cvDNaive : Flag := flagAnd (flagNot (cvEq cvYes cvInd 2 4 6)) (ratLt (cvPay cvYes cvInd 2 4 6 2 6) 0/1)
+-- Second price: the bid v(s, s) = 2s is an equilibrium (independent and correlated).
+def cvDSP : Flag := flagAnd (cvEq cvNo cvInd 0 4 8) (cvEq cvNo cvCor 0 4 8)
+-- First price: b(s) = s is an equilibrium with independent signals; with
+-- correlated signals the equilibrium is (0, 1, 5/2).
+def cvDFP : Flag := flagAnd (cvEq cvYes cvInd 0 2 4) (cvEq cvYes cvCor 0 2 5)
+-- First price has exactly 3 symmetric pure equilibria with independent
+-- signals, and exactly 1 with correlated signals.
+def cvDFPCount : Flag := flagAnd (ratEq (cvCount cvYes cvInd) 3/1) (ratEq (cvCount cvYes cvCor) 1/1)
+def cvDRevFPInd : Rat := cvRev cvYes cvInd 0 2 4
+def cvDRevSPInd : Rat := cvRev cvNo cvInd 0 4 8
+def cvDRevFPCor : Rat := cvRev cvYes cvCor 0 2 5
+def cvDRevSPCor : Rat := cvRev cvNo cvCor 0 4 8
+-- As found on this grid: first price gives more than second price, with
+-- independent and with correlated signals.
+def cvDRank : Flag := flagAnd (ratLt cvDRevSPInd cvDRevFPInd) (ratLt cvDRevSPCor cvDRevFPCor)

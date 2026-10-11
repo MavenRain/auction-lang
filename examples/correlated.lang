@@ -1,0 +1,45 @@
+-- M&M 3.2: correlated private values. Two bidders with values s, t in
+-- {0, 1, 2}; each bidder knows only its own value. pr is the joint prior.
+-- Bids k/4 for k = 0..8, a tie gives the object with probability 1/2.
+-- The format flag fp is crYes for first price and crNo for second price.
+def crYes : Flag := natEq 0 0
+def crNo : Flag := natEq 0 1
+def crInd : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => 1/9
+-- Correlated prior: weight 4, 2, 1 for |s - t| = 0, 1, 2, divided by 22.
+def crCor : (s t : Fin 3) -> Rat := fun (s t : Fin 3) => flagIf (finEq s t) 2/11 (flagIf (natEq (natAdd (finVal s) (finVal t)) 2) 1/22 1/11)
+-- Both priors are symmetric probability distributions.
+def crProb : (pr : (s t : Fin 3) -> Rat) -> Flag := fun (pr : (s t : Fin 3) -> Rat) => flagAnd (ratEq (sumRat 3 (fun (s : Fin 3) => sumRat 3 (fun (t : Fin 3) => pr s t))) 1/1) (allFin 3 (fun (s : Fin 3) => allFin 3 (fun (t : Fin 3) => ratEq (pr s t) (pr t s))))
+def crPriors : Flag := flagAnd (crProb crInd) (crProb crCor)
+-- A higher own value moves the belief about the rival value up: P(t <= k | s)
+-- decreases in s for k = 0, 1. With independent values the belief stays the same.
+def crBelow : (pr : (s t : Fin 3) -> Rat) -> (s : Fin 3) -> (k : Fin 2) -> Rat := fun (pr : (s t : Fin 3) -> Rat) (s : Fin 3) (k : Fin 2) => ratDiv (sumRat 3 (fun (t : Fin 3) => flagIf (natLe (finVal t) (finVal k)) (pr s t) 0/1)) (sumRat 3 (fun (t : Fin 3) => pr s t))
+def crShift : Flag := allFin 3 (fun (s : Fin 3) => allFin 3 (fun (u : Fin 3) => allFin 2 (fun (k : Fin 2) => flagIf (finLt s u) (flagAnd (ratLt (crBelow crCor u k) (crBelow crCor s k)) (ratEq (crBelow crInd u k) (crBelow crInd s k))) (natEq 0 0))))
+def crB : (b0 b1 b2 : Fin 9) -> (s : Fin 3) -> Fin 9 := fun (b0 b1 b2 : Fin 9) (s : Fin 3) => flagIf (finEq s 0) b0 (flagIf (finEq s 1) b1 b2)
+def crShare : (z r : Fin 9) -> Rat := fun (z r : Fin 9) => flagIf (finLt r z) 1/1 (flagIf (finEq z r) 1/2 0/1)
+-- Surplus of value s that bids z when the rival bids r: the winner pays its
+-- own bid (first price) or the rival bid (second price).
+def crSurplus : (fp : Flag) -> (s : Fin 3) -> (z r : Fin 9) -> Rat := fun (fp : Flag) (s : Fin 3) (z r : Fin 9) => ratMul (crShare z r) (ratSub (ratOfNat (finVal s)) (ratMul 1/4 (ratOfNat (finVal (flagIf fp z r)))))
+-- Second price: the truthful bid 4s (value s) is dominant, for each rival bid.
+def crSPDominant : Flag := allFin 3 (fun (s : Fin 3) => allFin 9 (fun (z : Fin 9) => allFin 9 (fun (r : Fin 9) => ratLe (crSurplus crNo s z r) (crSurplus crNo s (crB 0 4 8 s) r))))
+def crPay : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> (b0 b1 b2 : Fin 9) -> (s : Fin 3) -> (z : Fin 9) -> Rat := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) (b0 b1 b2 : Fin 9) (s : Fin 3) (z : Fin 9) => sumRat 3 (fun (t : Fin 3) => ratMul (pr s t) (crSurplus fp s z (crB b0 b1 b2 t)))
+def crEq : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> (b0 b1 b2 : Fin 9) -> Flag := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) (b0 b1 b2 : Fin 9) => allFin 3 (fun (s : Fin 3) => allFin 9 (fun (z : Fin 9) => ratLe (crPay fp pr b0 b1 b2 s z) (crPay fp pr b0 b1 b2 s (crB b0 b1 b2 s))))
+def crCount : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> Rat := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) => sumRat 9 (fun (b0 : Fin 9) => sumRat 9 (fun (b1 : Fin 9) => sumRat 9 (fun (b2 : Fin 9) => flagIf (crEq fp pr b0 b1 b2) 1/1 0/1)))
+def crRev : (fp : Flag) -> (pr : (s t : Fin 3) -> Rat) -> (b0 b1 b2 : Fin 9) -> Rat := fun (fp : Flag) (pr : (s t : Fin 3) -> Rat) (b0 b1 b2 : Fin 9) => sumRat 3 (fun (s : Fin 3) => sumRat 3 (fun (t : Fin 3) => ratMul (pr s t) (ratMul 1/4 (ratOfNat (finVal (flagIf fp (finMax (crB b0 b1 b2 s) (crB b0 b1 b2 t)) (flagIf (finLe (crB b0 b1 b2 s) (crB b0 b1 b2 t)) (crB b0 b1 b2 s) (crB b0 b1 b2 t))))))))
+-- Second price: truthful bids are an equilibrium for both priors.
+def crSPTruth : Flag := flagAnd (crEq crNo crInd 0 4 8) (crEq crNo crCor 0 4 8)
+-- First price: truthful bids are not an equilibrium. Independent values give
+-- exactly 3 symmetric pure equilibria; correlated values give exactly 1.
+def crTruthNotFP : Flag := flagNot (crEq crYes crInd 0 4 8)
+def crFPInd : Flag := flagAnd (flagAnd (crEq crYes crInd 0 1 3) (crEq crYes crInd 0 2 3)) (flagAnd (crEq crYes crInd 0 2 4) (ratEq (crCount crYes crInd) 3/1))
+def crFPCor : Flag := flagAnd (crEq crYes crCor 0 2 5) (ratEq (crCount crYes crCor) 1/1)
+def crRevFPInd1 : Rat := crRev crYes crInd 0 1 3
+def crRevFPInd2 : Rat := crRev crYes crInd 0 2 3
+def crRevFPInd3 : Rat := crRev crYes crInd 0 2 4
+def crRevSPInd : Rat := crRev crNo crInd 0 4 8
+def crRevFPCor : Rat := crRev crYes crCor 0 2 5
+def crRevSPCor : Rat := crRev crNo crCor 0 4 8
+-- As found on this grid. Independent values: the second price revenue lies
+-- strictly between first price equilibrium revenues, so there is no revenue
+-- equivalence. Correlated values: first price gives more than second price.
+def crIndBracket : Flag := flagAnd (ratLt crRevFPInd1 crRevSPInd) (ratLt crRevSPInd crRevFPInd2)
+def crCorRank : Flag := ratLt crRevSPCor crRevFPCor
