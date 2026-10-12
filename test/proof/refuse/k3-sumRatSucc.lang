@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule sumRatSucc gives RULE_SUM_RAT_SUCC.
+theorem bad : True := sumRatSucc flagYes

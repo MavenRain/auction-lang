@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule pairVal gives RULE_PAIR_VAL.
+theorem bad : True := pairVal flagYes

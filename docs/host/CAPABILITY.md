@@ -114,7 +114,7 @@ kit, or to the root of a generated language.
   `natLe 0 (finVal x)`.
 - `flagIf x a b` is the if-then-else at any result type.
 - `langc check` refuses these names with `REFUSE_ALLOW`, and the message
-  gives the allowed form: natMin, natGe, natGt, flagOr, finMin, finGe,
+  gives the allowed form: natGe, natGt, flagOr, finMin, finGe,
   finGt, finAdd, finMul, ratMin, ratMax, ratAbs, ratNeg, ratInv, ratGe,
   ratGt, ratFloor, ratCeil, matMul, matTensor, matDet, matTranspose,
   matInv, matAdd and matScale. The lexer refuses text (`test/parse/string.lang`).

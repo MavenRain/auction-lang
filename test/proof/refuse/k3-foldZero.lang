@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule foldZero gives RULE_FOLD_ZERO.
+theorem bad : True := foldZero flagYes

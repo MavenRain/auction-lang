@@ -60,6 +60,49 @@ static void refused_read(const char *name, const char *instances, const char *co
   arena_release(&arena);
 }
 
+static void refused_build(const char *name, const char *program, const char *code) {
+  Arena arena;
+  Diag diag;
+  DeclList decls;
+  Machine machine;
+  const char *json = NULL;
+  size_t json_len = 0;
+  int ok;
+  arena_init(&arena, (size_t)1 << 30);
+  diag_init(&diag);
+  ok = front_load(&arena, name, program, strlen(program), &decls, &diag)
+    && check_program(&arena, &decls, &machine, &diag)
+    && !json_document(&machine, &json, &json_len)
+    && diag.set && strcmp(diag.code, code) == 0;
+  result(name, ok, &diag);
+  arena_release(&arena);
+}
+
+static void successor_bounds(void) {
+  refused_build("generic finZero overflow",
+    "def z : (n : Nat) -> Fin (natAdd n 1) := fun n => finZero n\n"
+    "def bad : Nat := finVal (z 18446744073709551615)\n",
+    "EVAL_OVERFLOW");
+  refused_build("generic finSucc overflow",
+    "def s : (n : Nat) -> Fin n -> Nat := fun n => fun i => finVal (finSucc n i)\n"
+    "def bad : Nat := s 18446744073709551615 0\n",
+    "EVAL_OVERFLOW");
+  built_read("successor largest valid size",
+    "def z : (n : Nat) -> Fin (natAdd n 1) := fun n => finZero n\n"
+    "def s : (n : Nat) -> Fin n -> Nat := fun n => fun i => finVal (finSucc n i)\n"
+    "def zeroBound : Nat := finVal (z 18446744073709551614)\n"
+    "def succBound : Nat := s 18446744073709551614 18446744073709551613\n",
+    "zeroBound : Nat = 0\nsuccBound : Nat = 18446744073709551614\n");
+  built_read("K3 built-ins and natMin",
+    "def k3Zero : Fin 3 := finZero 2\n"
+    "def k3Succ : Fin 3 := finSucc 2 1\n"
+    "def k3MinRight : Nat := natMin 5 3\n"
+    "def k3MinLeft : Nat := natMin 2 5\n"
+    "def k3MinEqual : Nat := natMin 4 4\n",
+    "k3Zero : Fin 3 = 0\nk3Succ : Fin 3 = 2\n"
+    "k3MinRight : Nat = 3\nk3MinLeft : Nat = 2\nk3MinEqual : Nat = 4\n");
+}
+
 static void proof_instances(void) {
   const char *program =
     "def trueProof : True := trivial\n"
@@ -174,6 +217,7 @@ static void json_print_budget(void) {
 }
 
 int main(void) {
+  successor_bounds();
   proof_instances();
   eval_print_budget("measured print fuel", 2, "fun g => 7\n", NULL);
   eval_print_budget("measured print refusal", 1, "", "EVAL_FUEL");

@@ -1,0 +1,2 @@
+-- M5 K3: finSucc 3 1 is 2, so this equation is false.
+theorem bad : Eq Nat (finVal (finSucc 3 1)) 1 := refl

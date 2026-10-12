@@ -121,6 +121,18 @@ trap is equal to no term, so a type that traps is refused at check with
 has 1311 tests, with 3 proof files and 67 proof refusals. 27 of
 27 K2 mutants are KILLED.
 
+M5 slice K3a is done (2026-10-12): the deferred K2 rules. Two new
+built-ins, `finZero` and `finSucc`, and the kernel definition `natMin`
+(USER ruling 6: Nat min is in for M5). `natMin` leaves the refused
+names, so the allow-list has 24 names. 13 new rules in
+`kernel/rules.lang`: `finCases`, `finEmpty`, `finZeroVal`, `finSuccVal`,
+`pairFirst`, `pairSecond`, `pairVal`, `sumRatZero`, `sumRatSucc`,
+`foldZero`, `foldSucc`, `minL` and `minR`. The file `test/proof/ok/k3.lang`
+has 16 theorems. There are 17 new proof refusals. The gate has 1328
+tests, with 4 proof files and 84 proof refusals. 17 of 17 K3a mutants
+are KILLED. Next is K3: `nf.c` with `ring`, `ringNat`, `field`, `cert`,
+`certLt` and `sqNonneg`.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

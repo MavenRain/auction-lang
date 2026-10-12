@@ -73,6 +73,8 @@ typedef enum {
   RULE_FIN_PAIR,
   RULE_FIN_PART,
   RULE_FIN_SUB,
+  RULE_FIN_ZERO,
+  RULE_FIN_SUCC,
   RULE_FIN2,
   RULE_ALL_FIN,
   RULE_RAT2,
@@ -150,6 +152,8 @@ static const Builtin BUILTINS[] = {
   {"finFirst", 3, RULE_FIN_PART, OP_NAT_MOD, OP_FIN, 0},
   {"finSecond", 3, RULE_FIN_PART, OP_NAT_DIV, OP_FIN, 1},
   {"finSub", 2, RULE_FIN_SUB, OP_NAT_SUB, OP_FIN, 0},
+  {"finZero", 1, RULE_FIN_ZERO, OP_NAT, OP_FIN, 0},
+  {"finSucc", 2, RULE_FIN_SUCC, OP_NAT_ADD, OP_FIN, 0},
   {"finMax", 2, RULE_FIN2, OP_NAT_MAX, OP_FIN, 0},
   {"finEq", 2, RULE_FIN2, OP_NAT_EQ, OP_FLAG, 0},
   {"finLt", 2, RULE_FIN2, OP_NAT_LT, OP_FLAG, 0},
@@ -185,7 +189,6 @@ static const char *const RESERVED[] = {"Bool", "Text"};
    with the allowed form. A use or a declaration of one is REFUSE_ALLOW. The
    lexer refuses text (test/parse/string.lang). */
 static const char *const REFUSED[][2] = {
-  {"natMin", "flagIf (natLe x y) x y"},
   {"natGe", "natLe y x"},
   {"natGt", "natLt y x"},
   {"flagOr", "flagIf x flagYes y"},
@@ -1044,6 +1047,45 @@ static const Core *rule_fin_sub(Call *k) {
   return op3(c, OP_NAT_SUB, 0, 2, x, d, NULL);
 }
 
+/* Fin (natAdd n 1), the type of finZero n and finSucc n x. A size past
+   2^64-1 is refused. */
+static const Value *fin_succ_type(Call *k, const Core *n) {
+  Checker *c = k->c;
+  const Value *size = here(c, op3(c, OP_NAT_ADD, 0, 2, n, core_leaf(c, CORE_NAT, 1), NULL));
+  if (size != NULL && size->kind == VAL_TRAP) {
+    (void)FAIL(c, "TYPE_FIN_SIZE", "%s needs a size natAdd n 1 below 2^64", k->b->name);
+    return NULL;
+  }
+  return fin_type(c, size);
+}
+
+/* Keep the successor size in the erased value so it still traps after
+   substituting an open n. Existing Nat ops also preserve the JSON format. */
+static const Core *fin_succ_bound(Call *k, const Core *n) {
+  Checker *c = k->c;
+  const Core *size = op3(c, OP_NAT_ADD, 0, 2, n, core_leaf(c, CORE_NAT, 1), NULL);
+  return op3(c, OP_NAT_MUL, 0, 2, size, core_leaf(c, CORE_NAT, 0), NULL);
+}
+
+/* finZero n = 0 : Fin (natAdd n 1) (M5). With finSucc, the ops of
+   Fin.sumRat in auction-cat (FinStoch.lean:124). */
+static const Core *rule_fin_zero(Call *k) {
+  Checker *c = k->c;
+  const Core *n = check(c, k->args[0], nat_type(c));
+  k->type = n == NULL ? NULL : fin_succ_type(k, n);
+  return k->type == NULL ? NULL : fin_succ_bound(k, n);
+}
+
+/* finSucc n x = natAdd x 1 : Fin (natAdd n 1), for x : Fin n (M5). */
+static const Core *rule_fin_succ(Call *k) {
+  Checker *c = k->c;
+  const Core *n = check(c, k->args[0], nat_type(c));
+  const Core *x = n == NULL ? NULL : check(c, k->args[1], fin_type(c, here(c, n)));
+  k->type = x == NULL ? NULL : fin_succ_type(k, n);
+  return k->type == NULL ? NULL : op3(c, OP_NAT_ADD, 0, 2, fin_succ_bound(k, n),
+    op3(c, OP_NAT_ADD, 0, 2, x, core_leaf(c, CORE_NAT, 1), NULL), NULL);
+}
+
 /* finPair m n a b = natAdd (natMul m b) a : Fin (natMul m n). The sizes are
    explicit, since the value needs m. The first component is the low digit
    (FinStoch.lean:46). */
@@ -1284,6 +1326,10 @@ static const Core *rule(Call *k) {
     return rule_fin_part(k);
   case RULE_FIN_SUB:
     return rule_fin_sub(k);
+  case RULE_FIN_ZERO:
+    return rule_fin_zero(k);
+  case RULE_FIN_SUCC:
+    return rule_fin_succ(k);
   case RULE_FIN2:
     return rule_fin2(k);
   case RULE_ALL_FIN:
@@ -1595,7 +1641,20 @@ static const struct {
   {"notSpec", "RULE_NOT_SPEC"},
   {"allFinSpec", "RULE_ALL_FIN_SPEC"},
   {"finValLt", "RULE_FIN_VAL_LT"},
-  {"finExt", "RULE_FIN_EXT"}
+  {"finExt", "RULE_FIN_EXT"},
+  {"finCases", "RULE_FIN_CASES"},
+  {"finEmpty", "RULE_FIN_EMPTY"},
+  {"finZeroVal", "RULE_FIN_ZERO_VAL"},
+  {"finSuccVal", "RULE_FIN_SUCC_VAL"},
+  {"pairFirst", "RULE_PAIR_FIRST"},
+  {"pairSecond", "RULE_PAIR_SECOND"},
+  {"pairVal", "RULE_PAIR_VAL"},
+  {"sumRatZero", "RULE_SUM_RAT_ZERO"},
+  {"sumRatSucc", "RULE_SUM_RAT_SUCC"},
+  {"foldZero", "RULE_FOLD_ZERO"},
+  {"foldSucc", "RULE_FOLD_SUCC"},
+  {"minL", "RULE_MIN_L"},
+  {"minR", "RULE_MIN_R"}
 };
 
 /* The kernel rule that HEAD names, or NO_DEF. */

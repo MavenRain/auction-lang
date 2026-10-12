@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule pairSecond gives RULE_PAIR_SECOND.
+theorem bad : True := pairSecond flagYes

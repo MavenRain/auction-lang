@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule foldSucc gives RULE_FOLD_SUCC.
+theorem bad : True := foldSucc flagYes

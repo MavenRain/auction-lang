@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule minR gives RULE_MIN_R.
+theorem bad : True := minR flagYes

@@ -78,3 +78,20 @@ rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
 rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
 rule finValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n
 rule finExt : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Eq Nat (finVal i) (finVal j) -> Eq (Fin n) i j
+-- M5 K3. natMin is a definition (USER ruling 6: Nat min is in for M5).
+-- finZero and finSucc are built-ins (check.c, rule_fin_zero, rule_fin_succ).
+def natMin : Nat -> Nat -> Nat := fun a => fun b => flagIf (natLe a b) a b
+rule finCases : (n : Nat) -> (P : Fin (natAdd n 1) -> Prop) -> P (finZero n) -> ((i : Fin n) -> P (finSucc n i)) -> (i : Fin (natAdd n 1)) -> P i
+rule finEmpty : Fin 0 -> False
+rule finZeroVal : (n : Nat) -> Eq Nat (finVal (finZero n)) 0
+rule finSuccVal : (n : Nat) -> (i : Fin n) -> Eq Nat (finVal (finSucc n i)) (natAdd (finVal i) 1)
+rule pairFirst : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin m) (finFirst m n (finPair m n a b)) a
+rule pairSecond : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin n) (finSecond m n (finPair m n a b)) b
+rule pairVal : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq Nat (finVal (finPair m n a b)) (natAdd (natMul m (finVal b)) (finVal a))
+-- The defining equations of sumRat and of the Nat fold on an open size.
+rule sumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1
+rule sumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i))))
+rule foldZero : (A : Type 0) -> (f : A -> A) -> (x : A) -> Eq A (fold f x 0) x
+rule foldSucc : (A : Type 0) -> (f : A -> A) -> (x : A) -> (n : Nat) -> Eq A (fold f x (natAdd n 1)) (f (fold f x n))
+rule minL : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) a
+rule minR : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) b

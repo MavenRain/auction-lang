@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule finCases gives RULE_FIN_CASES.
+theorem bad : True := finCases flagYes

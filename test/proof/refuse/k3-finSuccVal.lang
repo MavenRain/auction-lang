@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule finSuccVal gives RULE_FIN_SUCC_VAL.
+theorem bad : True := finSuccVal flagYes

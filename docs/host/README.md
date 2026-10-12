@@ -148,10 +148,10 @@ these codes:
 |---|---|
 | `TYPE_FIN_RANGE` | A literal at the type `Fin n` is not below `n` |
 | `TYPE_FIN_OPEN` | A literal at the type `Fin n` where `n` is not a number |
-| `TYPE_FIN_SIZE` | The size `natMul m n` of a finPair, finFirst or finSecond is not below 2^64 |
+| `TYPE_FIN_SIZE` | A Fin product size `natMul m n` or successor size `natAdd n 1` is not below 2^64 |
 | `TYPE_RAT_ZERO` | A Rat literal `N/D` with `D` = 0 |
 | `TYPE_RAT_RANGE` | The numerator of a Rat literal, after the reduction to lowest terms, is above 2^63 - 1 |
-| `REFUSE_ALLOW` | A name outside the allow-list, for example `natMin`, `flagOr`, `finMin`, `ratNeg` or `matMul` |
+| `REFUSE_ALLOW` | A name outside the allow-list, for example `natGe`, `flagOr`, `finMin`, `ratNeg` or `matMul` |
 
 `langc eval` refuses a Fin argument that is not below its size with
 `EVAL_ARGS`. `langc eval` does not take a Rat argument. A Rat result

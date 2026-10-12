@@ -1,0 +1,2 @@
+-- M5 K3: finSucc 3 0 has type Fin 4, not Fin 3.
+theorem bad : Eq (Fin 3) (finSucc 3 0) 1 := refl

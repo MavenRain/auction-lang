@@ -1,0 +1,18 @@
+-- M5 K3: one theorem per deferred K2 rule, and the built-ins finZero,
+-- finSucc and natMin.
+theorem k3FinZero : Eq Nat (finVal (finZero 2)) 0 := refl
+theorem k3FinSucc : Eq Nat (finVal (finSucc 2 1)) 2 := refl
+theorem k3NatMin : Eq Nat (natMin 5 3) 3 := refl
+theorem k3FinCases : (n : Nat) -> (i : Fin (natAdd n 1)) -> NatLt (finVal i) (natAdd n 1) := fun n => finCases n (fun i => NatLt (finVal i) (natAdd n 1)) (finValLt (natAdd n 1) (finZero n)) (fun i => finValLt (natAdd n 1) (finSucc n i))
+theorem k3FinEmpty : (i : Fin 0) -> NatLt 5 3 := fun i => absurd (finEmpty i) (NatLt 5 3)
+theorem k3FinZeroVal : (n : Nat) -> Eq Nat (finVal (finZero n)) 0 := fun n => finZeroVal n
+theorem k3FinSuccVal : (n : Nat) -> (i : Fin n) -> Eq Nat (finVal (finSucc n i)) (natAdd (finVal i) 1) := fun n => fun i => finSuccVal n i
+theorem k3PairFirst : (a : Fin 2) -> (b : Fin 3) -> Eq (Fin 2) (finFirst 2 3 (finPair 2 3 a b)) a := fun a => fun b => pairFirst 2 3 a b
+theorem k3PairSecond : (a : Fin 2) -> (b : Fin 3) -> Eq (Fin 3) (finSecond 2 3 (finPair 2 3 a b)) b := fun a => fun b => pairSecond 2 3 a b
+theorem k3PairVal : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq Nat (finVal (finPair m n a b)) (natAdd (natMul m (finVal b)) (finVal a)) := fun m => fun n => fun a => fun b => pairVal m n a b
+theorem k3SumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1 := fun f => sumRatZero f
+theorem k3SumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i)))) := fun n => fun f => sumRatSucc n f
+theorem k3FoldZero : (x : Nat) -> Eq Nat (fold (fun a => natAdd a 2) x 0) x := fun x => foldZero Nat (fun a => natAdd a 2) x
+theorem k3FoldSucc : (x : Nat) -> (n : Nat) -> Eq Nat (fold (fun a => natAdd a 2) x (natAdd n 1)) (natAdd (fold (fun a => natAdd a 2) x n) 2) := fun x => fun n => foldSucc Nat (fun a => natAdd a 2) x n
+theorem k3MinL : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) a := fun a => fun b => minL a b
+theorem k3MinR : (a : Nat) -> NatLe (natMin a 4) 4 := fun a => minR a 4

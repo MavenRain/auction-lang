@@ -30,7 +30,6 @@ finpair-arity.lang TYPE_ARITY
 finpair-size-mismatch.lang TYPE_MISMATCH
 allfin-nat.lang TYPE_MISMATCH
 finlt-flag.lang TYPE_MISMATCH
-natmin-use.lang REFUSE_ALLOW
 natge-use.lang REFUSE_ALLOW
 natgt-use.lang REFUSE_ALLOW
 flagor-use.lang REFUSE_ALLOW
@@ -39,7 +38,7 @@ finge-use.lang REFUSE_ALLOW
 fingt-use.lang REFUSE_ALLOW
 finadd-use.lang REFUSE_ALLOW
 finmul-use.lang REFUSE_ALLOW
-natmin-decl.lang REFUSE_ALLOW
+natmin-decl.lang REFUSE_NAME
 rat-zero.lang TYPE_RAT_ZERO
 rat-range.lang TYPE_RAT_RANGE
 rat-for-nat.lang TYPE_MISMATCH

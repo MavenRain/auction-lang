@@ -1,0 +1,2 @@
+-- M5 K3: finZero 2 is 0, so this equation is false.
+theorem bad : Eq Nat (finVal (finZero 2)) 1 := refl

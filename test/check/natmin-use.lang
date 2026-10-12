@@ -1,1 +1,0 @@
-def wrong : Nat := natMin 1 2

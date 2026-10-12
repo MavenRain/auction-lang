@@ -35,17 +35,17 @@ The compiler refuses these forms in a program:
 | `axiom`: an unproved fact | R2 | `REFUSE_AXIOM` | `test/check/axiom.lang` |
 | `def rec`: general recursion | R3 | `REFUSE_REC` | `test/check/rec.lang` |
 | A definition with a core name | R4 | `REFUSE_NAME` | `test/check/core-name.lang` |
-| A name outside the allow-list, for example `natMin` | | `REFUSE_ALLOW` | `test/check/natmin-use.lang` |
+| A name outside the allow-list, for example `natGe` | | `REFUSE_ALLOW` | `test/check/natge-use.lang` |
 | Text, for example `"bolt"` | | `LEX_CHAR` | `test/parse/string.lang` |
 
 The core names are the built-ins of `src/front/check.c`, the reserved names
-`Bool` and `Text` (`src/front/check.c:181`), and each name in a domain file.
+`Bool` and `Text` (`src/front/check.c:186`), and each name in a domain file.
 The Makefile joins `domain/domain.lang`, `domain/finstoch.lang`,
 `domain/auction.lang` and `domain/opengame.lang` in this order
-(`Makefile:15`). The allow-list refusals have 25 names. Each diagnostic
+(`Makefile:15`). The allow-list refusals have 24 names. Each diagnostic
 gives an allowed form or states that no such operation is provided
-(`src/front/check.c:186-211`). For example, write
-`flagIf (natLe x y) x y` for `natMin x y`.
+(`src/front/check.c:191-216`). For example, write
+`natLe y x` for `natGe x y`.
 
 Thus a program cannot add a data type, an unproved fact or general
 recursion. Recursion comes only from `fold` and `unfold` (F6, F7). The
@@ -255,9 +255,32 @@ definitions.
   that the type traps and gives the cause. Before M5 K2, `langc check`
   accepted it and `langc build` refused it with `EVAL_OVERFLOW`
   (`test/emit/auction-overflow.lang`, `test/emit/opengame-overflow.lang`).
-- Not in K2 (they need new built-ins): finCases, finEmpty, finZero,
-  finSucc, finZeroVal, finSuccVal, pairFirst, pairSecond, pairVal,
-  sumRatZero, sumRatSucc, foldZero, foldSucc, minL, minR.
+- The K3 rules (M5 K3). They are the K2 rules that needed new built-ins.
+  `natMin` is a definition in `kernel/rules.lang`, so a program that
+  defines `natMin` gets `REFUSE_NAME`. `finZero n : Fin (natAdd n 1)` is
+  0, and `finSucc n x : Fin (natAdd n 1)` is `natAdd x 1` for `x : Fin n`.
+  They are built-ins. Their erased values retain the successor-size check
+  using existing Nat operations, so the JSON format does not change.
+
+  ```
+  def natMin : Nat -> Nat -> Nat := fun a => fun b => flagIf (natLe a b) a b
+  rule finCases : (n : Nat) -> (P : Fin (natAdd n 1) -> Prop) -> P (finZero n) -> ((i : Fin n) -> P (finSucc n i)) -> (i : Fin (natAdd n 1)) -> P i
+  rule finEmpty : Fin 0 -> False
+  rule finZeroVal : (n : Nat) -> Eq Nat (finVal (finZero n)) 0
+  rule finSuccVal : (n : Nat) -> (i : Fin n) -> Eq Nat (finVal (finSucc n i)) (natAdd (finVal i) 1)
+  rule pairFirst : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin m) (finFirst m n (finPair m n a b)) a
+  rule pairSecond : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin n) (finSecond m n (finPair m n a b)) b
+  rule pairVal : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq Nat (finVal (finPair m n a b)) (natAdd (natMul m (finVal b)) (finVal a))
+  rule sumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1
+  rule sumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i))))
+  rule foldZero : (A : Type 0) -> (f : A -> A) -> (x : A) -> Eq A (fold f x 0) x
+  rule foldSucc : (A : Type 0) -> (f : A -> A) -> (x : A) -> (n : Nat) -> Eq A (fold f x (natAdd n 1)) (f (fold f x n))
+  rule minL : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) a
+  rule minR : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) b
+  ```
+
+- A typing failure at an argument of a K3 rule gives `RULE_<NAME>`, for
+  example `RULE_FIN_CASES`, `RULE_SUM_RAT_SUCC` and `RULE_MIN_L`.
 
 ## 7. Target and instance encoding
 

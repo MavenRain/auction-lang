@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule sumRatZero gives RULE_SUM_RAT_ZERO.
+theorem bad : True := sumRatZero flagYes

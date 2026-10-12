@@ -1,0 +1,2 @@
+-- M5 K3: a wrong argument to the kernel rule finZeroVal gives RULE_FIN_ZERO_VAL.
+theorem bad : True := finZeroVal flagYes

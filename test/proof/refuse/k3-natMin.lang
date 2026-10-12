@@ -1,0 +1,2 @@
+-- M5 K3: natMin 5 3 is 3, so this equation is false.
+theorem bad : Eq Nat (natMin 5 3) 5 := refl

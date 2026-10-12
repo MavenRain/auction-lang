@@ -1,0 +1,17 @@
+theorem k3FinZero ok
+theorem k3FinSucc ok
+theorem k3NatMin ok
+theorem k3FinCases ok
+theorem k3FinEmpty ok
+theorem k3FinZeroVal ok
+theorem k3FinSuccVal ok
+theorem k3PairFirst ok
+theorem k3PairSecond ok
+theorem k3PairVal ok
+theorem k3SumRatZero ok
+theorem k3SumRatSucc ok
+theorem k3FoldZero ok
+theorem k3FoldSucc ok
+theorem k3MinL ok
+theorem k3MinR ok
+ok
