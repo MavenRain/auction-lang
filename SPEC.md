@@ -193,6 +193,72 @@ definitions.
   code. A `Type k` argument at the motive of `orElim` or `exElim` gives
   `PROP_LARGE_ELIM`.
 
+- `kernel/rules.lang` defines `Holds b := Eq Flag b flagYes`, the Prop of
+  a Flag. It defines `NatLe a b := Holds (natLe a b)`, and `NatLt`,
+  `RatLe` and `RatLt` the same way. A closed instance, such as
+  `NatLe 2 3`, checks by conversion.
+- The K2 rules (M5 K2):
+
+  ```
+  rule decide : (b : Flag) -> Holds b
+  rule natInd : (P : Nat -> Prop) -> P 0 -> ((k : Nat) -> P k -> P (natAdd k 1)) -> (n : Nat) -> P n
+  rule flagCases : (P : Flag -> Prop) -> P flagYes -> P flagNo -> (b : Flag) -> P b
+  rule ifTrue : (A : Type 0) -> (c : Flag) -> (a : A) -> (b : A) -> Holds c -> Eq A (flagIf c a b) a
+  rule ifFalse : (A : Type 0) -> (c : Flag) -> (a : A) -> (b : A) -> Eq Flag c flagNo -> Eq A (flagIf c a b) b
+  rule natLeRefl : (a : Nat) -> NatLe a a
+  rule natLeTrans : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a b -> NatLe b c -> NatLe a c
+  rule natLeTotal : (a : Nat) -> (b : Nat) -> Or (NatLe a b) (NatLe b a)
+  rule natLeAntisymm : (a : Nat) -> (b : Nat) -> NatLe a b -> NatLe b a -> Eq Nat a b
+  rule natLtIrrefl : (a : Nat) -> Not (NatLt a a)
+  rule natLtIffSuccLe : (a : Nat) -> (b : Nat) -> Iff (NatLt a b) (NatLe (natAdd a 1) b)
+  rule natLtOfLeNe : (a : Nat) -> (b : Nat) -> NatLe a b -> Ne Nat a b -> NatLt a b
+  rule natAddLe : (a : Nat) -> (b : Nat) -> (c : Nat) -> (d : Nat) -> NatLe a b -> NatLe c d -> NatLe (natAdd a c) (natAdd b d)
+  rule natZeroLe : (a : Nat) -> NatLe 0 a
+  rule ratLeRefl : (a : Rat) -> RatLe a a
+  rule ratLeTrans : (a : Rat) -> (b : Rat) -> (c : Rat) -> RatLe a b -> RatLe b c -> RatLe a c
+  rule ratLeTotal : (a : Rat) -> (b : Rat) -> Or (RatLe a b) (RatLe b a)
+  rule ratLeAntisymm : (a : Rat) -> (b : Rat) -> RatLe a b -> RatLe b a -> Eq Rat a b
+  rule ratLtIrrefl : (a : Rat) -> Not (RatLt a a)
+  rule ratLtOfLeNe : (a : Rat) -> (b : Rat) -> RatLe a b -> Ne Rat a b -> RatLt a b
+  rule ratAddLe : (a : Rat) -> (b : Rat) -> (c : Rat) -> (d : Rat) -> RatLe a b -> RatLe c d -> RatLe (ratAdd a c) (ratAdd b d)
+  rule ratMulNonneg : (a : Rat) -> (b : Rat) -> RatLe 0/1 a -> RatLe 0/1 b -> RatLe 0/1 (ratMul a b)
+  rule ofNatLe : (a : Nat) -> (b : Nat) -> NatLe a b -> RatLe (ratOfNat a) (ratOfNat b)
+  rule ofNatLeRev : (a : Nat) -> (b : Nat) -> RatLe (ratOfNat a) (ratOfNat b) -> NatLe a b
+  rule ofNatAdd : (a : Nat) -> (b : Nat) -> Eq Rat (ratOfNat (natAdd a b)) (ratAdd (ratOfNat a) (ratOfNat b))
+  rule ofNatMul : (a : Nat) -> (b : Nat) -> Eq Rat (ratOfNat (natMul a b)) (ratMul (ratOfNat a) (ratOfNat b))
+  rule ofNatNonneg : (a : Nat) -> RatLe 0/1 (ratOfNat a)
+  rule subSpec : (a : Nat) -> (b : Nat) -> Or (And (NatLe b a) (Eq Nat (natAdd (natSub a b) b) a)) (And (NatLt a b) (Eq Nat (natSub a b) 0))
+  rule divModSpec : (a : Nat) -> (b : Nat) -> NatLt 0 b -> Eq Nat (natAdd (natMul b (natDiv a b)) (natMod a b)) a
+  rule modLt : (a : Nat) -> (b : Nat) -> NatLt 0 b -> NatLt (natMod a b) b
+  rule maxL : (a : Nat) -> (b : Nat) -> NatLe a (natMax a b)
+  rule maxR : (a : Nat) -> (b : Nat) -> NatLe b (natMax a b)
+  rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
+  rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
+  rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
+  rule finValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n
+  rule finExt : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Eq Nat (finVal i) (finVal j) -> Eq (Fin n) i j
+  ```
+
+- `decide`. The checker accepts `decide b` only when b is a closed Flag
+  that evaluates to `flagYes` (check.c, `decide_holds`). Then `decide b`
+  has the type `Holds b`. A bare `decide`, an argument that is not a Flag,
+  a Flag that evaluates to `flagNo`, a Flag that traps and an open Flag
+  each give `RULE_DECIDE`.
+- Traps. A trap (an overflow, a division by zero) is not a value.
+  Conversion makes a trap equal to no term, not even to a trap (eval.c,
+  `conv_loop`). Thus a rule at a trap proves nothing: for a trap t,
+  `natLtIrrefl t (natLeRefl t)` gives `RULE_NAT_LT_IRREFL`. The Nat rules
+  are true in the unbounded natural numbers, and this is sound because a
+  trap converts to no term.
+- A type that traps is equal to no type. Thus `langc check` refuses a
+  definition with such a type with `TYPE_MISMATCH`, and the message says
+  that the type traps and gives the cause. Before M5 K2, `langc check`
+  accepted it and `langc build` refused it with `EVAL_OVERFLOW`
+  (`test/emit/auction-overflow.lang`, `test/emit/opengame-overflow.lang`).
+- Not in K2 (they need new built-ins): finCases, finEmpty, finZero,
+  finSucc, finZeroVal, finSuccVal, pairFirst, pairSecond, pairVal,
+  sumRatZero, sumRatSucc, foldZero, foldSucc, minL, minR.
+
 ## 7. Target and instance encoding
 
 An instance is a definition of the program, not of `domain/`, whose type

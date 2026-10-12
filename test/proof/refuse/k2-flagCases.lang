@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule flagCases gives RULE_FLAG_CASES.
+theorem bad : True := flagCases 0

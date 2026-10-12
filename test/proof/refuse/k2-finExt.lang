@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule finExt gives RULE_FIN_EXT.
+theorem bad : True := finExt flagYes

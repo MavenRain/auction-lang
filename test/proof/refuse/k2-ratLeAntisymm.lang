@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ratLeAntisymm gives RULE_RAT_LE_ANTISYMM.
+theorem bad : True := ratLeAntisymm flagYes

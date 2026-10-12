@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ratLtOfLeNe gives RULE_RAT_LT_OF_LE_NE.
+theorem bad : True := ratLtOfLeNe flagYes

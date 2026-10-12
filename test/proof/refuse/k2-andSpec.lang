@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule andSpec gives RULE_AND_SPEC.
+theorem bad : True := andSpec 0

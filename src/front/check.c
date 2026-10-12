@@ -388,14 +388,22 @@ static void pop(Checker *c) {
 /* 1 when a term of type FOUND can stand where WANT is expected. A universe
    is in each larger universe, and Prop is in each universe (M5). */
 static int expect(Checker *c, const Value *found, const Value *want) {
+  const Value *trap;
   if (found == NULL || want == NULL)
     return 0;
+  c->m->conv_trap = NULL;
   if (conv_values(c->m, c->level, found, want))
     return 1;
   if (found->kind == VAL_UNIV && want->kind == VAL_UNIV && found->nat <= want->nat)
     return 1;
   if (val_is(found, OP_PROP) && want->kind == VAL_UNIV)
     return 1;
+  /* A trap is equal to no term, so a type that traps is equal to no type
+     (M5 K2, USER ruling (a)). The message tells the cause. */
+  trap = c->m->conv_trap;
+  if (trap != NULL)
+    return FAIL(c, "TYPE_MISMATCH", "the type traps, so it is equal to no type: expected a term of type %s, found a term of type %s; %s",
+                show(c, want), show(c, found), trap_text(trap));
   return FAIL(c, "TYPE_MISMATCH", "expected a term of type %s, found a term of type %s", show(c, want), show(c, found));
 }
 
@@ -1550,7 +1558,44 @@ static const struct {
   {"absurd", "RULE_ABSURD"}, {"And", "RULE_AND"}, {"andIntro", "RULE_AND_INTRO"},
   {"andLeft", "RULE_AND_LEFT"}, {"andRight", "RULE_AND_RIGHT"}, {"Or", "RULE_OR"},
   {"orLeft", "RULE_OR_LEFT"}, {"orRight", "RULE_OR_RIGHT"}, {"orElim", "RULE_OR_ELIM"},
-  {"Exists", "RULE_EXISTS"}, {"exIntro", "RULE_EX_INTRO"}, {"exElim", "RULE_EX_ELIM"}
+  {"Exists", "RULE_EXISTS"}, {"exIntro", "RULE_EX_INTRO"}, {"exElim", "RULE_EX_ELIM"},
+  {"decide", "RULE_DECIDE"},
+  {"natInd", "RULE_NAT_IND"},
+  {"flagCases", "RULE_FLAG_CASES"},
+  {"ifTrue", "RULE_IF_TRUE"},
+  {"ifFalse", "RULE_IF_FALSE"},
+  {"natLeRefl", "RULE_NAT_LE_REFL"},
+  {"natLeTrans", "RULE_NAT_LE_TRANS"},
+  {"natLeTotal", "RULE_NAT_LE_TOTAL"},
+  {"natLeAntisymm", "RULE_NAT_LE_ANTISYMM"},
+  {"natLtIrrefl", "RULE_NAT_LT_IRREFL"},
+  {"natLtIffSuccLe", "RULE_NAT_LT_IFF_SUCC_LE"},
+  {"natLtOfLeNe", "RULE_NAT_LT_OF_LE_NE"},
+  {"natAddLe", "RULE_NAT_ADD_LE"},
+  {"natZeroLe", "RULE_NAT_ZERO_LE"},
+  {"ratLeRefl", "RULE_RAT_LE_REFL"},
+  {"ratLeTrans", "RULE_RAT_LE_TRANS"},
+  {"ratLeTotal", "RULE_RAT_LE_TOTAL"},
+  {"ratLeAntisymm", "RULE_RAT_LE_ANTISYMM"},
+  {"ratLtIrrefl", "RULE_RAT_LT_IRREFL"},
+  {"ratLtOfLeNe", "RULE_RAT_LT_OF_LE_NE"},
+  {"ratAddLe", "RULE_RAT_ADD_LE"},
+  {"ratMulNonneg", "RULE_RAT_MUL_NONNEG"},
+  {"ofNatLe", "RULE_OF_NAT_LE"},
+  {"ofNatLeRev", "RULE_OF_NAT_LE_REV"},
+  {"ofNatAdd", "RULE_OF_NAT_ADD"},
+  {"ofNatMul", "RULE_OF_NAT_MUL"},
+  {"ofNatNonneg", "RULE_OF_NAT_NONNEG"},
+  {"subSpec", "RULE_SUB_SPEC"},
+  {"divModSpec", "RULE_DIV_MOD_SPEC"},
+  {"modLt", "RULE_MOD_LT"},
+  {"maxL", "RULE_MAX_L"},
+  {"maxR", "RULE_MAX_R"},
+  {"andSpec", "RULE_AND_SPEC"},
+  {"notSpec", "RULE_NOT_SPEC"},
+  {"allFinSpec", "RULE_ALL_FIN_SPEC"},
+  {"finValLt", "RULE_FIN_VAL_LT"},
+  {"finExt", "RULE_FIN_EXT"}
 };
 
 /* The kernel rule that HEAD names, or NO_DEF. */
@@ -1620,11 +1665,36 @@ static void rule_refusal(Checker *c, uint32_t d, const Value *ty, const Term *co
   diag->code = code;
 }
 
+/* decide b : Holds b (m5-design.md 3.5). The checker accepts decide only
+   with its argument b, and only when b is closed and evaluates to flagYes.
+   Each refusal gives RULE_DECIDE. */
+static int decide_holds(Checker *c, const Term *const *args, uint32_t argc) {
+  Diag *diag = c->m->diag;
+  const Core *b = argc == 0u ? NULL : check(c, args[0], flag_type(c));
+  const Value *v = b == NULL ? NULL : here(c, b);
+  if (argc == 0u)
+    return FAIL(c, "RULE_DECIDE", "decide needs its argument, a closed Flag");
+  if (b == NULL) {
+    diag->code = diag->code != NULL && strncmp(diag->code, "TYPE_", 5) == 0 ? "RULE_DECIDE" : diag->code;
+    return 0;
+  }
+  if (v == NULL)
+    return FAIL(c, "RULE_DECIDE", "decide cannot evaluate its Flag");
+  if (val_is(v, OP_FLAG_YES))
+    return 1;
+  if (v->kind == VAL_TRAP)
+    return FAIL(c, "RULE_DECIDE", "decide needs a Flag that evaluates to flagYes; the Flag traps: %s", trap_text(v));
+  if (val_is(v, OP_FLAG_NO))
+    return FAIL(c, "RULE_DECIDE", "decide needs a Flag that evaluates to flagYes; the Flag evaluates to flagNo");
+  return FAIL(c, "RULE_DECIDE", "decide needs a closed Flag; the Flag is open: %s", show(c, v));
+}
+
 static const Core *apply_term(Checker *c, const Term *head, const Term *const *args, uint32_t argc, const Value *hint, const Value **type) {
   const Value *ty = NULL;
   const Core *k = head->kind == TERM_VAR ? var_core(c, head->name, &ty) : infer(c, head, &ty);
   uint32_t d = k == NULL ? NO_DEF : rule_head(c, head);
-  const Core *r = apply_rest(c, k, ty, args, argc, hint, type);
+  int decide = d != NO_DEF && strcmp(c->m->defs[d].name, "decide") == 0;
+  const Core *r = decide && !decide_holds(c, args, argc) ? NULL : apply_rest(c, k, ty, args, argc, hint, type);
   if (r == NULL && d != NO_DEF && c->m->diag->set)
     rule_refusal(c, d, ty, args, argc);
   return r;

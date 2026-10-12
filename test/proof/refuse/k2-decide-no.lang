@@ -1,0 +1,2 @@
+-- M5 K2: decide refuses a Flag that evaluates to flagNo.
+theorem bad : Holds flagNo := decide flagNo

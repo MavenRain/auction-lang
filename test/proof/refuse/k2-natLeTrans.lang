@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule natLeTrans gives RULE_NAT_LE_TRANS.
+theorem bad : True := natLeTrans flagYes

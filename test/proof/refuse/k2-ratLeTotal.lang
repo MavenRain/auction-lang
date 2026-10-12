@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ratLeTotal gives RULE_RAT_LE_TOTAL.
+theorem bad : True := ratLeTotal flagYes

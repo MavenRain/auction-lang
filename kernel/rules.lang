@@ -25,3 +25,56 @@ rule exElim : (A : Type 0) -> (P : A -> Prop) -> (C : Prop) -> Exists A P -> ((a
 def Not : Prop -> Prop := fun P => P -> False
 def Iff : Prop -> Prop -> Prop := fun P => fun Q => And (P -> Q) (Q -> P)
 def Ne : (A : Type 0) -> A -> A -> Prop := fun A => fun a => fun b => Not (Eq A a b)
+-- M5 K2. Holds b is the Prop of a Flag. NatLe, NatLt, RatLe and RatLt use
+-- the comparison ops, so a closed instance checks by conversion.
+def Holds : Flag -> Prop := fun b => Eq Flag b flagYes
+def NatLe : Nat -> Nat -> Prop := fun a => fun b => Holds (natLe a b)
+def NatLt : Nat -> Nat -> Prop := fun a => fun b => Holds (natLt a b)
+def RatLe : Rat -> Rat -> Prop := fun a => fun b => Holds (ratLe a b)
+def RatLt : Rat -> Rat -> Prop := fun a => fun b => Holds (ratLt a b)
+-- decide has a check in C (check.c, decide_holds): the checker accepts
+-- decide b only when b is closed and evaluates to flagYes (RULE_DECIDE).
+rule decide : (b : Flag) -> Holds b
+-- Induction on Nat and cases on Flag.
+rule natInd : (P : Nat -> Prop) -> P 0 -> ((k : Nat) -> P k -> P (natAdd k 1)) -> (n : Nat) -> P n
+rule flagCases : (P : Flag -> Prop) -> P flagYes -> P flagNo -> (b : Flag) -> P b
+-- The equations of flagIf on an open Flag.
+rule ifTrue : (A : Type 0) -> (c : Flag) -> (a : A) -> (b : A) -> Holds c -> Eq A (flagIf c a b) a
+rule ifFalse : (A : Type 0) -> (c : Flag) -> (a : A) -> (b : A) -> Eq Flag c flagNo -> Eq A (flagIf c a b) b
+-- Order on Nat and on Rat. These rules are true in the natural numbers and
+-- in the rationals. A trap is not a value: conversion never makes a trap
+-- equal to a term (eval.c, conv_loop), so a rule at a trap proves nothing.
+rule natLeRefl : (a : Nat) -> NatLe a a
+rule natLeTrans : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a b -> NatLe b c -> NatLe a c
+rule natLeTotal : (a : Nat) -> (b : Nat) -> Or (NatLe a b) (NatLe b a)
+rule natLeAntisymm : (a : Nat) -> (b : Nat) -> NatLe a b -> NatLe b a -> Eq Nat a b
+rule natLtIrrefl : (a : Nat) -> Not (NatLt a a)
+rule natLtIffSuccLe : (a : Nat) -> (b : Nat) -> Iff (NatLt a b) (NatLe (natAdd a 1) b)
+rule natLtOfLeNe : (a : Nat) -> (b : Nat) -> NatLe a b -> Ne Nat a b -> NatLt a b
+rule natAddLe : (a : Nat) -> (b : Nat) -> (c : Nat) -> (d : Nat) -> NatLe a b -> NatLe c d -> NatLe (natAdd a c) (natAdd b d)
+rule natZeroLe : (a : Nat) -> NatLe 0 a
+rule ratLeRefl : (a : Rat) -> RatLe a a
+rule ratLeTrans : (a : Rat) -> (b : Rat) -> (c : Rat) -> RatLe a b -> RatLe b c -> RatLe a c
+rule ratLeTotal : (a : Rat) -> (b : Rat) -> Or (RatLe a b) (RatLe b a)
+rule ratLeAntisymm : (a : Rat) -> (b : Rat) -> RatLe a b -> RatLe b a -> Eq Rat a b
+rule ratLtIrrefl : (a : Rat) -> Not (RatLt a a)
+rule ratLtOfLeNe : (a : Rat) -> (b : Rat) -> RatLe a b -> Ne Rat a b -> RatLt a b
+rule ratAddLe : (a : Rat) -> (b : Rat) -> (c : Rat) -> (d : Rat) -> RatLe a b -> RatLe c d -> RatLe (ratAdd a c) (ratAdd b d)
+rule ratMulNonneg : (a : Rat) -> (b : Rat) -> RatLe 0/1 a -> RatLe 0/1 b -> RatLe 0/1 (ratMul a b)
+-- The cast ratOfNat.
+rule ofNatLe : (a : Nat) -> (b : Nat) -> NatLe a b -> RatLe (ratOfNat a) (ratOfNat b)
+rule ofNatLeRev : (a : Nat) -> (b : Nat) -> RatLe (ratOfNat a) (ratOfNat b) -> NatLe a b
+rule ofNatAdd : (a : Nat) -> (b : Nat) -> Eq Rat (ratOfNat (natAdd a b)) (ratAdd (ratOfNat a) (ratOfNat b))
+rule ofNatMul : (a : Nat) -> (b : Nat) -> Eq Rat (ratOfNat (natMul a b)) (ratMul (ratOfNat a) (ratOfNat b))
+rule ofNatNonneg : (a : Nat) -> RatLe 0/1 (ratOfNat a)
+-- Specifications of the Nat, Flag, allFin and Fin built-ins.
+rule subSpec : (a : Nat) -> (b : Nat) -> Or (And (NatLe b a) (Eq Nat (natAdd (natSub a b) b) a)) (And (NatLt a b) (Eq Nat (natSub a b) 0))
+rule divModSpec : (a : Nat) -> (b : Nat) -> NatLt 0 b -> Eq Nat (natAdd (natMul b (natDiv a b)) (natMod a b)) a
+rule modLt : (a : Nat) -> (b : Nat) -> NatLt 0 b -> NatLt (natMod a b) b
+rule maxL : (a : Nat) -> (b : Nat) -> NatLe a (natMax a b)
+rule maxR : (a : Nat) -> (b : Nat) -> NatLe b (natMax a b)
+rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
+rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
+rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
+rule finValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n
+rule finExt : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Eq Nat (finVal i) (finVal j) -> Eq (Fin n) i j

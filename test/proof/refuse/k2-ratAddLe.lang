@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ratAddLe gives RULE_RAT_ADD_LE.
+theorem bad : True := ratAddLe flagYes

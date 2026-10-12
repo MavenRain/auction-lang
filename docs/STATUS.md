@@ -109,6 +109,18 @@ omitted from JSON instances and that a nested core application keeps its
 own refusal code. The typed reader regression covers build, read and
 verify with proofs of And, Or and Exists alongside a Nat instance.
 
+M5 slice K2 is done (2026-10-11): the kernel definitions Holds, NatLe,
+NatLt, RatLe and RatLt, and 37 rules in `kernel/rules.lang`: `decide`,
+`natInd`, `flagCases`, the flagIf equations, the order rules of Nat and
+Rat, the ratOfNat cast rules and the specifications of the Nat, Flag,
+allFin and Fin built-ins (`SPEC.md` section 6, Proofs). The checker
+accepts `decide b` only for a closed Flag b that evaluates to flagYes. A
+trap is equal to no term, so a type that traps is refused at check with
+`TYPE_MISMATCH` (USER ruling, 2026-10-11). Thus 2 build refusals
+(auction-overflow, opengame-overflow) are now check refusals. The gate
+has 1311 tests, with 3 proof files and 67 proof refusals. 27 of
+27 K2 mutants are KILLED.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

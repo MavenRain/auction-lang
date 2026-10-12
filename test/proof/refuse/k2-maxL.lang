@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule maxL gives RULE_MAX_L.
+theorem bad : True := maxL flagYes

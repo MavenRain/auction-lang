@@ -1,0 +1,2 @@
+-- M5 K2: decide refuses a Flag that traps.
+theorem bad : True := (fun (h : Holds (natEq (natDiv 1 0) 0)) => trivial) (decide (natEq (natDiv 1 0) 0))

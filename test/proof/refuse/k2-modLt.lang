@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule modLt gives RULE_MOD_LT.
+theorem bad : True := modLt flagYes

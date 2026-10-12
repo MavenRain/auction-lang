@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule natAddLe gives RULE_NAT_ADD_LE.
+theorem bad : True := natAddLe flagYes

@@ -246,6 +246,9 @@ typedef struct {
   unsigned depth;
   uint64_t fuel;
   int overflowed;
+  /* The trap that conv_values found, or NULL. check.c sets it to NULL before
+     a type comparison, and uses it in the TYPE_MISMATCH message (M5 K2). */
+  const Value *conv_trap;
 } Machine;
 
 /* Each function returns NULL (or 0) after a diagnostic. A NULL input gives a

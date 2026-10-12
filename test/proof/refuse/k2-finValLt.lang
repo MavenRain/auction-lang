@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule finValLt gives RULE_FIN_VAL_LT.
+theorem bad : True := finValLt flagYes

@@ -1,0 +1,2 @@
+-- M5 K2: decide without its argument. Else decide flagNo is a proof.
+theorem bad : Holds flagNo := (fun (f : (b : Flag) -> Holds b) => f flagNo) decide

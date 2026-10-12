@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ifTrue gives RULE_IF_TRUE.
+theorem bad : True := ifTrue 0

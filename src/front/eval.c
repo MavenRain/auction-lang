@@ -1813,6 +1813,13 @@ static int conv_loop(Machine *m, uint32_t level, const Value *a, const Value *b)
   while (a != NULL && b != NULL && spend(m, 1)) {
     if (a->kind == VAL_LAM || b->kind == VAL_LAM)
       return conv_fun(m, level, a, b);
+    if (a->kind == VAL_TRAP || b->kind == VAL_TRAP) {
+      /* A trap is not a value, so it is equal to no term, not even to a
+         trap (M5 K2). Else natLtIrrefl t (natLeRefl t) proves False for a
+         trap t, since natLe t t and natLt t t both evaluate to the trap. */
+      m->conv_trap = a->kind == VAL_TRAP ? a : b;
+      return 0;
+    }
     if (a->kind != b->kind)
       return 0;
     switch (a->kind) {
@@ -1825,7 +1832,6 @@ static int conv_loop(Machine *m, uint32_t level, const Value *a, const Value *b)
     case VAL_MATRIX:
       return cells_equal(a, b);
     case VAL_TRAP:
-      return 1;
     case VAL_LAM:
       return 0;
     case VAL_PI:

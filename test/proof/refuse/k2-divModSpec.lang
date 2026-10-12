@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule divModSpec gives RULE_DIV_MOD_SPEC.
+theorem bad : True := divModSpec flagYes

@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ofNatLeRev gives RULE_OF_NAT_LE_REV.
+theorem bad : True := ofNatLeRev flagYes

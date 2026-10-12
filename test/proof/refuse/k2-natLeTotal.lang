@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule natLeTotal gives RULE_NAT_LE_TOTAL.
+theorem bad : True := natLeTotal flagYes

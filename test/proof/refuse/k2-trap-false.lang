@@ -1,0 +1,3 @@
+-- M5 K2: conversion does not make two traps equal. Else this is a proof
+-- of False, since natLe t t and natLt t t both evaluate to the trap.
+theorem bad : False := natLtIrrefl (natDiv 1 0) (natLeRefl (natDiv 1 0))

@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule natLeAntisymm gives RULE_NAT_LE_ANTISYMM.
+theorem bad : True := natLeAntisymm flagYes

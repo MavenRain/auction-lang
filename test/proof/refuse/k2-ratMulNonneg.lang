@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ratMulNonneg gives RULE_RAT_MUL_NONNEG.
+theorem bad : True := ratMulNonneg flagYes

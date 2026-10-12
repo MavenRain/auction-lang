@@ -1,0 +1,2 @@
+-- M5 K2: decide refuses an open Flag.
+theorem bad : (b : Flag) -> Holds b := fun b => decide b

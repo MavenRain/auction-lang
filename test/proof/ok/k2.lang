@@ -1,0 +1,40 @@
+-- M5 K2: one theorem per K2 kernel rule, decide, and the order definitions.
+theorem k2Decide : NatLe 2 3 := decide (natLe 2 3)
+theorem k2DecideRat : RatLt 1/2 2/3 := decide (ratLt 1/2 2/3)
+theorem k2DecideAll : Holds (allFin 3 (fun i => natLt (finVal i) 3)) := decide (allFin 3 (fun i => natLt (finVal i) 3))
+theorem k2NatInd : (n : Nat) -> NatLe 0 n := natInd (fun n => NatLe 0 n) (natZeroLe 0) (fun k => fun h => natZeroLe (natAdd k 1))
+theorem k2FlagCases : (b : Flag) -> Eq Flag (flagAnd b b) b := flagCases (fun b => Eq Flag (flagAnd b b) b) refl refl
+theorem k2IfTrue : (c : Flag) -> Holds c -> Eq Nat (flagIf c 1 2) 1 := fun c => fun h => ifTrue Nat c 1 2 h
+theorem k2IfFalse : (c : Flag) -> Eq Flag c flagNo -> Eq Nat (flagIf c 1 2) 2 := fun c => fun h => ifFalse Nat c 1 2 h
+theorem k2NatLeRefl : (a : Nat) -> NatLe a a := fun a => natLeRefl a
+theorem k2NatLeTrans : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a b -> NatLe b c -> NatLe a c := fun a => fun b => fun c => fun h => fun k => natLeTrans a b c h k
+theorem k2NatLeTotal : (a : Nat) -> Or (NatLe a 5) (NatLe 5 a) := fun a => natLeTotal a 5
+theorem k2NatLeAntisymm : (a : Nat) -> NatLe a 3 -> NatLe 3 a -> Eq Nat a 3 := fun a => fun h => fun k => natLeAntisymm a 3 h k
+theorem k2NatLtIrrefl : (a : Nat) -> NatLt a a -> False := fun a => fun h => natLtIrrefl a h
+theorem k2NatLtSucc : (a : Nat) -> (b : Nat) -> NatLt a b -> NatLe (natAdd a 1) b := fun a => fun b => fun h => andLeft (NatLt a b -> NatLe (natAdd a 1) b) (NatLe (natAdd a 1) b -> NatLt a b) (natLtIffSuccLe a b) h
+theorem k2NatLtOfLeNe : (a : Nat) -> NatLe a 4 -> Ne Nat a 4 -> NatLt a 4 := fun a => fun h => fun n => natLtOfLeNe a 4 h n
+theorem k2NatAddLe : (a : Nat) -> (b : Nat) -> NatLe a b -> NatLe (natAdd a 1) (natAdd b 1) := fun a => fun b => fun h => natAddLe a b 1 1 h (natLeRefl 1)
+theorem k2NatZeroLe : (a : Nat) -> NatLe 0 a := fun a => natZeroLe a
+theorem k2RatLeRefl : (a : Rat) -> RatLe a a := fun a => ratLeRefl a
+theorem k2RatLeTrans : (a : Rat) -> (b : Rat) -> RatLe 0/1 a -> RatLe a b -> RatLe 0/1 b := fun a => fun b => fun h => fun k => ratLeTrans 0/1 a b h k
+theorem k2RatLeTotal : (a : Rat) -> Or (RatLe a 1/2) (RatLe 1/2 a) := fun a => ratLeTotal a 1/2
+theorem k2RatLeAntisymm : (a : Rat) -> RatLe a 1/2 -> RatLe 1/2 a -> Eq Rat a 1/2 := fun a => fun h => fun k => ratLeAntisymm a 1/2 h k
+theorem k2RatLtIrrefl : (a : Rat) -> Not (RatLt a a) := fun a => ratLtIrrefl a
+theorem k2RatLtOfLeNe : (a : Rat) -> RatLe a 1/2 -> Ne Rat a 1/2 -> RatLt a 1/2 := fun a => fun h => fun n => ratLtOfLeNe a 1/2 h n
+theorem k2RatAddLe : (a : Rat) -> RatLe 0/1 a -> RatLe 1/2 (ratAdd a 1/2) := fun a => fun h => ratAddLe 0/1 a 1/2 1/2 h (ratLeRefl 1/2)
+theorem k2RatMulNonneg : (a : Rat) -> RatLe 0/1 a -> RatLe 0/1 (ratMul a a) := fun a => fun h => ratMulNonneg a a h h
+theorem k2OfNatLe : (a : Nat) -> NatLe a 2 -> RatLe (ratOfNat a) 2/1 := fun a => fun h => ofNatLe a 2 h
+theorem k2OfNatLeRev : (a : Nat) -> RatLe (ratOfNat a) 2/1 -> NatLe a 2 := fun a => fun h => ofNatLeRev a 2 h
+theorem k2OfNatAdd : (a : Nat) -> Eq Rat (ratOfNat (natAdd a 1)) (ratAdd (ratOfNat a) 1/1) := fun a => ofNatAdd a 1
+theorem k2OfNatMul : (a : Nat) -> Eq Rat (ratOfNat (natMul a 2)) (ratMul (ratOfNat a) 2/1) := fun a => ofNatMul a 2
+theorem k2OfNatNonneg : (a : Nat) -> RatLe 0/1 (ratOfNat a) := fun a => ofNatNonneg a
+theorem k2SubSpec : (a : Nat) -> (b : Nat) -> Or (And (NatLe b a) (Eq Nat (natAdd (natSub a b) b) a)) (And (NatLt a b) (Eq Nat (natSub a b) 0)) := fun a => fun b => subSpec a b
+theorem k2DivModSpec : (a : Nat) -> Eq Nat (natAdd (natMul 3 (natDiv a 3)) (natMod a 3)) a := fun a => divModSpec a 3 (decide (natLt 0 3))
+theorem k2ModLt : (a : Nat) -> NatLt (natMod a 3) 3 := fun a => modLt a 3 (decide (natLt 0 3))
+theorem k2MaxL : (a : Nat) -> (b : Nat) -> NatLe a (natMax a b) := fun a => fun b => maxL a b
+theorem k2MaxR : (a : Nat) -> (b : Nat) -> NatLe b (natMax a b) := fun a => fun b => maxR a b
+theorem k2AndSpec : (x : Flag) -> (y : Flag) -> Holds (flagAnd x y) -> Holds x := fun x => fun y => fun h => andLeft (Holds x) (Holds y) (andLeft (Holds (flagAnd x y) -> And (Holds x) (Holds y)) (And (Holds x) (Holds y) -> Holds (flagAnd x y)) (andSpec x y) h)
+theorem k2NotSpec : (x : Flag) -> Holds (flagNot x) -> Not (Holds x) := fun x => andLeft (Holds (flagNot x) -> Not (Holds x)) (Not (Holds x) -> Holds (flagNot x)) (notSpec x)
+theorem k2AllFinSpec : (p : Fin 3 -> Flag) -> Holds (allFin 3 p) -> (i : Fin 3) -> Holds (p i) := fun p => fun h => allFinSpec 3 p h
+theorem k2FinValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n := fun n => fun i => finValLt n i
+theorem k2FinExt : (i : Fin 4) -> (j : Fin 4) -> Eq Nat (finVal i) (finVal j) -> Eq (Fin 4) i j := fun i => fun j => fun e => finExt 4 i j e

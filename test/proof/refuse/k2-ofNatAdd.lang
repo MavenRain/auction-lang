@@ -1,0 +1,2 @@
+-- M5 K2: a wrong argument to the kernel rule ofNatAdd gives RULE_OF_NAT_ADD.
+theorem bad : True := ofNatAdd flagYes
