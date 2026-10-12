@@ -157,6 +157,24 @@ and `sumRat_unpair` need a Fin cast and are not in L1. The gate has
 1340 checks in its main groups, with 6 proof files and 94 proof
 refusals.
 
+M5 slice L1b is done (2026-10-12): max, min and reserve revenue, as
+proof terms. There is one new kernel rule, `natMaxLub` (the least
+upper bound of `natMax`, USER ruling R2 (a)), with the refusal
+`l1b-natMaxLub.lang` and 3 of 3 mutants KILLED. The code table in
+`src/front/check.c` has the new pair. The new file
+`test/proof/ok/l1b.lang` has 49 theorems and no defs: 8 copies from
+l1.lang, 18 helpers with the prefix `l1b` (the natMax and natMin
+lattice, order and subtraction facts, the closed forms of the four
+revenue functions), the 20 Revenue.lean:137-496 theorems from
+`fpsb_revenue_eq_max` to `reserveRevenue_eq_zero_of_below_reserve_main`
+(the Lean `dutch_revenue_ge_english` is stated on the sealed-bid
+functions), `vickrey_bidder2_truthful_dominant` (SecondPrice.lean:127),
+and the Nat-indexed `sumRat_succ_right`, `sumRat_split` and
+`sumRat_unpair` (FinStoch.lean:188-247, USER ruling R1 (b): the
+summand is `g (finVal i)` for `g : Nat -> Rat`). Nothing is cut. The
+gate has 1342 checks in its main groups, with 7 proof files and 95
+proof refusals.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

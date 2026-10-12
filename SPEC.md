@@ -232,6 +232,7 @@ definitions.
   rule modLt : (a : Nat) -> (b : Nat) -> NatLt 0 b -> NatLt (natMod a b) b
   rule maxL : (a : Nat) -> (b : Nat) -> NatLe a (natMax a b)
   rule maxR : (a : Nat) -> (b : Nat) -> NatLe b (natMax a b)
+  rule natMaxLub : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a c -> NatLe b c -> NatLe (natMax a b) c
   rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
   rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
   rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)

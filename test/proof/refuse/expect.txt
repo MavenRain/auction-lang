@@ -92,3 +92,4 @@ k3b-ring-exp.lang RULE_RING
 k3b-ring.lang RULE_RING
 k3b-ringNat.lang RULE_RING_NAT
 k3b-sqNonneg.lang RULE_SQ_NONNEG
+l1b-natMaxLub.lang RULE_NAT_MAX_LUB

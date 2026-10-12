@@ -1,0 +1,2 @@
+-- M5 L1b: a wrong argument to the kernel rule natMaxLub gives RULE_NAT_MAX_LUB.
+theorem bad : True := natMaxLub flagYes

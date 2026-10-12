@@ -1638,6 +1638,7 @@ static const struct {
   {"modLt", "RULE_MOD_LT"},
   {"maxL", "RULE_MAX_L"},
   {"maxR", "RULE_MAX_R"},
+  {"natMaxLub", "RULE_NAT_MAX_LUB"},
   {"andSpec", "RULE_AND_SPEC"},
   {"notSpec", "RULE_NOT_SPEC"},
   {"allFinSpec", "RULE_ALL_FIN_SPEC"},
