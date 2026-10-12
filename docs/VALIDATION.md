@@ -1,6 +1,6 @@
 # Validation
 
-Date: 2026-10-10. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
+Date: 2026-10-11. TinyCC: 0.9.28rc 2026-09-04 mob@0fb54300 (AArch64
 Darwin). Apple clang: 21.0.0 (clang-2100.0.123.102). Host executable:
 `build/langc` from the sources of slice E1, the last commit that changes
 `src/`. Slices B1 to B3, B5, C4, D5 and D6 change no source file. Slice B4
@@ -16,9 +16,9 @@ changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 922 tests with zero failures: 22 examples, 10 parse refusals, 86 check
-refusals, 423 eval lines, 22 JSON builds, 15 build refusals, 22 round
-trips, 258 reads, 29 read refusals, 6 verify refusals, 15 limits checks
+runs 1227 tests with zero failures: 31 examples, 10 parse refusals, 86 check
+refusals, 564 eval lines, 31 JSON builds, 15 build refusals, 31 round
+trips, 395 reads, 29 read refusals, 6 verify refusals, 15 limits checks
 and 14 queries. It also runs
 `build/read-typed-test`: 16 typed reader and printing regressions with zero failures.
 The gate also checks a nesting of 1100 parentheses, the usage exit code 2,
@@ -297,3 +297,40 @@ sandbox, each reverted from a copy and compared with `cmp`): a depth
 limit of 200 in place of 2000 (2 failures, the 2 lines of 1999 levels);
 no refusal on a cut (2 failures, the 2 refusals); and `EVAL_PRINT_DEPTH`
 in place of `READ_PRINT_DEPTH` for a read value line (1 failure).
+
+M4 (book coverage, 2026-10-11). The commits ac567fa, e2f4109, 173c0f3
+and 8deca33 add 9 examples, their JSON goldens and 141 eval lines. The
+close commit changes docs only. No commit of M4 changes `src/` or
+`domain/`, so `build/langc` is the build of slice E1. `make check` after
+the close passes with zero failures: 1227 tests, with 31 examples, 564
+eval lines, 31 JSON builds, 31 round trips and 395 reads. The 141 new
+eval lines are the 137 closed definitions of the 9 examples (each one is
+also a read) and the 4 lines `muSeqCellAgrees 0` to `muSeqCellAgrees 3`.
+The gate time was not measured.
+
+The coverage is the finite models and sampled continuous payoff formulas
+listed in `README.md`. The affiliated revenue comparison uses a second
+price strategy that fails the equilibrium check; the sequential price
+comparison also uses a strategy that fails its equilibrium check. These
+goldens do not establish equilibrium revenue rankings or a failure of
+the martingale property at equilibrium.
+
+Each headline `Flag` has a value mutant in a scratch copy, outside the
+repository, that turns it to 0. All 85 mutants are killed: entryfee 7,
+discrete 8, riskaverse 9, commonvalue 11, correlated 9, affiliated 6,
+mechanism 15, combinatorial 7, multiunit 13.
+
+The cost of each example, measured with `/usr/bin/time -l` (one run, no
+sandbox). The size is the maximum resident set size (1 MB = 10^6 bytes).
+
+| Example | `langc check` | `langc build` |
+|---|---|---|
+| entryfee | 0.02 s, 17 MB | 0.04 s, 56 MB |
+| discrete | 0.01 s, 17 MB | 0.05 s, 38 MB |
+| riskaverse | 0.01 s, 16 MB | 0.02 s, 23 MB |
+| commonvalue | 0.01 s, 17 MB | 0.18 s, 214 MB |
+| correlated | 0.01 s, 17 MB | 0.12 s, 175 MB |
+| affiliated | 0.01 s, 19 MB | 0.20 s, 310 MB |
+| mechanism | 0.01 s, 17 MB | 0.10 s, 127 MB |
+| combinatorial | 0.01 s, 16 MB | 0.03 s, 34 MB |
+| multiunit | 0.02 s, 18 MB | 1.10 s, 895 MB |

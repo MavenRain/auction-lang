@@ -7,7 +7,10 @@ slices C1 to C4) adds the JSON reader, the typed read and the queries over
 the instances of a read document. Milestone M3 (the slices D1 to D6)
 adds speed, limits and a checked certificate for the output. M0, M1, M2
 and M3 are done. After M3, slice E1 sets the depth limit of a value line
-(O18). `SPEC.md` section 9 records the rulings on O1 to O18.
+(O18). `SPEC.md` section 9 records the rulings on O1 to O18. Milestone
+M4 (book coverage) adds 9 examples. They check finite models and sampled
+continuous payoff formulas for selected results of Menezes and Monteiro,
+chapters 3 to 7. Book coverage remains partial.
 
 ## Implemented
 
@@ -28,7 +31,8 @@ and M3 are done. After M3, slice E1 sets the depth limit of a value line
   Bayes-Nash pipeline expectations.
 - `domain/domain.lang`: 5 definitions and 4 families. The sample domain of
   lang-template.
-- 22 example programs in `examples/`.
+- 31 example programs in `examples/`. The 9 examples of M4 check selected
+  models and formulas (`README.md`, section "Book coverage").
 - The verbs `check`, `eval`, `build`, `read` and `verify` of `build/langc`.
   `build` writes one JSON document. `read` reads that document and checks
   each value against its type. With `--read DOC`, `eval` and `build` make
@@ -55,8 +59,10 @@ and M3 are done. After M3, slice E1 sets the depth limit of a value line
 
 ## Remaining work
 
-No M0, M1, M2 or M3 work remains. `SPEC.md` section 9 records the rulings
-on O1 to O18, and each ruling is done. O13 to O17 are the items of M3
+No M0, M1, M2 or M3 work remains. M4's nine example slices are implemented;
+`README.md`, section "Book coverage", lists the remaining book coverage.
+`SPEC.md` section 9 records the rulings on O1 to O18, and each ruling is
+done. O13 to O17 are the items of M3
 (hardening: speed, limits, a checked certificate for the output), and the
 rulings of 2026-10-09 accept each proposal. `SPEC.md` section 10 lists
 the slices of M0 to M3. Slice D1 is done: `matComp` skips a term when
@@ -81,6 +87,15 @@ of 2000 levels and a refusal past it). Before E1, a value line of
 `read`, `eval` or `verify` that nested 200 levels in arguments that are
 not the last printed a "..." cut with exit 0. Now it prints in full up
 to 1999 levels, and a deeper line is refused (Known limits).
+
+M4 has nine implemented example slices (2026-10-11, ruling: USER).
+The examples `entryfee`,
+`discrete`, `riskaverse`, `correlated`, `commonvalue`, `affiliated`,
+`mechanism`, `multiunit` and `combinatorial` check finite auction models
+and continuous payoff formulas at sample points. `README.md` lists the
+omitted book results and the scope of each comparison. The largest
+example is `examples/multiunit.lang`: `langc build` takes 1.1 s and
+895 MB maximum RSS (the arena is 1 GiB).
 
 ## Known limits
 

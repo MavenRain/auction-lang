@@ -603,6 +603,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M1 | Core operations |
 | M2 | Queries and reads, or the contract |
 | M3 | Hardening: speed, limits, a checked certificate for the output |
+| M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 
 M0 has these slices:
 
@@ -680,4 +681,31 @@ adds the text of O18. No milestone holds E1.
 
 | Slice | Commit | Content |
 |---|---|---|
-| E1 | This commit | O18 (a) with a limit, and (b) past it: `eval`, `read` and `verify` print a value line of up to 1999 levels in full, and refuse a line of 2000 levels or more with `EVAL_PRINT_DEPTH` (`eval`) or `READ_PRINT_DEPTH` (`read`, `verify`), exit 1. A type and a diagnostic keep the cut at 200 levels. The gate group `limits` has 15 checks (922 tests) |
+| E1 | 92d8079 | O18 (a) with a limit, and (b) past it: `eval`, `read` and `verify` print a value line of up to 1999 levels in full, and refuse a line of 2000 levels or more with `EVAL_PRINT_DEPTH` (`eval`) or `READ_PRINT_DEPTH` (`read`, `verify`), exit 1. A type and a diagnostic keep the cut at 200 levels. The gate group `limits` has 15 checks (922 tests) |
+
+M4 adds examples towards book coverage (ruling: USER 2026-10-11, "cover
+the rest of the book"). The slices cover selected models of Menezes and
+Monteiro, An Introduction to Auction Theory (2004 edition), using finite
+type and bid spaces or continuous payoff formulas at finite sample
+points. Each headline result is a closed `Flag` that evaluates to 1.
+Key `Rat` values are goldens. When a finite model differs from the
+continuous model, a comment in the example describes the difference.
+These checks establish their implemented comparisons, with the scope
+and omissions listed in `README.md`. M4 changes no file in `src/` or
+`domain/`.
+
+| Slice | Commit | Content |
+|---|---|---|
+| entryfee | ac567fa | `examples/entryfee.lang`, M&M 3.1.4: entry fees and reserve prices |
+| discrete, riskaverse, correlated, commonvalue, affiliated | e2f4109 | M&M 3.1.1 and 3.4 (discrete values), 3.3 (risk aversion), 3.2 (correlated values), ch. 4 (common values), ch. 5 and appendix C (affiliated signals) |
+| mechanism | 173c0f3 | M&M ch. 6: mechanism design on discrete types |
+| multiunit, combinatorial | 8deca33 | M&M ch. 7: identical units, and two different objects |
+| Close | This commit | This file, `docs/STATUS.md`, `docs/VALIDATION.md` and `README.md`. No test changes and no source changes |
+
+Each slice commit adds its examples, their JSON goldens and their eval
+lines.
+
+The nine M4 example slices are implemented (2026-10-11). The gate has
+31 examples, 564 eval lines and 395 reads (1227 tests). Book coverage
+remains partial; `README.md` lists the checked models and the remaining
+coverage by chapter.
