@@ -1,0 +1,27 @@
+theorem sumRat_nonneg ok
+theorem sumRat_const_zero ok
+theorem sumRat_congr ok
+theorem sumRat_add ok
+theorem sumRat_const_mul ok
+theorem sumRat_le ok
+theorem sumRat_swap ok
+theorem l1FlagRefl ok
+theorem l1FlagYesNeNo ok
+theorem l1LeOfNo ok
+theorem l1SubZeroOfNo ok
+theorem l1SubSelf ok
+theorem l1OutcomeRevenuePair ok
+theorem l1AllocPair ok
+theorem fpsb_spsb_same_allocation ok
+theorem fpsb_revenue_ge_spsb ok
+theorem english_revenue_eq_spsb ok
+theorem dutch_revenue_eq_fpsb ok
+theorem IsRevenueEquivalent_refl ok
+theorem IsRevenueEquivalent_symm ok
+theorem IsRevenueEquivalent_trans ok
+theorem english_is_revenue_equivalent_spsb ok
+theorem dutch_is_revenue_equivalent_fpsb ok
+theorem vickrey_truthful_dominant ok
+theorem vickrey_truthful_best_response ok
+theorem vickrey_truthful_is_bayes_nash ok
+ok

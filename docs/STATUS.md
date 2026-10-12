@@ -144,6 +144,19 @@ gate has 1339 checks in its main groups, with 5 proof files and 94 proof
 refusals, plus 21 C typed reader and 9 C certificate regressions.
 15 of 15 K3b mutants are KILLED.
 
+M5 slice L1 is done (2026-10-12): the sumRat library and the first
+Revenue results, as proof terms. There are no new kernel rules and no C
+changes. The new file `test/proof/ok/l1.lang` has 26 theorems and 3
+defs: 7 sumRat theorems (FinStoch.lean:139-245, among them
+`sumRat_swap`), 7 helpers with the prefix `l1`,
+`fpsb_spsb_same_allocation`, `fpsb_revenue_ge_spsb`, the English and
+Dutch revenue equalities (by `refl`), `IsRevenueEquivalent`,
+`vickrey_truthful_dominant` for all n, and the Bayes-Nash defs with
+`vickrey_truthful_is_bayes_nash`. `sumRat_succ_right`, `sumRat_split`
+and `sumRat_unpair` need a Fin cast and are not in L1. The gate has
+1340 checks in its main groups, with 6 proof files and 94 proof
+refusals.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
