@@ -175,6 +175,32 @@ summand is `g (finVal i)` for `g : Nat -> Rat`). Nothing is cut. The
 gate has 1342 checks in its main groups, with 7 proof files and 95
 proof refusals.
 
+M5 slice L2 is done (2026-10-12): the Ch 3 ports, as proof terms in
+test/proof/ok/l2.lang (33 theorems, 13 defs; 16 theorems and 2 defs are
+copies from l1.lang, 9 defs are copies from examples/discrete.lang, the
+M4 models). 3.1.1: the first price payoff polynomials are maximized by
+reporting the true value for N = 2 and N = 3 (`cert` with `sqNonneg`).
+The N = 2 bound holds for all Rat values and reports; N = 3 requires
+both to be nonnegative. The uniform auction interpretation uses values
+and reports in [0, 1]. 3.1.4: with two uniform bidders the reserve 1/2
+gives the most revenue for every r at least 0. The revenue is
+2 r^2 (1 - r) + (1 - r)^2 (r + (1 - r)/3) on [0, 1] and 0 above 1;
+R(1/2) = 5/12, R(0) = 1/3. Proof regressions check R(1) = R(2) = 0.
+3.2.1: the truthful second price bid is a best response under the
+conditional belief of any joint prior. 3.3: the truthful second price
+bid stays dominant, pointwise and in expectation, under each increasing
+utility u : Nat -> Rat. 3.4: the high type is indifferent on
+(vL, bbar] (`field`), a bid above bbar is worse (`certLt`), G is 0 at
+vL and 1 at bbar, and the first price and second price revenues are
+equal for all vL, vH and p (`ring`), with the book case 11/9 and bbar
+5/3. The indifference branch and G endpoints require the corresponding
+divisors to be nonzero. No kernel change, no new refusal, no mutants.
+Not in this slice
+(overflow turn): the no pure symmetric equilibrium result for all Rat
+bids (3.4) and the 3-bidder second price dominance (Vickrey3.lean:99).
+Current state: 8 proof files, 95 proof refusals, 1343 gate tests (the
+14 gate rows).
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
