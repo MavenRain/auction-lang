@@ -1,0 +1,53 @@
+-- M&M ch. 7: multiple objects, two different objects A and B, on discrete
+-- values. Bidder 1 wants A only (value a), bidder 2 wants B only (value b),
+-- bidder 3 wants the package AB only (value s). Values are in {0, 1, 2, 3}.
+def cbV : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratOfNat (finVal t)
+def cbMax : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) y x
+-- VCG: the efficient allocation. Tie rule: bidders 1 and 2 win when a + b >= s.
+def cbLocal : (a b s : Rat) -> Flag := fun (a b s : Rat) => ratLe s (ratAdd a b)
+-- Each winner pays the welfare that the other bidders lose because of it:
+-- bidder 1 pays max(b, s) - b, bidder 2 pays max(a, s) - a, bidder 3 pays a + b.
+def cbPay1 : (a b s : Rat) -> Rat := fun (a b s : Rat) => flagIf (cbLocal a b s) (ratSub (cbMax b s) b) 0/1
+def cbPay2 : (a b s : Rat) -> Rat := fun (a b s : Rat) => flagIf (cbLocal a b s) (ratSub (cbMax a s) a) 0/1
+def cbPay3 : (a b s : Rat) -> Rat := fun (a b s : Rat) => flagIf (cbLocal a b s) 0/1 (ratAdd a b)
+-- Utility of a bidder with the true value v and the report x; the other
+-- reports follow.
+def cbU1 : (v x b s : Rat) -> Rat := fun (v x b s : Rat) => flagIf (cbLocal x b s) (ratSub v (cbPay1 x b s)) 0/1
+def cbU2 : (v x a s : Rat) -> Rat := fun (v x a s : Rat) => flagIf (cbLocal a x s) (ratSub v (cbPay2 a x s)) 0/1
+def cbU3 : (v x a b : Rat) -> Rat := fun (v x a b : Rat) => flagIf (cbLocal a b x) 0/1 (ratSub v (cbPay3 a b x))
+-- M&M ch. 7, VCG: truthful reports are dominant for each bidder, for every
+-- true value, report and pair of other reports.
+def cbDSIC1 : Flag := allFin 4 (fun (v : Fin 4) => allFin 4 (fun (x : Fin 4) => allFin 4 (fun (b : Fin 4) => allFin 4 (fun (s : Fin 4) => ratLe (cbU1 (cbV v) (cbV x) (cbV b) (cbV s)) (cbU1 (cbV v) (cbV v) (cbV b) (cbV s))))))
+def cbDSIC2 : Flag := allFin 4 (fun (v : Fin 4) => allFin 4 (fun (x : Fin 4) => allFin 4 (fun (a : Fin 4) => allFin 4 (fun (s : Fin 4) => ratLe (cbU2 (cbV v) (cbV x) (cbV a) (cbV s)) (cbU2 (cbV v) (cbV v) (cbV a) (cbV s))))))
+def cbDSIC3 : Flag := allFin 4 (fun (v : Fin 4) => allFin 4 (fun (x : Fin 4) => allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => ratLe (cbU3 (cbV v) (cbV x) (cbV a) (cbV b)) (cbU3 (cbV v) (cbV v) (cbV a) (cbV b))))))
+-- Truthful utilities are not negative (individual rationality).
+def cbIR : Flag := allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => allFin 4 (fun (s : Fin 4) => flagAnd (ratLe 0/1 (cbU1 (cbV a) (cbV a) (cbV b) (cbV s))) (flagAnd (ratLe 0/1 (cbU2 (cbV b) (cbV b) (cbV a) (cbV s))) (ratLe 0/1 (cbU3 (cbV s) (cbV s) (cbV a) (cbV b)))))))
+def cbRev : (a b s : Fin 4) -> Rat := fun (a b s : Fin 4) => ratAdd (cbPay1 (cbV a) (cbV b) (cbV s)) (ratAdd (cbPay2 (cbV a) (cbV b) (cbV s)) (cbPay3 (cbV a) (cbV b) (cbV s)))
+-- Low revenue: the seller and bidder 3 block the outcome when their joint
+-- payoff (revenue plus the utility of bidder 3) is less than s. Then the VCG
+-- outcome is not in the core.
+def cbBlock : (a b s : Fin 4) -> Flag := fun (a b s : Fin 4) => ratLt (ratAdd (cbRev a b s) (cbU3 (cbV s) (cbV s) (cbV a) (cbV b))) (cbV s)
+-- a = b = s = 3 gives revenue 0; a = b = 2, s = 3 gives revenue 2 < 3.
+def cbNotCore : Flag := flagAnd (cbBlock 3 3 3) (cbBlock 2 2 3)
+-- Revenue is not monotone in the bidders. A bidder with value 0 changes no
+-- allocation and no payment, so b = 0 is the auction without bidder 2.
+-- Bidders 1 and 3 (a = 2, s = 3) give revenue 2; add bidder 2 with b = 3
+-- and the revenue drops to 1.
+def cbNotMonotone : Flag := ratLt (cbRev 2 3 3) (cbRev 2 0 3)
+-- Expected VCG revenue when a, b, s are i.i.d. with probability 1/4 each.
+def cbExpRev : Rat := sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => sumRat 4 (fun (s : Fin 4) => ratMul 1/64 (cbRev a b s))))
+-- M&M ch. 7, the exposure problem. A synergy bidder has value 1 for A alone,
+-- 1 for B alone and cbSyn = 4 for AB. A and B are sold in two separate second
+-- price auctions. Its bids x1, x2 and the high rival bids r1, r2 are in
+-- {0, ..., 4}; ties are split.
+def cbSyn : Rat := 4/1
+def cbV5 : (k : Fin 5) -> Rat := fun (k : Fin 5) => ratOfNat (finVal k)
+def cbW : (x r : Fin 5) -> Rat := fun (x r : Fin 5) => flagIf (finLt r x) 1/1 (flagIf (finEq x r) 1/2 0/1)
+def cbXU : (x1 x2 r1 r2 : Fin 5) -> Rat := fun (x1 x2 r1 r2 : Fin 5) => ratSub (ratAdd (ratMul (ratMul (cbW x1 r1) (cbW x2 r2)) cbSyn) (ratAdd (ratMul (cbW x1 r1) (ratSub 1/1 (cbW x2 r2))) (ratMul (cbW x2 r2) (ratSub 1/1 (cbW x1 r1))))) (ratAdd (ratMul (cbW x1 r1) (cbV5 r1)) (ratMul (cbW x2 r2) (cbV5 r2)))
+-- A bid pair is unsafe when some rival bids give a loss. It misses the
+-- package when some rival bids with r1 + r2 < cbSyn give less than the
+-- package surplus cbSyn - r1 - r2.
+def cbUnsafe : (x1 x2 : Fin 5) -> Flag := fun (x1 x2 : Fin 5) => flagNot (allFin 5 (fun (r1 : Fin 5) => allFin 5 (fun (r2 : Fin 5) => ratLe 0/1 (cbXU x1 x2 r1 r2))))
+def cbMisses : (x1 x2 : Fin 5) -> Flag := fun (x1 x2 : Fin 5) => flagNot (allFin 5 (fun (r1 : Fin 5) => allFin 5 (fun (r2 : Fin 5) => flagIf (ratLt (ratAdd (cbV5 r1) (cbV5 r2)) cbSyn) (ratLe (ratSub cbSyn (ratAdd (cbV5 r1) (cbV5 r2))) (cbXU x1 x2 r1 r2)) (natEq 0 0))))
+-- Every bid pair is unsafe or misses the package.
+def cbExposure : Flag := allFin 5 (fun (x1 : Fin 5) => allFin 5 (fun (x2 : Fin 5) => flagIf (cbUnsafe x1 x2) (natEq 0 0) (cbMisses x1 x2)))

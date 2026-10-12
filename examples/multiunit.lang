@@ -1,0 +1,131 @@
+-- M&M ch. 7: multiple objects, identical units, on discrete values.
+-- Three unit demand bidders and 2 units. The values t in {0, 1, 2, 3} are
+-- i.i.d. with probability 1/4 each. Bids are k/4, k = 0..12 (Fin 13).
+def muF : (t : Fin 4) -> Rat := fun (t : Fin 4) => 1/4
+def muV : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratOfNat (finVal t)
+def muB : (k : Fin 13) -> Rat := fun (k : Fin 13) => ratMul 1/4 (ratOfNat (finVal k))
+def muMin : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) x y
+def muMax : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) y x
+def muInd : (c : Flag) -> Rat := fun (c : Flag) => flagIf c 1/1 0/1
+-- k units are left for m tied bids: each tied bid gets min(1, k/m) units.
+def muShare : (k m : Rat) -> Rat := fun (k m : Rat) => flagIf (ratLe k 0/1) 0/1 (flagIf (ratLe m k) 1/1 (ratDiv k m))
+-- Units that the bid z gets against the rival bids r1 and r2.
+def muWin : (z r1 r2 : Rat) -> Rat := fun (z r1 r2 : Rat) => muShare (ratSub 2/1 (ratAdd (muInd (ratLt z r1)) (muInd (ratLt z r2)))) (ratAdd 1/1 (ratAdd (muInd (ratEq z r1)) (muInd (ratEq z r2))))
+-- M&M ch. 7, uniform price: each winner pays the highest losing bid, that is
+-- the lowest of the 3 bids.
+def muUP : (z r1 r2 : Rat) -> Rat := fun (z r1 r2 : Rat) => muMin z (muMin r1 r2)
+def muUU : (t : Fin 4) -> (z r1 r2 : Rat) -> Rat := fun (t : Fin 4) (z r1 r2 : Rat) => ratMul (muWin z r1 r2) (ratSub (muV t) (muUP z r1 r2))
+-- Truthful bidding is dominant: for every value, bid and pair of rival bids.
+def muUniformDominant : Flag := allFin 4 (fun (t : Fin 4) => allFin 13 (fun (z : Fin 13) => allFin 13 (fun (r1 : Fin 13) => allFin 13 (fun (r2 : Fin 13) => ratLe (muUU t (muB z) (muB r1) (muB r2)) (muUU t (muV t) (muB r1) (muB r2))))))
+-- A symmetric strategy gives the bid of each value.
+def muStrat : (b0 b1 b2 b3 : Fin 13) -> (t : Fin 4) -> Rat := fun (b0 b1 b2 b3 : Fin 13) (t : Fin 4) => muB (flagIf (finEq t 0) b0 (flagIf (finEq t 1) b1 (flagIf (finEq t 2) b2 b3)))
+def muP3 : (t u w : Fin 4) -> Rat := fun (t u w : Fin 4) => ratMul (muF t) (ratMul (muF u) (muF w))
+-- Expected revenue of a strategy: uniform price, and pay as bid (each winner
+-- pays its bid).
+def muUniRev : (b : (t : Fin 4) -> Rat) -> Rat := fun (b : (t : Fin 4) -> Rat) => sumRat 4 (fun (t : Fin 4) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul (muP3 t u w) (ratMul (ratAdd (muWin (b t) (b u) (b w)) (ratAdd (muWin (b u) (b t) (b w)) (muWin (b w) (b t) (b u)))) (muUP (b t) (b u) (b w))))))
+def muPABRev : (b : (t : Fin 4) -> Rat) -> Rat := fun (b : (t : Fin 4) -> Rat) => sumRat 4 (fun (t : Fin 4) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul (muP3 t u w) (ratAdd (ratMul (muWin (b t) (b u) (b w)) (b t)) (ratAdd (ratMul (muWin (b u) (b t) (b w)) (b u)) (ratMul (muWin (b w) (b t) (b u)) (b w)))))))
+-- Truthful uniform price revenue: 2 E[lowest value] = 9/8.
+def muUniRevT : Rat := muUniRev (fun (t : Fin 4) => muV t)
+-- M&M ch. 7, pay as bid (discriminatory auction): interim utility of value t
+-- with bid z when the rivals use the strategy b.
+def muPABU : (b : (t : Fin 4) -> Rat) -> (t : Fin 4) -> (z : Rat) -> Rat := fun (b : (t : Fin 4) -> Rat) (t : Fin 4) (z : Rat) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul (ratMul (muF u) (muF w)) (ratMul (muWin z (b u) (b w)) (ratSub (muV t) z))))
+def muPABEq : (b0 b1 b2 b3 : Fin 13) -> Flag := fun (b0 b1 b2 b3 : Fin 13) => allFin 4 (fun (t : Fin 4) => allFin 13 (fun (z : Fin 13) => ratLe (muPABU (fun (u : Fin 4) => muStrat b0 b1 b2 b3 u) t (muB z)) (muPABU (fun (u : Fin 4) => muStrat b0 b1 b2 b3 u) t (muStrat b0 b1 b2 b3 t))))
+-- Two monotone symmetric equilibria: bids 0, 1/4, 1/2, 3/4 and 0, 1/4, 3/4, 3/4.
+def muPABEqs : Flag := flagAnd (muPABEq 0 1 2 3) (muPABEq 0 1 3 3)
+def muPABRev1 : Rat := muPABRev (fun (t : Fin 4) => muStrat 0 1 2 3 t)
+def muPABRev2 : Rat := muPABRev (fun (t : Fin 4) => muStrat 0 1 3 3 t)
+-- The first equilibrium has the allocation of truthful uniform price.
+def muSameAlloc : Flag := allFin 4 (fun (t : Fin 4) => allFin 4 (fun (u : Fin 4) => allFin 4 (fun (w : Fin 4) => ratEq (muWin (muStrat 0 1 2 3 t) (muStrat 0 1 2 3 u) (muStrat 0 1 2 3 w)) (muWin (muV t) (muV u) (muV w)))))
+-- Revenue equivalence, as found: the revenues are 63/64 < 9/8 < 293/256. The
+-- first equilibrium has the same allocation and U(0) = 0 as uniform price, but
+-- less revenue. The book's continuous theorem gives one revenue.
+def muRevNotEquiv : Flag := flagAnd (ratLt muPABRev1 muUniRevT) (ratLt muUniRevT muPABRev2)
+-- M&M ch. 7, demand reduction. Bidder A wants 2 units with marginal values 3
+-- and 3. Bidder B wants 1 unit. Uniform price with the bids x1, x2 of A and
+-- y of B: A gets the units that B does not get.
+def muAm : Rat := 3/1
+def muAu : (x1 x2 y : Fin 4) -> Rat := fun (x1 x2 y : Fin 4) => ratMul (ratSub 2/1 (muWin (muV y) (muV x1) (muV x2))) (ratSub muAm (muUP (muV x1) (muV x2) (muV y)))
+-- Against y = 2, the truthful bids 3, 3 get 2 and the reduced bids 3, 0 get 3.
+-- So truthful bidding is not dominant for a multi unit bidder.
+def muDemandRed : Flag := ratLt (muAu 3 3 2) (muAu 3 0 2)
+-- Multi unit Vickrey with the same bidders. A reports x1 >= x2, B reports y.
+-- A gets one unit for sure, and the second unit when x2 > y (ties split).
+-- Each bidder pays the welfare loss that it causes to the other bidder.
+def muSecond : (x2 y : Rat) -> Rat := fun (x2 y : Rat) => flagIf (ratLt y x2) 1/1 (flagIf (ratEq x2 y) 1/2 0/1)
+def muVApay : (x2 y : Rat) -> Rat := fun (x2 y : Rat) => ratSub y (ratMul (ratSub 1/1 (muSecond x2 y)) y)
+def muVBpay : (x1 x2 y : Rat) -> Rat := fun (x1 x2 y : Rat) => ratSub (ratAdd x1 x2) (ratAdd x1 (ratMul (muSecond x2 y) x2))
+def muVAu : (m1 m2 x2 y : Rat) -> Rat := fun (m1 m2 x2 y : Rat) => ratSub (ratAdd m1 (ratMul (muSecond x2 y) m2)) (muVApay x2 y)
+def muVBu : (w x1 x2 y : Rat) -> Rat := fun (w x1 x2 y : Rat) => ratSub (ratMul (ratSub 1/1 (muSecond x2 y)) w) (muVBpay x1 x2 y)
+-- Truthful reports are dominant for A (all m1 >= m2, x1 >= x2, y) and for B
+-- (all w, y, x1 >= x2).
+def muVickreyDominant : Flag := flagAnd (allFin 4 (fun (m1 : Fin 4) => allFin 4 (fun (m2 : Fin 4) => allFin 4 (fun (x2 : Fin 4) => allFin 4 (fun (y : Fin 4) => flagIf (finLe m2 m1) (ratLe (muVAu (muV m1) (muV m2) (muV x2) (muV y)) (muVAu (muV m1) (muV m2) (muV m2) (muV y))) (natEq 0 0)))))) (allFin 4 (fun (w : Fin 4) => allFin 4 (fun (y : Fin 4) => allFin 4 (fun (x1 : Fin 4) => allFin 4 (fun (x2 : Fin 4) => flagIf (finLe x2 x1) (ratLe (muVBu (muV w) (muV x1) (muV x2) (muV y)) (muVBu (muV w) (muV x1) (muV x2) (muV w))) (natEq 0 0))))))
+-- In the demand reduction example A gets 4 with x2 = 3 and 3 with x2 = 0.
+def muVickreyA : (x2 y : Fin 4) -> Rat := fun (x2 y : Fin 4) => muVAu muAm muAm (muV x2) (muV y)
+-- M&M ch. 7, sequential sale: unit 1 by second price sealed bid among the 3
+-- bidders, then unit 2 by second price between the 2 losers, who bid their
+-- values (dominant in the last round).
+-- Share of the top place for bid x against the bids y1 and y2 (ties split).
+def muTop : (x y1 y2 : Rat) -> Rat := fun (x y1 y2 : Rat) => flagIf (flagAnd (ratLe y1 x) (ratLe y2 x)) (ratDiv 1/1 (ratAdd 1/1 (ratAdd (muInd (ratEq x y1)) (muInd (ratEq x y2))))) 0/1
+def muMed : (x y z : Rat) -> Rat := fun (x y z : Rat) => muMax (muMin x y) (muMin (muMax x y) z)
+-- Round 2 utility of value t against the remaining rival of value w.
+def muR2 : (t w : Fin 4) -> Rat := fun (t w : Fin 4) => muMax 0/1 (ratSub (muV t) (muV w))
+-- Interim utility of value t with the round 1 bid z when the rivals use b.
+-- Evaluate each pair of rival types once. The reversed pair has the same
+-- utility and probability, so off-diagonal terms have weight 2.
+def muRatIf : (c : Flag) -> (yes no : (unit : Nat) -> Rat) -> Rat := fun (c : Flag) (yes no : (unit : Nat) -> Rat) => (flagIf c yes no) 0
+-- Condition on the first-round winner. Tied winners have equal shares.
+def muSeqCellAt : (v su sw z x y h : Rat) -> Rat := fun (v su sw z x y h : Rat) =>
+  muRatIf (ratLt z h)
+    (fun (unit : Nat) => muRatIf (ratLt y x)
+      (fun (unit : Nat) => sw)
+      (fun (unit : Nat) => muRatIf (ratLt x y)
+        (fun (unit : Nat) => su)
+        (fun (unit : Nat) => ratMul 1/2 (ratAdd su sw))))
+    (fun (unit : Nat) => muRatIf (ratLt h z)
+      (fun (unit : Nat) => ratSub v h)
+      (fun (unit : Nat) => muRatIf (ratLt y x)
+        (fun (unit : Nat) => ratMul 1/2 (ratAdd (ratSub v h) sw))
+        (fun (unit : Nat) => muRatIf (ratLt x y)
+          (fun (unit : Nat) => ratMul 1/2 (ratAdd (ratSub v h) su))
+          (fun (unit : Nat) => ratMul 1/3 (ratAdd (ratSub v h) (ratAdd su sw))))))
+def muSeqCell : (v u w z x y : Rat) -> Rat := fun (v u w z x y : Rat) => muSeqCellAt v (muMax 0/1 (ratSub v u)) (muMax 0/1 (ratSub v w)) z x y (muMax x y)
+def muSeqU : (b : (t : Fin 4) -> Rat) -> (t : Fin 4) -> (z : Rat) -> Rat := fun (b : (t : Fin 4) -> Rat) (t : Fin 4) (z : Rat) => sumRat 4 (fun (u1 : Fin 4) => sumRat 4 (fun (u2 : Fin 4) => muRatIf (finLe u1 u2) (fun (unit : Nat) => ratMul (ratMul (muF u1) (muF u2)) (ratMul (flagIf (finEq u1 u2) 1/1 2/1) (muSeqCell (muV t) (muV u1) (muV u2) z (b u1) (b u2)))) (fun (unit : Nat) => 0/1)))
+-- Reference expression: weight each possible first-round winner by its
+-- share. Check every value, rival value and integer bid for each z.
+def muSeqCellRef : (v u w z x y : Rat) -> Rat := fun (v u w z x y : Rat) => ratAdd (ratMul (muTop z x y) (ratSub v (muMed z x y))) (ratAdd (ratMul (muTop x z y) (muMax 0/1 (ratSub v w))) (ratMul (muTop y z x) (muMax 0/1 (ratSub v u))))
+def muSeqCellAgrees : (z : Fin 4) -> Flag := fun (z : Fin 4) => allFin 4 (fun (v : Fin 4) => allFin 4 (fun (u : Fin 4) => allFin 4 (fun (w : Fin 4) => allFin 4 (fun (x : Fin 4) => allFin 4 (fun (y : Fin 4) => ratEq (muSeqCell (muV v) (muV u) (muV w) (muV z) (muV x) (muV y)) (muSeqCellRef (muV v) (muV u) (muV w) (muV z) (muV x) (muV y)))))))
+def muSeqEq : (b : (t : Fin 4) -> Rat) -> Flag := fun (b : (t : Fin 4) -> Rat) => allFin 4 (fun (t : Fin 4) => allFin 13 (fun (k : Fin 13) => ratLe (muSeqU b t (muB k)) (muSeqU b t (b t))))
+-- As found: no monotone symmetric pure equilibrium with round 1 bids k/4.
+-- Each of the 1820 nondecreasing bid profiles has a better grid reply. A
+-- search found 3 witness replies that cover all profiles: value 3 bids 1,
+-- value 2 bids 5/4, value 0 bids 0. The check below uses only these.
+def muWit : (b : (t : Fin 4) -> Rat) -> (t : Fin 4) -> (k : Fin 13) -> Flag := fun (b : (t : Fin 4) -> Rat) (t : Fin 4) (k : Fin 13) => ratLt (muSeqU b t (b t)) (muSeqU b t (muB k))
+-- flagIf evaluates its arguments eagerly. Pass functions to defer unused
+-- searches and replies, then apply only the selected branch.
+def muIf : (c : Flag) -> (yes no : (unit : Nat) -> Flag) -> Flag := fun (c : Flag) (yes no : (unit : Nat) -> Flag) => (flagIf c yes no) 0
+def muWhen : (c : Flag) -> (yes : (unit : Nat) -> Flag) -> Flag := fun (c : Flag) (yes : (unit : Nat) -> Flag) => muIf c yes (fun (unit : Nat) => natEq 0 0)
+def muBreak : (b : (t : Fin 4) -> Rat) -> Flag := fun (b : (t : Fin 4) -> Rat) => muIf (muWit b 3 4) (fun (unit : Nat) => natEq 0 0) (fun (unit : Nat) => muIf (muWit b 2 5) (fun (unit : Nat) => natEq 0 0) (fun (unit : Nat) => muWit b 0 0))
+-- All profiles with lo <= b0 < hi (split in 3 parts for the step limit).
+def muNoPureIn : (lo hi : Nat) -> Flag := fun (lo hi : Nat) => allFin 13 (fun (b0 : Fin 13) => muWhen (flagAnd (flagNot (natLt (finVal b0) lo)) (natLt (finVal b0) hi)) (fun (unit : Nat) => allFin 13 (fun (b1 : Fin 13) => muWhen (finLe b0 b1) (fun (unit : Nat) => allFin 13 (fun (b2 : Fin 13) => muWhen (finLe b1 b2) (fun (unit : Nat) => allFin 13 (fun (b3 : Fin 13) => muWhen (finLe b2 b3) (fun (unit : Nat) => muBreak (fun (t : Fin 4) => muStrat b0 b1 b2 b3 t)))))))))
+def muSeqNoPure1 : Flag := muNoPureIn 0 1
+def muSeqNoPure2 : Flag := muNoPureIn 1 3
+def muSeqNoPure3 : Flag := muNoPureIn 3 13
+-- The continuous model round 1 bid E[Y2 | Y1 = v], where Y1 >= Y2 are the
+-- rival values: 0, 1/3, 4/5, 9/7.
+def muCond : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratDiv (sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => flagIf (finEq (finMax u w) t) (ratMul (ratMul (muF u) (muF w)) (muMin (muV u) (muV w))) 0/1))) (sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => flagIf (finEq (finMax u w) t) (ratMul (muF u) (muF w)) 0/1)))
+-- As found: it is not an equilibrium here. Bid 0 is a better reply for the
+-- values 1, 2 and 3.
+def muSeqCondNotEq : Flag := allFin 4 (fun (t : Fin 4) => flagIf (natLt 0 (finVal t)) (ratLt (muSeqU (fun (u : Fin 4) => muCond u) t (muCond t)) (muSeqU (fun (u : Fin 4) => muCond u) t 0/1)) (natEq 0 0))
+-- Expected prices of round 1 (the middle bid) and round 2 (the lower value of
+-- the 2 round 1 losers).
+def muSeqP1 : (b : (t : Fin 4) -> Rat) -> Rat := fun (b : (t : Fin 4) -> Rat) => sumRat 4 (fun (t : Fin 4) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul (muP3 t u w) (muMed (b t) (b u) (b w)))))
+def muSeqP2 : (b : (t : Fin 4) -> Rat) -> Rat := fun (b : (t : Fin 4) -> Rat) => sumRat 4 (fun (t : Fin 4) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul (muP3 t u w) (ratAdd (ratMul (muTop (b t) (b u) (b w)) (muMin (muV u) (muV w))) (ratAdd (ratMul (muTop (b u) (b t) (b w)) (muMin (muV t) (muV w))) (ratMul (muTop (b w) (b t) (b u)) (muMin (muV t) (muV u))))))))
+def muCondP1 : Rat := muSeqP1 (fun (t : Fin 4) => muCond t)
+def muCondP2 : Rat := muSeqP2 (fun (t : Fin 4) => muCond t)
+-- As found: with these bids E[p1] = 62/105 > E[p2] = 9/16. The book's
+-- continuous model gives equal expected prices (martingale property).
+def muNoMartingale : Flag := ratLt muCondP2 muCondP1
+-- Truthful round 1 bids are not an equilibrium; E[p1] = 3/2.
+def muSeqTruthNotEq : Flag := flagNot (muSeqEq (fun (t : Fin 4) => muV t))
+def muTruthP1 : Rat := muSeqP1 (fun (t : Fin 4) => muV t)
+def muTruthP2 : Rat := muSeqP2 (fun (t : Fin 4) => muV t)
