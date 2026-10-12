@@ -1,0 +1,2 @@
+-- M5 K3b: ring keeps two different variables as two atoms: RULE_RING.
+theorem bad : (x : Rat) -> (y : Rat) -> Eq Rat x y := fun x => fun y => ring x y

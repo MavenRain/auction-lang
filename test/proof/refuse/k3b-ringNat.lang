@@ -1,0 +1,3 @@
+-- M5 K3b: natSub is not a ring operation, so (a - b) + b = a is not a ring
+-- identity on Nat: RULE_RING_NAT.
+theorem bad : (a : Nat) -> (b : Nat) -> Eq Nat (natAdd (natSub a b) b) a := fun a => fun b => ringNat (natAdd (natSub a b) b) a

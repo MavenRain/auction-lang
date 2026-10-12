@@ -1,0 +1,3 @@
+-- M5 K3b: cert uses a fact x <= y only in its direction (0 <= x does not
+-- give x <= 0): RULE_CERT.
+theorem bad : (x : Rat) -> RatLe 0/1 x -> RatLe x 0/1 := fun x => fun h => cert x 0/1 (RatLe 0/1 x) h

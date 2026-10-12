@@ -1,0 +1,3 @@
+-- M5 K3b: certLt needs a positive constant or a strict fact (x < x is
+-- false): RULE_CERT_LT.
+theorem bad : (x : Rat) -> RatLt x x := fun x => certLt x x True trivial

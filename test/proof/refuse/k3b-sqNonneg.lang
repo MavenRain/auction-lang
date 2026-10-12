@@ -1,0 +1,2 @@
+-- M5 K3b: a wrong argument to the kernel rule sqNonneg gives RULE_SQ_NONNEG.
+theorem bad : True := sqNonneg flagYes

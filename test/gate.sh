@@ -393,6 +393,7 @@ status=0
 build/langc eval test/query/plain.lang --read >/dev/null 2>&1 || status=$?
 [ "$status" -eq 2 ] || { echo "FAIL eval --read with no document: want exit 2, got $status"; fail=$((fail + 1)); }
 build/read-typed-test || fail=$((fail + 1))
+build/nf-test || fail=$((fail + 1))
 
 rm -rf "$tmp"
 

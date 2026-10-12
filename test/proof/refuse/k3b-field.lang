@@ -1,0 +1,3 @@
+-- M5 K3b: field needs Ne Rat x 0/1 for the divisor x (x / x = 1 is false at
+-- x = 0): RULE_FIELD.
+theorem bad : (x : Rat) -> Eq Rat (ratDiv x x) 1/1 := fun x => field (ratDiv x x) 1/1 True trivial

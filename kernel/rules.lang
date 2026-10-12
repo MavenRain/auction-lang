@@ -95,3 +95,15 @@ rule foldZero : (A : Type 0) -> (f : A -> A) -> (x : A) -> Eq A (fold f x 0) x
 rule foldSucc : (A : Type 0) -> (f : A -> A) -> (x : A) -> (n : Nat) -> Eq A (fold f x (natAdd n 1)) (f (fold f x n))
 rule minL : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) a
 rule minR : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) b
+-- M5 K3b. ring, ringNat, field, cert and certLt have a check in C (nf.c,
+-- check.c nf_holds): the checker accepts them only when the normal forms
+-- agree. H joins the hypotheses with And (True: no hypothesis). field: each
+-- divisor d that is not a literal needs Ne Rat d 0/1 in H. cert and certLt:
+-- H gives facts RatLe x y or RatLt x y, and b - a - (the sum of y - x) must
+-- be a constant >= 0 (certLt: > 0, or 0 with one RatLt fact).
+rule ring : (a : Rat) -> (b : Rat) -> Eq Rat a b
+rule ringNat : (a : Nat) -> (b : Nat) -> Eq Nat a b
+rule field : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> Eq Rat a b
+rule cert : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> RatLe a b
+rule certLt : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> RatLt a b
+rule sqNonneg : (x : Rat) -> RatLe 0/1 (ratMul x x)

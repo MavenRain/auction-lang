@@ -82,3 +82,13 @@ k3-finZero-val.lang TYPE_REFL
 k3-finSucc-size.lang TYPE_MISMATCH
 k3-finSucc-val.lang TYPE_REFL
 k3-natMin.lang TYPE_REFL
+k3b-cert-dir.lang RULE_CERT
+k3b-cert.lang RULE_CERT
+k3b-certLt.lang RULE_CERT_LT
+k3b-field-hyp.lang RULE_FIELD
+k3b-field.lang RULE_FIELD
+k3b-ring-atoms.lang RULE_RING
+k3b-ring-exp.lang RULE_RING
+k3b-ring.lang RULE_RING
+k3b-ringNat.lang RULE_RING_NAT
+k3b-sqNonneg.lang RULE_SQ_NONNEG

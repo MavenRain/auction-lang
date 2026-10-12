@@ -1,0 +1,2 @@
+-- M5 K3b: ring keeps the exponent of a factor (x * x is not x): RULE_RING.
+theorem bad : (x : Rat) -> Eq Rat (ratMul x x) x := fun x => ring (ratMul x x) x

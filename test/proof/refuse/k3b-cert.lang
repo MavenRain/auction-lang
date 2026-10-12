@@ -1,0 +1,2 @@
+-- M5 K3b: cert refuses a negative constant (1 <= 0 is false): RULE_CERT.
+theorem bad : RatLe 1/1 0/1 := cert 1/1 0/1 True trivial

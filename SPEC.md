@@ -282,6 +282,11 @@ definitions.
 - A typing failure at an argument of a K3 rule gives `RULE_<NAME>`, for
   example `RULE_FIN_CASES`, `RULE_SUM_RAT_SUCC` and `RULE_MIN_L`.
 
+M5 slice K3b adds six kernel rules. `sqNonneg` is a table rule. `ring`,
+`ringNat`, `field`, `cert` and `certLt` have a check in C
+(`src/front/nf.c`). `check.c` calls this check before it checks the
+arguments, the same as for `decide`. Section 11 gives the details.
+
 ## 7. Target and instance encoding
 
 An instance is a definition of the program, not of `domain/`, whose type
@@ -847,3 +852,94 @@ The nine M4 example slices are implemented (2026-10-11). The gate has
 31 examples, 578 eval lines and 395 reads (1241 tests). Book coverage
 remains partial; `README.md` lists the checked models and the remaining
 coverage by chapter.
+
+## 11. Checked rules: ring, field and cert (M5 K3b, draft)
+
+The file `kernel/rules.lang` declares these rules:
+
+```
+rule ring : (a : Rat) -> (b : Rat) -> Eq Rat a b
+rule ringNat : (a : Nat) -> (b : Nat) -> Eq Nat a b
+rule field : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> Eq Rat a b
+rule cert : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> RatLe a b
+rule certLt : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> RatLt a b
+rule sqNonneg : (x : Rat) -> RatLe 0/1 (ratMul x x)
+```
+
+`sqNonneg` is a table rule. The other five rules have a check in C. The
+checker evaluates `a`, `b` and `H`. It accepts the application only when
+`nf_check` (`src/front/nf.c`) accepts these values. `apply_term` in
+`check.c` calls this check before it checks the arguments, the same as
+for `decide`.
+
+### 11.1 Normal form
+
+- A term becomes a rational function `N / D`. `N` and `D` are sparse
+  polynomials with Rat coefficients.
+- A coefficient is a fraction of two `int64` values in lowest terms. The
+  numerator and the denominator are at most 2^61 in magnitude.
+- A monomial is a coefficient times a product of atom powers, in atom
+  order. A polynomial is a sorted list of monomials. No coefficient is 0.
+- An atom is a maximal subterm that is not a ring operation and not a
+  literal. Two atoms are the same atom when conversion at the current
+  binder level makes them equal.
+- The ring operations on Rat are `ratAdd`, `ratSub`, `ratMul`, `ratDiv`
+  and `ratOfNat`. The cast goes through `natAdd` and `natMul`. The ring
+  operations on Nat are `natAdd` and `natMul`. `natSub`, `natDiv`,
+  `natMod`, `natMax` and `natMin` are not ring operations, so they stay
+  atoms.
+- A division by a nonzero literal is a multiplication by its inverse. A
+  division by the literal 0 is refused. In `ring` and `cert`, a division
+  by a term that is not a literal is one atom (the full `ratDiv` term).
+  In `field`, each such divisor `d` needs the fact `Ne Rat d 0/1` in `H`.
+  The checker finds the fact by conversion. If no fact agrees, the rule
+  is refused.
+- A term that traps is refused.
+- The limits are 64 atoms, 1024 terms, degree 32 and 32 hypotheses. A
+  larger normal form, or a coefficient out of range, is refused.
+
+### 11.2 The rules
+
+- `ring`, `ringNat` and `field` accept when `N_a * D_b = N_b * D_a` as
+  polynomials.
+- The hypothesis `H` is `True` (no fact), one fact, or `And P Q`
+  (nested). A `field` fact is `Ne Rat d 0/1`. A `cert` or `certLt` fact
+  is `RatLe x y` or `RatLt x y`.
+- A closed true comparison evaluates to `Eq Flag flagYes flagYes`, so its
+  endpoints and comparison kind are erased. `cert` and `certLt` treat this
+  as a redundant fact with contribution 0 and no strictness. Closed false
+  comparisons are refused. The application still checks the proof of `H`.
+- Each unreduced fact has the coefficient 1. To use a scaled fact, make it first
+  with `ratMulNonneg`.
+- `cert` accepts when `b - a - (the sum of y_i - x_i over the facts)`
+  normalizes to a constant `k` with `k >= 0`. `certLt` accepts when
+  `k > 0`, or when `k = 0` and at least one fact is `RatLt`.
+
+### 11.3 Soundness
+
+- `ring`: equal normal forms give a commutative ring identity over Q. The
+  identity is true for all values of the atoms.
+- `ringNat`: in Nat mode each coefficient is a non-negative integer. N is
+  a subset of Q and the operations agree, so the identity is true in N.
+- `field`: each `D` is a product of divisors that `H` shows are not 0.
+  So the cross-multiplied identity gives `a = b`.
+- `cert`: `b - a = k + sum(y_i - x_i)` is a polynomial identity. Each
+  `y_i - x_i` is at least 0 by its fact, and more than 0 for a `RatLt`
+  fact. So `b - a >= k >= 0`. For `certLt`, `b - a > 0`.
+- An atom can trap at some values of the variables, for example
+  `ratDiv x y` at `y = 0/1`. As for the table rules, a rule at a trap
+  proves nothing: conversion never makes a trap equal to a term.
+
+### 11.4 Refusals and tests
+
+- The refusal codes are `RULE_RING`, `RULE_RING_NAT`, `RULE_FIELD`,
+  `RULE_CERT`, `RULE_CERT_LT` and `RULE_SQ_NONNEG`. A typing failure at
+  an argument of one of these rules also gives the code of the rule.
+- `test/proof/ok/k3b.lang` has 14 theorems. Among them are `sumRat_add`,
+  `sumRat_const_mul`, `sumRat_le`, and `2xy <= x^2 + y^2` (by `cert`
+  with `sqNonneg (ratSub x y)`).
+- `test/proof/refuse/k3b-*.lang` has 10 refusals.
+
+Note (draft): this section differs from `m5-design.md` 3.5. There the
+certificate is a list of non-negative coefficients. Here the certificate
+is the Prop `H`, and each fact has the coefficient 1.

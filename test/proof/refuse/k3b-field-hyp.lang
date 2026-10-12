@@ -1,0 +1,2 @@
+-- M5 K3b: a field hypothesis must have the form Ne Rat d 0/1: RULE_FIELD.
+theorem bad : (x : Rat) -> RatLe 0/1 x -> Eq Rat (ratDiv x x) 1/1 := fun x => fun h => field (ratDiv x x) 1/1 (RatLe 0/1 x) h

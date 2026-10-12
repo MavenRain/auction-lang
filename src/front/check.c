@@ -4,6 +4,7 @@
    hint) or its type is inferred. Two types are equal when their normal forms
    are equal (front/eval.c). The checker writes core terms (front/core.h). */
 #include "front/check.h"
+#include "front/nf.h"
 
 #include <string.h>
 
@@ -1654,7 +1655,13 @@ static const struct {
   {"foldZero", "RULE_FOLD_ZERO"},
   {"foldSucc", "RULE_FOLD_SUCC"},
   {"minL", "RULE_MIN_L"},
-  {"minR", "RULE_MIN_R"}
+  {"minR", "RULE_MIN_R"},
+  {"ring", "RULE_RING"},
+  {"ringNat", "RULE_RING_NAT"},
+  {"field", "RULE_FIELD"},
+  {"cert", "RULE_CERT"},
+  {"certLt", "RULE_CERT_LT"},
+  {"sqNonneg", "RULE_SQ_NONNEG"}
 };
 
 /* The kernel rule that HEAD names, or NO_DEF. */
@@ -1748,12 +1755,68 @@ static int decide_holds(Checker *c, const Term *const *args, uint32_t argc) {
   return FAIL(c, "RULE_DECIDE", "decide needs a closed Flag; the Flag is open: %s", show(c, v));
 }
 
+/* The rules with a normal-form check in C (nf.c, m5-design.md 3.5). ARGS is
+   the arguments that nf_check reads: a, b and the hypotheses H. */
+static const struct {
+  const char *rule;
+  NfRule nf;
+  const char *code;
+  uint32_t args;
+} NF_RULES[] = {
+  {"ring", NF_RING, "RULE_RING", 2u},
+  {"ringNat", NF_RING_NAT, "RULE_RING_NAT", 2u},
+  {"field", NF_FIELD, "RULE_FIELD", 3u},
+  {"cert", NF_CERT, "RULE_CERT", 3u},
+  {"certLt", NF_CERT_LT, "RULE_CERT_LT", 3u}
+};
+
+/* The checker accepts the rule R of NF_RULES only when nf_check accepts its
+   arguments. Each refusal gives the code of the rule. */
+static int nf_holds(Checker *c, uint32_t r, const Term *const *args, uint32_t argc) {
+  Diag *diag = c->m->diag;
+  const Value *sort = NF_RULES[r].nf == NF_RING_NAT ? nat_type(c) : rat_type(c);
+  const Value *v[3] = {NULL, NULL, NULL};
+  const Value *at = NULL;
+  const Core *k;
+  NfVerdict verdict;
+  uint32_t i;
+  if (argc < NF_RULES[r].args)
+    return FAIL(c, NF_RULES[r].code, "%s needs %u arguments, found %u", NF_RULES[r].rule, NF_RULES[r].args, argc);
+  for (i = 0; i < NF_RULES[r].args; i++) {
+    k = check(c, args[i], i < 2u ? sort : prop_type(c));
+    v[i] = k == NULL ? NULL : here(c, k);
+    if (v[i] == NULL && !diag->set)
+      return FAIL(c, NF_RULES[r].code, "%s cannot evaluate its argument %u", NF_RULES[r].rule, i + 1u);
+    if (v[i] == NULL) {
+      diag->code = diag->code != NULL && strncmp(diag->code, "TYPE_", 5) == 0 ? NF_RULES[r].code : diag->code;
+      return 0;
+    }
+  }
+  verdict = nf_check(c->m, c->level, NF_RULES[r].nf, v[0], v[1], v[2], &at);
+  if (verdict == NF_OK)
+    return 1;
+  if (at != NULL)
+    return FAIL(c, NF_RULES[r].code, "%s: %s: %s", NF_RULES[r].rule, nf_text(verdict), show(c, at));
+  return FAIL(c, NF_RULES[r].code, "%s: %s", NF_RULES[r].rule, nf_text(verdict));
+}
+
+/* The C check of the kernel rule D (decide and the rules of nf.c), or 1. */
+static int native_holds(Checker *c, uint32_t d, const Term *const *args, uint32_t argc) {
+  uint32_t r;
+  if (strcmp(c->m->defs[d].name, "decide") == 0)
+    return decide_holds(c, args, argc);
+  for (r = 0; r < sizeof NF_RULES / sizeof NF_RULES[0]; r++) {
+    if (strcmp(NF_RULES[r].rule, c->m->defs[d].name) == 0)
+      return nf_holds(c, r, args, argc);
+  }
+  return 1;
+}
+
 static const Core *apply_term(Checker *c, const Term *head, const Term *const *args, uint32_t argc, const Value *hint, const Value **type) {
   const Value *ty = NULL;
   const Core *k = head->kind == TERM_VAR ? var_core(c, head->name, &ty) : infer(c, head, &ty);
   uint32_t d = k == NULL ? NO_DEF : rule_head(c, head);
-  int decide = d != NO_DEF && strcmp(c->m->defs[d].name, "decide") == 0;
-  const Core *r = decide && !decide_holds(c, args, argc) ? NULL : apply_rest(c, k, ty, args, argc, hint, type);
+  const Core *r = d != NO_DEF && !native_holds(c, d, args, argc) ? NULL : apply_rest(c, k, ty, args, argc, hint, type);
   if (r == NULL && d != NO_DEF && c->m->diag->set)
     rule_refusal(c, d, ty, args, argc);
   return r;

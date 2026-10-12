@@ -133,6 +133,17 @@ tests, with 4 proof files and 84 proof refusals. 17 of 17 K3a mutants
 are KILLED. Next is K3: `nf.c` with `ring`, `ringNat`, `field`, `cert`,
 `certLt` and `sqNonneg`.
 
+M5 slice K3b is done (2026-10-12): the checked rules. The new file
+`src/front/nf.c` has a normal form of sparse polynomials with Rat
+coefficients. There are six new rules in `kernel/rules.lang`: `ring`,
+`ringNat`, `field`, `cert` and `certLt` (a check in C), and `sqNonneg`
+(a table rule). SPEC.md section 11 has the draft. The file
+`test/proof/ok/k3b.lang` has 14 theorems, among them `sumRat_add`,
+`sumRat_const_mul` and `sumRat_le`. There are 10 new proof refusals. The
+gate has 1339 checks in its main groups, with 5 proof files and 94 proof
+refusals, plus 21 C typed reader and 9 C certificate regressions.
+15 of 15 K3b mutants are KILLED.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
