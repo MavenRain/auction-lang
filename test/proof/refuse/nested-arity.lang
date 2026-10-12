@@ -1,0 +1,2 @@
+-- An under-applied built-in keeps its diagnostic inside a proof rule.
+theorem r : And True True := andIntro True True (natAdd 1) trivial

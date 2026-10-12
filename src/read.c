@@ -660,7 +660,7 @@ static int decode(Typed *t, const Value *type, const JsonNode *node, const Value
 }
 
 /* As is_instance of src/json.c: not a function type, a universe or an equality. */
-static int instance_type(const Machine *m, const Value *type) {
+static int instance_type(Machine *m, const Value *type) {
   if (val_is_kernel_prop(m, type))
     return 0;
   switch (type->kind) {
@@ -872,7 +872,7 @@ static size_t find_read(const ReadDef *reads, const char *used, size_t count, co
 }
 
 /* The program instances, as json_document writes them (src/json.c is_instance). */
-static int program_instance(const Machine *m, const DefInfo *d) {
+static int program_instance(Machine *m, const DefInfo *d) {
   return d->origin == ORIGIN_PROGRAM && !d->is_theorem && instance_type(m, d->type);
 }
 

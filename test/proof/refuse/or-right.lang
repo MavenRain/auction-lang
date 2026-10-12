@@ -1,0 +1,2 @@
+-- orRight needs a proof of the right side.
+theorem r : Or True False := orRight True False trivial

@@ -27,6 +27,8 @@ typedef struct {
   const char *code;
   char def[64];
   char msg[512];
+  const void *arg; /* the argument term that failed first, or NULL (M5) */
+  const void *call; /* a core application that failed internally, or NULL */
 } Diag;
 
 void diag_init(Diag *diag);

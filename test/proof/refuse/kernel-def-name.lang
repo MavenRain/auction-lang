@@ -1,0 +1,2 @@
+-- Not is a kernel definition (rule R4).
+def Not : Prop := True

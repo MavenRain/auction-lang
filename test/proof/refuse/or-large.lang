@@ -1,0 +1,2 @@
+-- orElim cannot eliminate into a data type.
+def r : (P : Prop) -> (Q : Prop) -> Or P Q -> Nat := fun P => fun Q => fun h => orElim P Q Nat h (fun p => 1) (fun q => 2)

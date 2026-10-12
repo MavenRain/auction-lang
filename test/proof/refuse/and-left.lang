@@ -1,0 +1,2 @@
+-- andLeft needs a proof of And Q P here.
+theorem r : (P : Prop) -> (Q : Prop) -> And P Q -> Q := fun P => fun Q => fun h => andLeft Q P h

@@ -1,0 +1,2 @@
+-- exIntro needs a proof for the witness.
+theorem r : Exists Nat (fun n => Eq Nat n 1) := exIntro Nat (fun n => Eq Nat n 1) 2 refl

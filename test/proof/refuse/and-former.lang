@@ -1,0 +1,2 @@
+-- And takes two propositions.
+theorem r : And Nat True := trivial

@@ -1,0 +1,2 @@
+-- Not True is True -> False, so the identity is not a proof.
+theorem r : Not True := fun h => h

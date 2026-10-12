@@ -51,6 +51,16 @@ for prog in test/proof/ok/*.lang; do
   fi
 done
 echo "proofs: $proofs checked"
+
+# A theorem is not an instance: `langc build` of each proof file gives
+# FILE.json, and `langc verify` accepts it.
+for prog in test/proof/ok/*.lang; do
+  json="${prog%.lang}.json"
+  if ! build/langc build "$prog" >"$tmp/proof.json" 2>&1 || ! cmp -s "$tmp/proof.json" "$json" || ! build/langc verify "$prog" "$json" >/dev/null 2>&1; then
+    echo "FAIL $prog: the JSON build differs from $json, or verify refuses it"
+    fail=$((fail + 1))
+  fi
+done
 refusals test/proof/refuse proof
 
 # A refl refusal shows both normal forms.

@@ -1,0 +1,2 @@
+-- exElim cannot eliminate into a data type.
+def r : Exists Nat (fun n => Eq Nat n 1) -> Nat := fun h => exElim Nat (fun n => Eq Nat n 1) Nat h (fun n => fun p => n)

@@ -1,0 +1,2 @@
+-- orLeft needs a proof of the left side.
+theorem r : Or False True := orLeft False True trivial

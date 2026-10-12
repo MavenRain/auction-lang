@@ -345,7 +345,7 @@ static int value_json(Out *o, const Value *type, const Value *v) {
 }
 
 /* Functions, types, families and proofs are not instances. */
-static int is_instance(const Machine *m, const DefInfo *d) {
+static int is_instance(Machine *m, const DefInfo *d) {
   if (d->origin != ORIGIN_PROGRAM || d->is_theorem || val_is_kernel_prop(m, d->type))
     return 0;
   switch (d->type->kind) {

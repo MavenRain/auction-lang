@@ -1519,6 +1519,8 @@ static const Core *apply_rest(Checker *c, const Core *k, const Value *ty, const 
     if (ty == NULL || ty->kind != VAL_PI)
       return nul(FAIL(c, "TYPE_NOT_FUNCTION", "a term of type %s is applied to an argument", show(c, ty)));
     a = check(c, args[i], ty->dom);
+    if (a == NULL && c->m->diag->arg == NULL)
+      c->m->diag->arg = args[i];
     ty = closure_apply(c->m, ty, here(c, a));
     k = core_app(c, k, a);
   }
@@ -1540,10 +1542,92 @@ static const Core *var_core(Checker *c, const char *name, const Value **type) {
   return nul(refused_name(c, name) ? 0 : FAIL(c, "NAME_UNKNOWN", "unknown name %s", name));
 }
 
+/* The refusal code of each kernel rule that takes arguments (M5). */
+static const struct {
+  const char *rule;
+  const char *code;
+} KERNEL_CODES[] = {
+  {"absurd", "RULE_ABSURD"}, {"And", "RULE_AND"}, {"andIntro", "RULE_AND_INTRO"},
+  {"andLeft", "RULE_AND_LEFT"}, {"andRight", "RULE_AND_RIGHT"}, {"Or", "RULE_OR"},
+  {"orLeft", "RULE_OR_LEFT"}, {"orRight", "RULE_OR_RIGHT"}, {"orElim", "RULE_OR_ELIM"},
+  {"Exists", "RULE_EXISTS"}, {"exIntro", "RULE_EX_INTRO"}, {"exElim", "RULE_EX_ELIM"}
+};
+
+/* The kernel rule that HEAD names, or NO_DEF. */
+static uint32_t rule_head(Checker *c, const Term *head) {
+  uint32_t d;
+  const Value *v;
+  if (head->kind != TERM_VAR || find_local(c, head->name) != NULL)
+    return NO_DEF;
+  d = find_def(c->m, head->name);
+  v = d == NO_DEF ? NULL : c->m->defs[d].value;
+  return v != NULL && c->m->defs[d].origin == ORIGIN_KERNEL && v->kind == VAL_STUCK && v->op == OP_RULE ? d : NO_DEF;
+}
+
+/* The motive of the rule type TY, or NO_DEF. The motive is the parameter
+   whose variable is the result type, when its type is Prop and a minor
+   premise (a function) comes after it. Or and Exists eliminate only into a
+   Prop. */
+static uint32_t rule_motive(Checker *c, const Value *ty) {
+  const Value *t = ty;
+  const Value *u = ty;
+  uint32_t n = 0;
+  uint32_t i;
+  uint32_t motive = NO_DEF;
+  int minor = 0;
+  while (t != NULL && t->kind == VAL_PI && n < SPINE_MAX) {
+    t = closure_apply(c->m, t, val_var(c->m, c->level + n));
+    n++;
+  }
+  for (i = 0; i < n && u != NULL && t != NULL; i++) {
+    if (motive != NO_DEF && u->dom != NULL && u->dom->kind == VAL_PI)
+      minor = 1;
+    if (motive == NO_DEF && val_is(u->dom, OP_PROP) && conv_values(c->m, c->level + n, t, val_var(c->m, c->level + i)))
+      motive = i;
+    u = closure_apply(c->m, u, val_var(c->m, c->level + i));
+  }
+  return minor ? motive : NO_DEF;
+}
+
+/* After a failed application of the kernel rule D to ARGS: a typing failure
+   at an argument gives the code of the rule (orElim gives RULE_OR_ELIM). A
+   Type k argument at the motive gives PROP_LARGE_ELIM. A failure inside a
+   nested application keeps its own code. */
+static void rule_refusal(Checker *c, uint32_t d, const Value *ty, const Term *const *args, uint32_t argc) {
+  Diag *diag = c->m->diag;
+  Diag saved = *diag;
+  const Value *at = NULL;
+  const char *code = NULL;
+  uint32_t arg = argc;
+  uint32_t i;
+  for (i = 0; i < argc; i++) {
+    if ((const void *)args[i] == diag->arg)
+      arg = i;
+  }
+  for (i = 0; i < sizeof KERNEL_CODES / sizeof KERNEL_CODES[0]; i++) {
+    if (strcmp(KERNEL_CODES[i].rule, c->m->defs[d].name) == 0)
+      code = KERNEL_CODES[i].code;
+  }
+  if (diag->call != NULL || arg == argc || code == NULL || diag->code == NULL || strncmp(diag->code, "TYPE_", 5) != 0)
+    return;
+  if (arg == rule_motive(c, ty)) {
+    diag->set = 0;
+    if (infer(c, args[arg], &at) == NULL || at == NULL || at->kind != VAL_UNIV)
+      at = NULL;
+    *diag = saved;
+    code = at != NULL ? "PROP_LARGE_ELIM" : code;
+  }
+  diag->code = code;
+}
+
 static const Core *apply_term(Checker *c, const Term *head, const Term *const *args, uint32_t argc, const Value *hint, const Value **type) {
   const Value *ty = NULL;
   const Core *k = head->kind == TERM_VAR ? var_core(c, head->name, &ty) : infer(c, head, &ty);
-  return apply_rest(c, k, ty, args, argc, hint, type);
+  uint32_t d = k == NULL ? NO_DEF : rule_head(c, head);
+  const Core *r = apply_rest(c, k, ty, args, argc, hint, type);
+  if (r == NULL && d != NO_DEF && c->m->diag->set)
+    rule_refusal(c, d, ty, args, argc);
+  return r;
 }
 
 static const Core *apply_known(Checker *c, const Term *whole, const Head *h, const Term *const *args, uint32_t argc, const Value *hint, const Value **type) {
@@ -1552,8 +1636,11 @@ static const Core *apply_known(Checker *c, const Term *whole, const Head *h, con
   const Core *core;
   if (argc < arity && hint != NULL && hint->kind == VAL_PI)
     return eta(c, whole, hint, type);
-  if (argc < arity)
+  if (argc < arity) {
+    if (whole->kind == TERM_APP && c->m->diag->call == NULL)
+      c->m->diag->call = whole;
     return nul(FAIL(c, "TYPE_ARITY", "%s needs %u arguments, found %u", known_name(c, h), arity, argc));
+  }
   memset(&k, 0, sizeof k);
   k.c = c;
   k.b = h->builtin;
@@ -1563,6 +1650,8 @@ static const Core *apply_known(Checker *c, const Term *whole, const Head *h, con
   k.outer = hint;
   k.used = arity;
   core = known_core(&k, h);
+  if (core == NULL && whole->kind == TERM_APP && c->m->diag->call == NULL)
+    c->m->diag->call = whole;
   return apply_rest(c, core, k.type, args + k.used, argc - k.used, hint, type);
 }
 

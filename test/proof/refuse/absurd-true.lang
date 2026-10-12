@@ -1,0 +1,2 @@
+-- absurd needs a proof of False.
+theorem r : Eq Nat 1 2 := absurd trivial (Eq Nat 1 2)

@@ -1,0 +1,2 @@
+-- orElim needs a proof of the motive from each side.
+theorem r : (P : Prop) -> (Q : Prop) -> Or P Q -> P := fun P => fun Q => fun h => orElim P Q P h (fun p => p) (fun q => q)

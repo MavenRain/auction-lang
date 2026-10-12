@@ -1,0 +1,2 @@
+-- An ill-typed built-in argument keeps its diagnostic inside a proof rule.
+theorem r : And True True := andIntro True True (natAdd True 1) trivial

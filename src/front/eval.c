@@ -275,9 +275,21 @@ int val_is(const Value *v, Op op) {
   return v != NULL && v->kind == VAL_OP && v->op == op;
 }
 
-int val_is_kernel_prop(const Machine *m, const Value *v) {
-  return v != NULL && v->kind == VAL_STUCK && v->op == OP_RULE && v->argc == 0
-    && v->inst < m->def_count && val_is(m->defs[v->inst].type, OP_PROP);
+/* The type of a neutral kernel constant or application. */
+static const Value *kernel_app_type(Machine *m, const Value *v) {
+  const Value *type;
+  if (v == NULL)
+    return NULL;
+  if (v->kind == VAL_APP) {
+    type = kernel_app_type(m, v->dom);
+    return type != NULL && type->kind == VAL_PI ? closure_apply(m, type, v->arg) : NULL;
+  }
+  return v->kind == VAL_STUCK && v->op == OP_RULE && v->argc == 0 && v->inst < m->def_count
+    ? m->defs[v->inst].type : NULL;
+}
+
+int val_is_kernel_prop(Machine *m, const Value *v) {
+  return val_is(kernel_app_type(m, v), OP_PROP);
 }
 
 const Env *env_push(Machine *m, const Env *env, const Value *value) {

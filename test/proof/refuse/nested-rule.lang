@@ -1,0 +1,2 @@
+-- A nested kernel rule keeps its own refusal code.
+theorem r : And True True := andIntro True True (And Nat True) trivial

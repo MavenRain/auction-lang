@@ -1,0 +1,16 @@
+theorem k1Trivial ok
+theorem k1Absurd ok
+theorem k1AndIntro ok
+theorem k1AndLeft ok
+theorem k1AndRight ok
+theorem k1OrLeft ok
+theorem k1OrRight ok
+theorem k1OrElim ok
+theorem k1ExIntro ok
+theorem k1ExElim ok
+theorem k1Not ok
+theorem k1NotElim ok
+theorem k1Iff ok
+theorem k1Ne ok
+theorem k1Transport ok
+ok

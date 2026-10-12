@@ -1,0 +1,2 @@
+-- andIntro needs a proof of each side.
+theorem r : And True False := andIntro True False trivial trivial

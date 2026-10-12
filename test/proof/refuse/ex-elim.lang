@@ -1,0 +1,2 @@
+-- exElim needs a proof of the motive for each witness.
+theorem r : (P : Nat -> Prop) -> (Q : Prop) -> Exists Nat P -> Q := fun P => fun Q => fun h => exElim Nat P Q h (fun n => fun p => p)

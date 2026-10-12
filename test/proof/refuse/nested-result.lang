@@ -1,0 +1,2 @@
+-- A well-typed built-in with the wrong result type fails at the rule argument.
+theorem r : And True True := andIntro True True (natAdd 1 2) trivial

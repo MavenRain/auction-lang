@@ -144,6 +144,55 @@ definitions.
 | The `Fn` and `Util` forms, for example `spsbAuctionFn` and `auctionBidder1Util` | See `domain/opengame.lang:137` | The deterministic function of each auction score and game (section 6) |
 | `auctionExpectedBidder1Util`, `vickreyReserveExpectedUtility` and the forms for bidders 2 and 3 | See `domain/opengame.lang:191` | The Bayes-Nash pipeline expectations (auction-cat `BayesNashPipeline.lean`) (sections 5 and 6) |
 
+### Proofs (M5)
+
+- `Prop` is the sort of propositions, and `Prop : Type 0`. A term of type
+  `Prop` can stand where a `Type k` is expected. A `Type j` can stand where
+  a `Type k` is expected when j <= k (cumulativity).
+- A Pi type `(x : A) -> B` is a Prop when B is a Prop (impredicative). A
+  Sigma type is never a Prop. `Eq A a b` is a Prop. `transport` accepts a
+  family of Props.
+- `theorem NAME : T := PROOF` declares a theorem. T must be a Prop, else
+  the checker refuses it with `THEOREM_NOT_PROP`. `langc check` prints
+  `theorem NAME ok` for each theorem, then `ok`. A theorem is not an
+  instance: `langc build` does not write it, and `langc verify` does not
+  expect it. Proofs declared with `def`, including proofs of `And`, `Or`
+  and `Exists`, are also omitted from instances.
+- The file `kernel/rules.lang` declares the proof rules with
+  `rule NAME : T`. A rule has no body, and the checker uses its type as
+  given. Only this file can declare a rule (`RULE_DECL_OUTSIDE_KERNEL`).
+  The kernel names are core names, so a program cannot define them again
+  (`REFUSE_NAME`, rule R4). The K1 rules:
+
+  ```
+  rule True : Prop
+  rule trivial : True
+  rule False : Prop
+  rule absurd : False -> (C : Type 1) -> C
+  rule And : Prop -> Prop -> Prop
+  rule andIntro : (P : Prop) -> (Q : Prop) -> P -> Q -> And P Q
+  rule andLeft : (P : Prop) -> (Q : Prop) -> And P Q -> P
+  rule andRight : (P : Prop) -> (Q : Prop) -> And P Q -> Q
+  rule Or : Prop -> Prop -> Prop
+  rule orLeft : (P : Prop) -> (Q : Prop) -> P -> Or P Q
+  rule orRight : (P : Prop) -> (Q : Prop) -> Q -> Or P Q
+  rule orElim : (P : Prop) -> (Q : Prop) -> (C : Prop) -> Or P Q -> (P -> C) -> (Q -> C) -> C
+  rule Exists : (A : Type 0) -> (A -> Prop) -> Prop
+  rule exIntro : (A : Type 0) -> (P : A -> Prop) -> (a : A) -> P a -> Exists A P
+  rule exElim : (A : Type 0) -> (P : A -> Prop) -> (C : Prop) -> Exists A P -> ((a : A) -> P a -> C) -> C
+  ```
+
+- `kernel/rules.lang` also defines `Not P := P -> False`,
+  `Iff P Q := And (P -> Q) (Q -> P)` and `Ne A a b := Not (Eq A a b)`.
+- `absurd` eliminates `False` into each type of `Type 1` and below. `orElim`
+  and `exElim` eliminate only into a Prop: the motive `C` is a Prop.
+- Refusal codes. A typing failure at an argument of a rule application
+  gives the code of the rule, `RULE_<NAME>`, with the typing message
+  (`andIntro` gives `RULE_AND_INTRO`, `orElim` gives `RULE_OR_ELIM`, `And`
+  gives `RULE_AND`). A failure inside a nested application keeps its own
+  code. A `Type k` argument at the motive of `orElim` or `exElim` gives
+  `PROP_LARGE_ELIM`.
+
 ## 7. Target and instance encoding
 
 An instance is a definition of the program, not of `domain/`, whose type

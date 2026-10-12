@@ -67,6 +67,11 @@ static void proof_instances(void) {
     "def liftedProof : trueType := trivial\n"
     "def proposition : Prop := True\n"
     "def equalityProof : Eq Nat 1 1 := refl\n"
+    "def andProof : And True True := andIntro True True trivial trivial\n"
+    "def orProof : Or False True := orRight False True trivial\n"
+    "def exProof : Exists Nat (fun n => Eq Nat n 1) := exIntro Nat (fun n => Eq Nat n 1) 1 refl\n"
+    "def andType : Type 0 := And True True\n"
+    "def liftedAnd : andType := andProof\n"
     "theorem trueTheorem : True := trueProof\n"
     "def answer : Nat := 7\n";
   const char *expected = "answer : Nat = 7\n";

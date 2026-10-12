@@ -1,0 +1,17 @@
+-- M5 K1b: one theorem per kernel rule, and the Not, Iff and Ne definitions.
+theorem k1Trivial : True := trivial
+theorem k1Absurd : False -> Eq Nat 1 2 := fun h => absurd h (Eq Nat 1 2)
+def k1AbsurdNat : False -> Nat := fun h => absurd h Nat
+theorem k1AndIntro : And True (Eq Nat 1 1) := andIntro True (Eq Nat 1 1) trivial refl
+theorem k1AndLeft : (P : Prop) -> (Q : Prop) -> And P Q -> P := fun P => fun Q => fun h => andLeft P Q h
+theorem k1AndRight : (P : Prop) -> (Q : Prop) -> And P Q -> Q := fun P => fun Q => fun h => andRight P Q h
+theorem k1OrLeft : Or True False := orLeft True False trivial
+theorem k1OrRight : Or False True := orRight False True trivial
+theorem k1OrElim : (P : Prop) -> (Q : Prop) -> Or P Q -> Or Q P := fun P => fun Q => fun h => orElim P Q (Or Q P) h (fun p => orRight Q P p) (fun q => orLeft Q P q)
+theorem k1ExIntro : Exists Nat (fun n => Eq Nat n 1) := exIntro Nat (fun n => Eq Nat n 1) 1 refl
+theorem k1ExElim : (P : Nat -> Prop) -> (Q : Prop) -> Exists Nat P -> ((n : Nat) -> P n -> Q) -> Q := fun P => fun Q => fun h => fun f => exElim Nat P Q h f
+theorem k1Not : Not False := fun h => h
+theorem k1NotElim : (P : Prop) -> P -> Not P -> False := fun P => fun p => fun n => n p
+theorem k1Iff : (P : Prop) -> (Q : Prop) -> (P -> Q) -> (Q -> P) -> Iff P Q := fun P => fun Q => fun f => fun g => andIntro (P -> Q) (Q -> P) f g
+theorem k1Ne : (A : Type 0) -> (a : A) -> (b : A) -> Ne A a b -> Not (Eq A a b) := fun A => fun a => fun b => fun h => h
+theorem k1Transport : (a : Nat) -> (b : Nat) -> Eq Nat a b -> Eq Nat a a -> Eq Nat a b := fun a => fun b => fun e => fun r => transport (fun (x : Nat) => Eq Nat a x) e r

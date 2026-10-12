@@ -2,5 +2,26 @@
 -- build/kernel.c, and the checker reads it before the domain files. Only this
 -- file can declare a rule (RULE_DECL_OUTSIDE_KERNEL). A rule has no body: the
 -- checker takes its type as given. Each name here is a core name (rule R4).
+-- A typing failure at an argument of a rule gives the code RULE_<NAME>.
 rule True : Prop
 rule trivial : True
+rule False : Prop
+-- absurd eliminates False into each type of Type 1 and below.
+rule absurd : False -> (C : Type 1) -> C
+rule And : Prop -> Prop -> Prop
+rule andIntro : (P : Prop) -> (Q : Prop) -> P -> Q -> And P Q
+rule andLeft : (P : Prop) -> (Q : Prop) -> And P Q -> P
+rule andRight : (P : Prop) -> (Q : Prop) -> And P Q -> Q
+-- orElim and exElim eliminate only into a Prop: the motive C is a Prop. A
+-- Type k motive gives PROP_LARGE_ELIM.
+rule Or : Prop -> Prop -> Prop
+rule orLeft : (P : Prop) -> (Q : Prop) -> P -> Or P Q
+rule orRight : (P : Prop) -> (Q : Prop) -> Q -> Or P Q
+rule orElim : (P : Prop) -> (Q : Prop) -> (C : Prop) -> Or P Q -> (P -> C) -> (Q -> C) -> C
+rule Exists : (A : Type 0) -> (A -> Prop) -> Prop
+rule exIntro : (A : Type 0) -> (P : A -> Prop) -> (a : A) -> P a -> Exists A P
+rule exElim : (A : Type 0) -> (P : A -> Prop) -> (C : Prop) -> Exists A P -> ((a : A) -> P a -> C) -> C
+-- Definitions, not rules.
+def Not : Prop -> Prop := fun P => P -> False
+def Iff : Prop -> Prop -> Prop := fun P => fun Q => And (P -> Q) (Q -> P)
+def Ne : (A : Type 0) -> A -> A -> Prop := fun A => fun a => fun b => Not (Eq A a b)

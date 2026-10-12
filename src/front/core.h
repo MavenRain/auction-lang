@@ -264,7 +264,7 @@ const Value *val_arrow(Machine *m, const Value *dom, const Value *cod);
 const Value *val_closure(Machine *m, ValKind kind, const char *name, const Value *dom, const Env *env, const Core *body);
 int val_is(const Value *v, Op op);
 /* A proposition constant from the kernel, including a normalized alias. */
-int val_is_kernel_prop(const Machine *m, const Value *v);
+int val_is_kernel_prop(Machine *m, const Value *v);
 const Env *env_push(Machine *m, const Env *env, const Value *value);
 const Value *def_value(Machine *m, uint32_t index);
 const Value *eval_core(Machine *m, const Env *env, const Core *core);

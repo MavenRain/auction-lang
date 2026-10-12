@@ -97,6 +97,18 @@ omitted book results and the scope of each comparison. The largest
 example is `examples/multiunit.lang`: `langc build` takes 1.1 s and
 895 MB maximum RSS (the arena is 1 GiB).
 
+M5 slice K1 is done (2026-10-11): Prop, theorem, the kernel rules in
+`kernel/rules.lang` (True, False, And, Or, Exists) and the kernel
+definitions Not, Iff and Ne (`SPEC.md` section 6, Proofs). The gate has
+1268 tests, with 2 proof files and 25 proof refusals. The gate also
+builds each proof file to JSON and verifies it. 30 K1 mutants are
+KILLED.
+
+The staged K1 review also checks that compound proof definitions are
+omitted from JSON instances and that a nested core application keeps its
+own refusal code. The typed reader regression covers build, read and
+verify with proofs of And, Or and Exists alongside a Nat instance.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
