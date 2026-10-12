@@ -16,8 +16,8 @@ changes no file in `src/`, but it changes `domain/opengame.lang`, which
 `make check` passes. It builds `build/langc` with TinyCC
 (`-std=c99 -Wall -Werror`). It checks the sources with clang
 (`-Wall -Wextra -Wswitch-enum -Werror -fsyntax-only`). Then `test/gate.sh`
-runs 1227 tests with zero failures: 31 examples, 10 parse refusals, 86 check
-refusals, 564 eval lines, 31 JSON builds, 15 build refusals, 31 round
+runs 1241 tests with zero failures: 31 examples, 10 parse refusals, 86 check
+refusals, 578 eval lines, 31 JSON builds, 15 build refusals, 31 round
 trips, 395 reads, 29 read refusals, 6 verify refusals, 15 limits checks
 and 14 queries. It also runs
 `build/read-typed-test`: 16 typed reader and printing regressions with zero failures.
@@ -307,6 +307,14 @@ eval lines, 31 JSON builds, 31 round trips and 395 reads. The 141 new
 eval lines are the 137 closed definitions of the 9 examples (each one is
 also a read) and the 4 lines `muSeqCellAgrees 0` to `muSeqCellAgrees 3`.
 The gate time was not measured.
+
+After the close, a follow-up change removes the unused definition `muR2`
+from `examples/multiunit.lang`. It also adds the 14 eval lines with
+arguments: `mcSPRev 0` to `mcSPRev 3` and `mcPhi 0` to `mcPhi 3`
+(mechanism), and `efFeeRev` and `efFeeRev3` at 0, 1 and 3 (entryfee).
+An eval line with arguments is not a read. `make check` then passes with
+zero failures: 1241 tests, with 578 eval lines and 395 reads. No JSON
+golden changes.
 
 The coverage is the finite models and sampled continuous payoff formulas
 listed in `README.md`. The affiliated revenue comparison uses a second

@@ -706,6 +706,6 @@ Each slice commit adds its examples, their JSON goldens and their eval
 lines.
 
 The nine M4 example slices are implemented (2026-10-11). The gate has
-31 examples, 564 eval lines and 395 reads (1227 tests). Book coverage
+31 examples, 578 eval lines and 395 reads (1241 tests). Book coverage
 remains partial; `README.md` lists the checked models and the remaining
 coverage by chapter.

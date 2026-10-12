@@ -67,8 +67,6 @@ def muVickreyA : (x2 y : Fin 4) -> Rat := fun (x2 y : Fin 4) => muVAu muAm muAm 
 -- Share of the top place for bid x against the bids y1 and y2 (ties split).
 def muTop : (x y1 y2 : Rat) -> Rat := fun (x y1 y2 : Rat) => flagIf (flagAnd (ratLe y1 x) (ratLe y2 x)) (ratDiv 1/1 (ratAdd 1/1 (ratAdd (muInd (ratEq x y1)) (muInd (ratEq x y2))))) 0/1
 def muMed : (x y z : Rat) -> Rat := fun (x y z : Rat) => muMax (muMin x y) (muMin (muMax x y) z)
--- Round 2 utility of value t against the remaining rival of value w.
-def muR2 : (t w : Fin 4) -> Rat := fun (t w : Fin 4) => muMax 0/1 (ratSub (muV t) (muV w))
 -- Interim utility of value t with the round 1 bid z when the rivals use b.
 -- Evaluate each pair of rival types once. The reversed pair has the same
 -- utility and probability, so off-diagonal terms have weight 2.
