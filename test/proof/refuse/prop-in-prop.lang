@@ -1,0 +1,2 @@
+-- Prop is a Type 0, not a Prop.
+def p : Prop := Prop

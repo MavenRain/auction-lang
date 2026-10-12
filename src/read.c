@@ -631,6 +631,8 @@ static int decode_op(Typed *t, const Value *type, const JsonNode *node, const Va
   case OP_MAT_ID_KRON_COMP:
   case OP_MAT_EQ:
   case OP_PROJ:
+  case OP_PROP:
+  case OP_RULE:
     return diag_fail(t->diag, "READ_TYPE", t->name, "the type is not a type former");
   }
   return diag_fail(t->diag, "INTERNAL", t->name, "the reader found an unknown operation");
@@ -658,13 +660,15 @@ static int decode(Typed *t, const Value *type, const JsonNode *node, const Value
 }
 
 /* As is_instance of src/json.c: not a function type, a universe or an equality. */
-static int instance_type(const Value *type) {
+static int instance_type(const Machine *m, const Value *type) {
+  if (val_is_kernel_prop(m, type))
+    return 0;
   switch (type->kind) {
   case VAL_PI:
   case VAL_UNIV:
     return 0;
   case VAL_OP:
-    return !val_is(type, OP_EQ);
+    return !val_is(type, OP_EQ) && !val_is(type, OP_PROP);
   case VAL_SIGMA:
   case VAL_NAT:
   case VAL_RAT:
@@ -791,7 +795,7 @@ static int typed_defs(Arena *arena, const JsonNode *doc, int ident, Machine *mac
       return diag_fail(diag, strcmp(check.code, "OOM") == 0 ? "OOM" : "READ_TYPE", t.name,
                        "the type does not parse or check: %s: %s", check.code, check.msg);
     machine->diag = diag;
-    if (!instance_type(type))
+    if (!instance_type(machine, type))
       return diag_fail(diag, "READ_TYPE", t.name, "the type is a function type, a universe or an equality, not an instance");
     if (!decode(&t, type, inst->first->next->next, &value))
       return 0;
@@ -868,8 +872,8 @@ static size_t find_read(const ReadDef *reads, const char *used, size_t count, co
 }
 
 /* The program instances, as json_document writes them (src/json.c is_instance). */
-static int program_instance(const DefInfo *d) {
-  return d->origin == ORIGIN_PROGRAM && instance_type(d->type);
+static int program_instance(const Machine *m, const DefInfo *d) {
+  return d->origin == ORIGIN_PROGRAM && !d->is_theorem && instance_type(m, d->type);
 }
 
 static int same_value(Machine *m, const Value *a, const Value *b) {
@@ -900,7 +904,7 @@ int read_verify(Arena *arena, const JsonNode *doc, const char *bytes, size_t byt
   for (d = 0; d < prog->def_count; d++) {
     const DefInfo *def = &prog->defs[d];
     size_t r;
-    if (!program_instance(def))
+    if (!program_instance(prog, def))
       continue;
     r = find_read(reads, used, count, def->name);
     if (r == count)

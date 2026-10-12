@@ -39,6 +39,20 @@ refusals() {
 refusals test/parse parse
 refusals test/check check
 
+# Proofs (M5). Each test/proof/ok/FILE.lang checks, and the `langc check`
+# output is FILE.out: one `theorem NAME ok` line per theorem, then `ok`.
+proofs=0
+for prog in test/proof/ok/*.lang; do
+  out=$(build/langc check "$prog" 2>&1) || true
+  proofs=$((proofs + 1))
+  if [ "$out" != "$(cat "${prog%.lang}.out")" ]; then
+    echo "FAIL $prog: $out"
+    fail=$((fail + 1))
+  fi
+done
+echo "proofs: $proofs checked"
+refusals test/proof/refuse proof
+
 # A refl refusal shows both normal forms.
 build/langc check test/check/bad-refl.lang 2>"$tmp/err" >/dev/null || true
 if ! rg -q -F 'the left side normalizes to 1201, the right side normalizes to 1200' "$tmp/err"; then

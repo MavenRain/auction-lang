@@ -47,14 +47,17 @@ typedef struct {
 typedef enum {
   DECL_DEF,    /* def [rec] name : type := body */
   DECL_AXIOM,  /* axiom name : type */
-  DECL_FAMILY  /* family name params := ctor | ... */
+  DECL_FAMILY,  /* family name params := ctor | ... */
+  DECL_THEOREM, /* theorem name : P := proof, P a Prop (M5) */
+  DECL_RULE     /* rule name : type, only in kernel/rules.lang (M5) */
 } DeclKind;
 
 /* A family is legal only in the domain file (rule R1). */
 typedef enum {
   ORIGIN_DOMAIN,
   ORIGIN_PROGRAM,
-  ORIGIN_READ /* an instance of a document from `--read DOC` (slice C3) */
+  ORIGIN_READ,  /* an instance of a document from `--read DOC` (slice C3) */
+  ORIGIN_KERNEL /* kernel/rules.lang: the proof rules (M5) */
 } Origin;
 
 typedef struct {

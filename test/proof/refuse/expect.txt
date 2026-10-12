@@ -1,0 +1,7 @@
+rule-outside.lang RULE_DECL_OUTSIDE_KERNEL
+theorem-nat.lang THEOREM_NOT_PROP
+theorem-type.lang THEOREM_NOT_PROP
+theorem-pi-type.lang THEOREM_NOT_PROP
+prop-in-prop.lang TYPE_MISMATCH
+axiom-prop.lang REFUSE_AXIOM
+kernel-name.lang REFUSE_NAME

@@ -18,14 +18,18 @@ build/domain.c: domain/domain.lang domain/finstoch.lang domain/auction.lang doma
 	cat domain/domain.lang domain/finstoch.lang domain/auction.lang domain/opengame.lang > build/domain-all.lang
 	$(TCC) -run gen/embed.c build/domain-all.lang build/domain.c
 
-build/langc: $(SRC) $(HEADERS) build/domain.c
-	$(TCC) $(CFLAGS) -o build/langc $(SRC) build/domain.c
+build/kernel.c: kernel/rules.lang gen/embed.c
+	mkdir -p build
+	$(TCC) -run gen/embed.c kernel/rules.lang build/kernel.c kernel_source
 
-build/read-typed-test: $(READ_TEST_SRC) $(HEADERS) build/domain.c
-	$(TCC) $(CFLAGS) -o build/read-typed-test $(READ_TEST_SRC) build/domain.c
+build/langc: $(SRC) $(HEADERS) build/domain.c build/kernel.c
+	$(TCC) $(CFLAGS) -o build/langc $(SRC) build/domain.c build/kernel.c
 
-check-clang: build/domain.c
-	$(CC) $(CLANG_FLAGS) $(SRC) test/read-typed.c build/domain.c
+build/read-typed-test: $(READ_TEST_SRC) $(HEADERS) build/domain.c build/kernel.c
+	$(TCC) $(CFLAGS) -o build/read-typed-test $(READ_TEST_SRC) build/domain.c build/kernel.c
+
+check-clang: build/domain.c build/kernel.c
+	$(CC) $(CLANG_FLAGS) $(SRC) test/read-typed.c build/domain.c build/kernel.c
 
 check: build/langc build/read-typed-test check-clang
 	sh test/gate.sh

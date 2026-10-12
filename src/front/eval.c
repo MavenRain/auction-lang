@@ -34,7 +34,8 @@ static const char *const OP_NAMES[] = {
   [OP_SUM_RAT] = "sumRat", [OP_MATRIX] = "Matrix",
   [OP_MAT_TABULATE] = "matTabulate", [OP_MAT_OF_FN] = "matOfFn",
   [OP_MAT_ENTRY] = "matEntry", [OP_MAT_COMP] = "matComp", [OP_MAT_KRON] = "matKron",
-  [OP_MAT_ID_KRON_COMP] = "matIdKronComp", [OP_MAT_EQ] = "matEq", [OP_PROJ] = "?"
+  [OP_MAT_ID_KRON_COMP] = "matIdKronComp", [OP_MAT_EQ] = "matEq", [OP_PROJ] = "?",
+  [OP_PROP] = "Prop", [OP_RULE] = "?"
 };
 
 /* The number of arguments of each operation. VARIES: it comes from the
@@ -57,7 +58,8 @@ static const unsigned char OP_ARITY[] = {
   [OP_RAT_OF_NAT] = 1, [OP_RAT_EQ] = 2, [OP_RAT_LE] = 2, [OP_RAT_LT] = 2,
   [OP_SUM_RAT] = 2, [OP_MATRIX] = 2, [OP_MAT_TABULATE] = 3,
   [OP_MAT_OF_FN] = 3, [OP_MAT_ENTRY] = 3, [OP_MAT_COMP] = 5, [OP_MAT_KRON] = 6,
-  [OP_MAT_ID_KRON_COMP] = 6, [OP_MAT_EQ] = 2, [OP_PROJ] = 1
+  [OP_MAT_ID_KRON_COMP] = 6, [OP_MAT_EQ] = 2, [OP_PROJ] = 1,
+  [OP_PROP] = 0, [OP_RULE] = 0
 };
 
 typedef enum {
@@ -271,6 +273,11 @@ const Value *val_closure(Machine *m, ValKind kind, const char *name, const Value
 
 int val_is(const Value *v, Op op) {
   return v != NULL && v->kind == VAL_OP && v->op == op;
+}
+
+int val_is_kernel_prop(const Machine *m, const Value *v) {
+  return v != NULL && v->kind == VAL_STUCK && v->op == OP_RULE && v->argc == 0
+    && v->inst < m->def_count && val_is(m->defs[v->inst].type, OP_PROP);
 }
 
 const Env *env_push(Machine *m, const Env *env, const Value *value) {
@@ -1601,6 +1608,7 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
   switch (op) {
   case OP_NAT:
   case OP_FLAG:
+  case OP_PROP:
   case OP_UNIT:
   case OP_PROD:
   case OP_SUM:
@@ -1711,6 +1719,8 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
     return reduce_mat_id_kron_comp(m, a, n);
   case OP_MAT_EQ:
     return reduce_mat_eq(m, a, n);
+  case OP_RULE:
+    return val_op(m, VAL_STUCK, OP_RULE, inst, 0, a, n);
   case OP_PROJ:
     return reduce_proj(m, inst, field, a, n);
   }
@@ -1986,6 +1996,8 @@ const char *op_name(const Machine *m, Op op, uint32_t inst, uint32_t field) {
     return inst < m->family_count ? m->families[inst].name : "?";
   if (op == OP_CTOR)
     return inst < m->ctor_count ? m->ctors[inst].name : "?";
+  if (op == OP_RULE)
+    return inst < m->def_count ? m->defs[inst].name : "?";
   if (op == OP_PROJ)
     return inst < m->ctor_count && field < m->ctors[inst].field_count ? m->ctors[inst].fields[field].name : "?";
   return (size_t)op < sizeof OP_NAMES / sizeof OP_NAMES[0] ? OP_NAMES[op] : "?";

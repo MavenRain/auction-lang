@@ -199,6 +199,9 @@ static int run(const Options *opt, Arena *arena, Diag *diag) {
   if (!check_program_reads(arena, &decls, reads, read_count, &machine, diag)) return 1;
   switch (opt->command) {
     case CMD_CHECK:
+      for (uint32_t i = 0; i < machine.def_count; i++) {
+        if (machine.defs[i].is_theorem) printf("theorem %s ok\n", machine.defs[i].name);
+      }
       puts("ok");
       return 0;
     case CMD_EVAL:

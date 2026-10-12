@@ -145,6 +145,8 @@ static int starts_atom(TokKind kind) {
     case TOK_KW_FUN:
     case TOK_KW_FAMILY:
     case TOK_KW_AXIOM:
+    case TOK_KW_THEOREM:
+    case TOK_KW_RULE:
       return 0;
   }
   return 0;
@@ -306,6 +308,8 @@ static const Term *parse_atom(Parser *p) {
     case TOK_KW_FUN:
     case TOK_KW_FAMILY:
     case TOK_KW_AXIOM:
+    case TOK_KW_THEOREM:
+    case TOK_KW_RULE:
       break;
   }
   fail_at(p, tok, "a term");
@@ -383,10 +387,25 @@ static int parse_def(Parser *p, Decl *d) {
   return d->body != NULL;
 }
 
-static int parse_axiom(Parser *p, Decl *d) {
+/* theorem name : P := proof (M5). */
+static int parse_theorem(Parser *p, Decl *d) {
   bump(p);
-  d->kind = DECL_AXIOM;
-  d->name = take_name(p, "an axiom name");
+  d->kind = DECL_THEOREM;
+  d->name = take_name(p, "a theorem name");
+  if (d->name == NULL) return 0;
+  p->def = d->name;
+  if (!expect(p, TOK_COLON, "':'")) return 0;
+  d->type = parse_term(p);
+  if (d->type == NULL || !expect(p, TOK_DEFINE, "':='")) return 0;
+  d->body = parse_term(p);
+  return d->body != NULL;
+}
+
+/* axiom name : type, and rule name : type (kernel/rules.lang only). */
+static int parse_signature(Parser *p, Decl *d, DeclKind kind, const char *what) {
+  bump(p);
+  d->kind = kind;
+  d->name = take_name(p, what);
   if (d->name == NULL) return 0;
   p->def = d->name;
   if (!expect(p, TOK_COLON, "':'")) return 0;
@@ -427,7 +446,9 @@ static int parse_decl(Parser *p, Decl *d) {
   d->col = tok->col;
   switch (tok->kind) {
     case TOK_KW_DEF: return parse_def(p, d);
-    case TOK_KW_AXIOM: return parse_axiom(p, d);
+    case TOK_KW_AXIOM: return parse_signature(p, d, DECL_AXIOM, "an axiom name");
+    case TOK_KW_RULE: return parse_signature(p, d, DECL_RULE, "a rule name");
+    case TOK_KW_THEOREM: return parse_theorem(p, d);
     case TOK_KW_FAMILY: return parse_family(p, d);
     case TOK_EOF:
     case TOK_IDENT:

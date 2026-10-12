@@ -23,7 +23,9 @@ typedef enum {
   TOK_KW_FAMILY,
   TOK_KW_AXIOM,
   TOK_KW_TYPE,
-  TOK_KW_SIGMA
+  TOK_KW_SIGMA,
+  TOK_KW_THEOREM,
+  TOK_KW_RULE
 } TokKind;
 
 typedef struct {

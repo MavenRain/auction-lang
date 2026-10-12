@@ -1,0 +1,2 @@
+-- A kernel name is a core name (rule R4).
+def True : Nat := 1

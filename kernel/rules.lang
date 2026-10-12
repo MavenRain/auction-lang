@@ -1,0 +1,6 @@
+-- The proof rules of the kernel (M5). gen/embed.c copies this file into
+-- build/kernel.c, and the checker reads it before the domain files. Only this
+-- file can declare a rule (RULE_DECL_OUTSIDE_KERNEL). A rule has no body: the
+-- checker takes its type as given. Each name here is a core name (rule R4).
+rule True : Prop
+rule trivial : True

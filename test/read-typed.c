@@ -60,6 +60,40 @@ static void refused_read(const char *name, const char *instances, const char *co
   arena_release(&arena);
 }
 
+static void proof_instances(void) {
+  const char *program =
+    "def trueProof : True := trivial\n"
+    "def trueType : Type 0 := True\n"
+    "def liftedProof : trueType := trivial\n"
+    "def proposition : Prop := True\n"
+    "def equalityProof : Eq Nat 1 1 := refl\n"
+    "theorem trueTheorem : True := trueProof\n"
+    "def answer : Nat := 7\n";
+  const char *expected = "answer : Nat = 7\n";
+  Arena arena;
+  Diag diag;
+  DeclList decls;
+  Machine machine;
+  const char *json = NULL;
+  const char *text = NULL;
+  const JsonNode *doc = NULL;
+  size_t json_len = 0;
+  size_t text_len = 0;
+  int ok;
+  arena_init(&arena, (size_t)1 << 30);
+  diag_init(&diag);
+  ok = front_load(&arena, "proof instances", program, strlen(program), &decls, &diag)
+    && check_program(&arena, &decls, &machine, &diag)
+    && json_document(&machine, &json, &json_len)
+    && read_document(&arena, json, json_len, &doc, &diag)
+    && read_typed(&arena, doc, &text, &text_len, &diag)
+    && text_len == strlen(expected) && memcmp(text, expected, text_len) == 0
+    && read_verify(&arena, doc, json, json_len, &machine, &text, &text_len, &diag)
+    && text_len == strlen(expected) && memcmp(text, expected, text_len) == 0;
+  result("proof instances", ok, &diag);
+  arena_release(&arena);
+}
+
 static void large_matrix_read(void) {
   static char expected[90100];
   const char *head = "fullMatrix : Matrix 1 10000 = [[";
@@ -135,6 +169,7 @@ static void json_print_budget(void) {
 }
 
 int main(void) {
+  proof_instances();
   eval_print_budget("measured print fuel", 2, "fun g => 7\n", NULL);
   eval_print_budget("measured print refusal", 1, "", "EVAL_FUEL");
   json_print_budget();

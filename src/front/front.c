@@ -10,6 +10,7 @@ int front_load(Arena *arena, const char *source, const char *text, size_t len, D
   out->items = NULL;
   out->count = 0;
   out->cap = 0;
-  return load_one(arena, "domain/domain.lang", ORIGIN_DOMAIN, (const char *)domain_source, domain_source_len, out, diag)
+  return load_one(arena, "kernel/rules.lang", ORIGIN_KERNEL, (const char *)kernel_source, kernel_source_len, out, diag)
+      && load_one(arena, "domain/domain.lang", ORIGIN_DOMAIN, (const char *)domain_source, domain_source_len, out, diag)
       && load_one(arena, source, ORIGIN_PROGRAM, text, len, out, diag);
 }

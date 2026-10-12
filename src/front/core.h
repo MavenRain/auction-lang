@@ -91,7 +91,9 @@ typedef enum {
   OP_MAT_KRON,
   OP_MAT_ID_KRON_COMP,
   OP_MAT_EQ,
-  OP_PROJ
+  OP_PROJ,
+  OP_PROP, /* the sort of propositions (M5) */
+  OP_RULE  /* a kernel rule constant, neutral; inst is the definition (M5) */
 } Op;
 
 /* The instance of pure, map, bind and filter (formers F5 and F8). */
@@ -223,6 +225,7 @@ typedef struct {
   const Core *body;
   const Value *type;
   const Value *value; /* computed when first used */
+  int is_theorem;     /* a theorem is never an instance (M5) */
 } DefInfo;
 
 /* The checked program and the evaluation state. No global state: every
@@ -260,6 +263,8 @@ const Value *val_make(Machine *m, Op op, uint32_t inst, uint32_t argc, const Val
 const Value *val_arrow(Machine *m, const Value *dom, const Value *cod);
 const Value *val_closure(Machine *m, ValKind kind, const char *name, const Value *dom, const Env *env, const Core *body);
 int val_is(const Value *v, Op op);
+/* A proposition constant from the kernel, including a normalized alias. */
+int val_is_kernel_prop(const Machine *m, const Value *v);
 const Env *env_push(Machine *m, const Env *env, const Value *value);
 const Value *def_value(Machine *m, uint32_t index);
 const Value *eval_core(Machine *m, const Env *env, const Core *core);

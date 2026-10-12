@@ -1,0 +1,9 @@
+-- M5 K1a: Prop, Eq in Prop, the impredicative Pi, theorem, a kernel rule.
+theorem trueHolds : True := trivial
+theorem oneIsOne : Eq Nat 1 1 := refl
+theorem oneIsOneAgain : Eq Nat 1 1 := oneIsOne
+theorem reflAll : (A : Type 0) -> (a : A) -> Eq A a a := fun A => fun a => refl
+-- Cumulativity: a Prop is a Type 0, and Prop is a Type 0.
+def eqType : Type 0 := Eq Nat 1 1
+def propSort : Type 0 := Prop
+def propSortUp : Type 1 := Prop

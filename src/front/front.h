@@ -10,7 +10,12 @@
 extern const unsigned char domain_source[];
 extern const size_t domain_source_len;
 
-/* Parses the embedded domain file, then the program, into one list. */
+/* build/kernel.c holds the bytes of kernel/rules.lang (M5). */
+extern const unsigned char kernel_source[];
+extern const size_t kernel_source_len;
+
+/* Parses the embedded kernel file, the embedded domain file, then the
+   program, into one list. */
 int front_load(Arena *arena, const char *source, const char *text, size_t len, DeclList *out, Diag *diag);
 
 #endif

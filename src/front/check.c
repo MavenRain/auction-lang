@@ -172,7 +172,8 @@ static const Builtin BUILTINS[] = {
   {"matComp", 5, RULE_MAT_COMP, OP_MAT_COMP, OP_MATRIX, 0},
   {"matKron", 6, RULE_MAT_KRON, OP_MAT_KRON, OP_MATRIX, 0},
   {"matIdKronComp", 6, RULE_MAT_ID_KRON_COMP, OP_MAT_ID_KRON_COMP, OP_MATRIX, 0},
-  {"matEq", 2, RULE_MAT_EQ, OP_MAT_EQ, OP_FLAG, 0}
+  {"matEq", 2, RULE_MAT_EQ, OP_MAT_EQ, OP_FLAG, 0},
+  {"Prop", 0, RULE_TYPE0, OP_PROP, OP_NAT, 0}
 };
 
 #define BUILTIN_COUNT ((uint32_t)(sizeof BUILTINS / sizeof BUILTINS[0]))
@@ -330,6 +331,10 @@ static const Value *nat_type(Checker *c) {
   return tyop(c, OP_NAT, 0, NULL, NULL, NULL);
 }
 
+static const Value *prop_type(Checker *c) {
+  return tyop(c, OP_PROP, 0, NULL, NULL, NULL);
+}
+
 static const Value *flag_type(Checker *c) {
   return tyop(c, OP_FLAG, 0, NULL, NULL, NULL);
 }
@@ -381,13 +386,15 @@ static void pop(Checker *c) {
 }
 
 /* 1 when a term of type FOUND can stand where WANT is expected. A universe
-   is in each larger universe. */
+   is in each larger universe, and Prop is in each universe (M5). */
 static int expect(Checker *c, const Value *found, const Value *want) {
   if (found == NULL || want == NULL)
     return 0;
   if (conv_values(c->m, c->level, found, want))
     return 1;
   if (found->kind == VAL_UNIV && want->kind == VAL_UNIV && found->nat <= want->nat)
+    return 1;
+  if (val_is(found, OP_PROP) && want->kind == VAL_UNIV)
     return 1;
   return FAIL(c, "TYPE_MISMATCH", "expected a term of type %s, found a term of type %s", show(c, want), show(c, found));
 }
@@ -441,15 +448,23 @@ static const Core *try_infer(Checker *c, const Term *t, const Value **type) {
   return k;
 }
 
-static const Core *check_type(Checker *c, const Term *t, uint64_t *level) {
+/* T is a type. Its sort is Type k (*LEVEL = k) or Prop (*LEVEL = 0 and
+   *PROP = 1). */
+static const Core *check_sort(Checker *c, const Term *t, uint64_t *level, int *prop) {
   const Value *type = NULL;
   const Core *k = infer(c, t, &type);
   if (k == NULL)
     return NULL;
-  if (type == NULL || type->kind != VAL_UNIV)
+  *prop = val_is(type, OP_PROP);
+  if (!*prop && (type == NULL || type->kind != VAL_UNIV))
     return nul(FAIL(c, "TYPE_MISMATCH", "expected a type, found a term of type %s", show(c, type)));
-  *level = type->nat;
+  *level = *prop ? 0 : type->nat;
   return k;
+}
+
+static const Core *check_type(Checker *c, const Term *t, uint64_t *level) {
+  int prop = 0;
+  return check_sort(c, t, level, &prop);
 }
 
 /* Compares the inferred *TYPE with HINT. */
@@ -568,7 +583,7 @@ static const Core *rule_eq(Call *k) {
   const Value *tv = here(c, t);
   const Core *a = check(c, k->args[1], tv);
   const Core *b = a == NULL ? NULL : check(c, k->args[2], tv);
-  k->type = val_univ(c->m, 0);
+  k->type = prop_type(c);
   return op3(c, OP_EQ, 0, 3, t, a, b);
 }
 
@@ -918,7 +933,7 @@ static const Core *rule_transport(Call *k) {
   if (p == NULL)
     return NULL;
   cod = pt != NULL && pt->kind == VAL_PI ? closure_apply(c->m, pt, val_var(c->m, c->level)) : NULL;
-  if (cod == NULL || cod->kind != VAL_UNIV || !conv_values(c->m, c->level, pt->dom, et->args[0]))
+  if (cod == NULL || (cod->kind != VAL_UNIV && !val_is(cod, OP_PROP)) || !conv_values(c->m, c->level, pt->dom, et->args[0]))
     return nul(FAIL(c, "TYPE_MISMATCH", "transport needs a family of types over %s, found a term of type %s", show(c, et->args[0]), show(c, pt)));
   pv = here(c, p);
   u = check(c, k->args[2], apply_value(c->m, pv, et->args[1]));
@@ -1613,17 +1628,19 @@ static const Core *infer_lam(Checker *c, const Term *t, const Value **type) {
   return core_bind(c, CORE_LAM, t->name, NULL, body);
 }
 
-/* (x : A) -> B and Sigma (x : A) B. */
+/* (x : A) -> B and Sigma (x : A) B. A Pi whose B is a Prop is a Prop
+   (impredicative, as Lean). Otherwise a Prop counts as level 0. */
 static const Core *elab_binder(Checker *c, const Term *t, CoreKind kind, const Value *hint, const Value **type) {
   uint64_t la = 0;
   uint64_t lb = 0;
+  int prop = 0;
   const Core *a = check_type(c, t->left, &la);
   const Core *b;
   if (a == NULL || !push(c, t->name, here(c, a)))
     return NULL;
-  b = check_type(c, t->right, &lb);
+  b = check_sort(c, t->right, &lb, &prop);
   pop(c);
-  *type = val_univ(c->m, la > lb ? la : lb);
+  *type = kind == CORE_PI && prop ? prop_type(c) : val_univ(c->m, la > lb ? la : lb);
   return finish(c, core_bind(c, kind, t->name, a, b), hint, type);
 }
 
@@ -1729,6 +1746,8 @@ static const char *name_owner(const Checker *c, const char *name) {
     return "an instance of the read document";
   case ORIGIN_PROGRAM:
     return "already defined";
+  case ORIGIN_KERNEL:
+    return "a kernel name";
   }
   return "already defined";
 }
@@ -1811,20 +1830,29 @@ static int check_family(Checker *c, const Decl *d) {
   return 1;
 }
 
+/* def, theorem and rule. A theorem states a Prop. A rule has no body: its
+   value is a neutral constant (OP_RULE), so its type is taken as given. */
 static int check_def(Checker *c, const Decl *d) {
   Machine *m = c->m;
   uint64_t level = 0;
-  const Core *t = check_type(c, d->type, &level);
+  int prop = 0;
+  const Core *t = check_sort(c, d->type, &level, &prop);
   const Value *tv = here(c, t);
-  const Core *body = check(c, d->body, tv);
+  const Core *body;
   DefInfo *info = &m->defs[m->def_count];
-  if (body == NULL)
+  if (t == NULL || tv == NULL)
+    return 0;
+  if (d->kind == DECL_THEOREM && !prop)
+    return FAIL(c, "THEOREM_NOT_PROP", "the type of theorem %s is %s, which is not a Prop", d->name, show(c, tv));
+  body = d->kind == DECL_RULE ? NULL : check(c, d->body, tv);
+  if (body == NULL && d->kind != DECL_RULE)
     return 0;
   info->name = d->name;
   info->origin = d->origin;
   info->body = body;
   info->type = tv;
-  info->value = NULL;
+  info->value = d->kind == DECL_RULE ? val_op(m, VAL_STUCK, OP_RULE, m->def_count, 0, NULL, 0) : NULL;
+  info->is_theorem = d->kind == DECL_THEOREM;
   m->def_count++;
   return 1;
 }
@@ -1832,6 +1860,8 @@ static int check_def(Checker *c, const Decl *d) {
 static int check_decl(Checker *c, const Decl *d) {
   if (d->kind == DECL_FAMILY && d->origin == ORIGIN_PROGRAM)
     return FAIL(c, "REFUSE_DATA", "a program cannot declare a family (rule R1); only domain/domain.lang can");
+  if (d->kind == DECL_RULE && d->origin != ORIGIN_KERNEL)
+    return FAIL(c, "RULE_DECL_OUTSIDE_KERNEL", "only kernel/rules.lang can declare a rule; a program states a theorem and proves it");
   if (d->kind == DECL_AXIOM)
     return FAIL(c, "REFUSE_AXIOM", "an axiom has no proof (rule R2)");
   if (d->is_rec)
@@ -1866,6 +1896,7 @@ static int bind_read(Checker *c, const ReadDef *r) {
     return 0;
   info->name = r->name;
   info->origin = ORIGIN_READ;
+  info->is_theorem = 0;
   info->body = NULL;
   info->type = r->type;
   info->value = r->value;

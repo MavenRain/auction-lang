@@ -291,6 +291,8 @@ static int op_json(Out *o, const Value *type, const Value *v) {
   case OP_MAT_ID_KRON_COMP:
   case OP_MAT_EQ:
   case OP_PROJ:
+  case OP_PROP:
+  case OP_RULE:
     return internal(o, "a type that is not a type former");
   }
   return internal(o, "an unknown operation");
@@ -343,15 +345,15 @@ static int value_json(Out *o, const Value *type, const Value *v) {
 }
 
 /* Functions, types, families and proofs are not instances. */
-static int is_instance(const DefInfo *d) {
-  if (d->origin != ORIGIN_PROGRAM)
+static int is_instance(const Machine *m, const DefInfo *d) {
+  if (d->origin != ORIGIN_PROGRAM || d->is_theorem || val_is_kernel_prop(m, d->type))
     return 0;
   switch (d->type->kind) {
   case VAL_PI:
   case VAL_UNIV:
     return 0;
   case VAL_OP:
-    return !val_is(d->type, OP_EQ);
+    return !val_is(d->type, OP_EQ) && !val_is(d->type, OP_PROP);
   case VAL_SIGMA:
   case VAL_NAT:
   case VAL_RAT:
@@ -410,7 +412,7 @@ int json_document(Machine *m, const char **text, size_t *len) {
     return diag_fail(m->diag, "OOM", NULL, "the arena limit is reached");
   ok = put_text(&o, "{") && put_string(&o, json_lang_name) && put_text(&o, ":1,\"instances\":[");
   for (i = 0; ok && i < m->def_count; i++) {
-    if (is_instance(&m->defs[i])) {
+    if (is_instance(m, &m->defs[i])) {
       ok = instance_json(&o, i, type_text, first);
       first = 0;
     }

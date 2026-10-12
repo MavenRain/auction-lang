@@ -1,0 +1,5 @@
+theorem trueHolds ok
+theorem oneIsOne ok
+theorem oneIsOneAgain ok
+theorem reflAll ok
+ok

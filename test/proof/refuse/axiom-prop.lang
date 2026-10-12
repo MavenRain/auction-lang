@@ -1,0 +1,2 @@
+-- A program cannot assume a proposition (rule R2).
+axiom ax : Eq Nat 1 2
