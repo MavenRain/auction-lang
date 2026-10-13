@@ -15,3 +15,7 @@ theorem k1NotElim : (P : Prop) -> P -> Not P -> False := fun P => fun p => fun n
 theorem k1Iff : (P : Prop) -> (Q : Prop) -> (P -> Q) -> (Q -> P) -> Iff P Q := fun P => fun Q => fun f => fun g => andIntro (P -> Q) (Q -> P) f g
 theorem k1Ne : (A : Type 0) -> (a : A) -> (b : A) -> Ne A a b -> Not (Eq A a b) := fun A => fun a => fun b => fun h => h
 theorem k1Transport : (a : Nat) -> (b : Nat) -> Eq Nat a b -> Eq Nat a a -> Eq Nat a b := fun a => fun b => fun e => fun r => transport (fun (x : Nat) => Eq Nat a x) e r
+-- M6 s1 J: a def (not a theorem) of a kernel Prop type is not an instance, so k1.json stays empty.
+def k1AndDef : And True (Eq Nat 1 1) := andIntro True (Eq Nat 1 1) trivial refl
+def k1OrDef : Or True False := orLeft True False trivial
+def k1ExistsDef : Exists Nat (fun (n : Nat) => Eq Nat n 0) := exIntro Nat (fun (n : Nat) => Eq Nat n 0) 0 refl

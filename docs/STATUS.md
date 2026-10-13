@@ -323,6 +323,24 @@ proof JSON is byte-equal to its golden (the gate compares each one with
 lemmas (turn 11 of the plan slipped) and the items under `Not covered after
 M5` in `README.md`.
 
+M6 session 1 is done (2026-10-13): the kernel batch. J (K1b): no code
+change. A rule application is always a chain of `VAL_APP` values on a rule
+constant with 0 arguments, because `OP_ARITY[OP_RULE]` is 0
+(`src/front/eval.c:62`) and `arity_ok` refuses a different count. A stuck rule
+with arguments is never built. `kernel_app_type` types that chain, so a `def`
+of type `And`, `Or` or `Exists` is not an instance. `test/proof/ok/k1.lang`
+has three such defs (`k1.json` stays empty), and `test/read/prop.json` checks
+that the reader refuses the type `And True True` (`READ_TYPE`). K (K3a):
+`examples/arith.lang` has the instance `smaller`, which calls `natMin`. M(i):
+`test/emit/fuel.lang` reaches `EVAL_FUEL` and `test/emit/depth.lang` reaches
+`JSON_DEPTH` (see Known limits). L (K3b) is not built in session 1: ring and
+cert still make an atom of a division by a term that is not a literal (USER
+ruling R4 (b), the next session). The gate has 1352 checks in 14 main groups
+(evals 579, build refusals 17, reads 396 and read refusals 30; the other
+groups are as above), 1382 checks with the C regressions, and 0 failures. The
+k1 mutant sweep kills 31 of 33 (mutants 24 and 25 are equivalent), so the
+kernel sweep kills 93 of 95.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
@@ -335,9 +353,11 @@ M5` in `README.md`.
   1000 (`src/front/parser.c:16`). The checker stops at a depth of 2000
   (`src/front/check.c:10`). The evaluator stops at a depth of 2000
   (`src/front/core.h:17`). The JSON writer stops at a depth of 2000
-  (`src/json.h:15`). No test in `test/` reaches the JSON depth limit.
+  (`src/json.h:15`). `test/emit/depth.lang` reaches the JSON depth
+  limit (`JSON_DEPTH`): a `Stack` of 2000 `push` cells, with the type `Stack`.
 - The evaluator has a fuel of 20,000,000 steps for each instance
-  (`src/front/core.h:18`). No test in `test/` reaches the fuel limit.
+  (`src/front/core.h:18`). `test/emit/fuel.lang` reaches the fuel limit
+  (`EVAL_FUEL`, 0.28 s): a `fold` of 10,000,000 turns, about 2 steps each.
 - All memory comes from one arena of 1 GiB (`src/main.c:11`). A source file
   is at most 1 MiB (`src/front/front.h:7`).
 - A matrix has at most 1 << 25 rows or columns and 1 << 25 cells

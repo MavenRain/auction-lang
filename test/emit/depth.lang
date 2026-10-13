@@ -1,0 +1,2 @@
+-- M6 s1 M(i): each push is one JSON level and the type stays Stack, so 2000 pushes reach JSON_DEPTH_LIMIT (2000).
+def deep : Stack := fold (fun (s : Stack) => push 0 s) bottom 2000

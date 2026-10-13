@@ -1,4 +1,4 @@
--- Arith: natDiv, natMod, natMax, natLt, flagAnd and flagNot.
+-- Arith: natDiv, natMod, natMax, natMin, natLt, flagAnd and flagNot.
 def quot : (a b : Nat) -> Nat := fun (a b : Nat) => natDiv a b
 def rem : (a b : Nat) -> Nat := fun (a b : Nat) => natMod a b
 def larger : (a b : Nat) -> Nat := fun (a b : Nat) => natMax a b
@@ -13,3 +13,5 @@ def tie : Nat := natMax 4 4
 def under : Flag := natLt 3 4
 def guarded : Flag := flagAnd flagNo (natEq (natDiv 1 0) 0)
 def notYes : Flag := flagNot flagYes
+-- natMin is a kernel definition (K3a): the instance calls it.
+def smaller : Nat := natMin 9 4

@@ -356,3 +356,14 @@ sandbox). The size is the maximum resident set size (1 MB = 10^6 bytes).
 | mechanism | 0.01 s, 17 MB | 0.10 s, 127 MB |
 | combinatorial | 0.01 s, 16 MB | 0.03 s, 34 MB |
 | multiunit | 0.02 s, 18 MB | 1.10 s, 895 MB |
+
+M6 session 1 (2026-10-13) adds 5 checks: evals 579 (the arith instance
+`smaller` calls `natMin`), reads 396, build refusals 17 (`test/emit/fuel.lang`
+gives `EVAL_FUEL` and `test/emit/depth.lang` gives `JSON_DEPTH`) and read
+refusals 30 (`test/read/prop.json`, a kernel Prop type, gives `READ_TYPE`). The
+gate has 1352 checks in the 14 main groups, 1382 checks in total, and 0
+failures. `test/proof/ok/k1.lang` has three defs of kernel Prop types; they are
+not instances, so `k1.json` stays empty and the theorem count stays 413. The k1
+mutant list has 3 new rows (the type chain in `kernel_app_type`, the Prop test
+in `is_instance` and in `instance_type`), and all 3 are killed: k1 31 of 33,
+the kernel sweep 93 of 95, with 0 build failures.

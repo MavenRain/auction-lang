@@ -27,3 +27,4 @@ lowest.json READ_VALUE
 row.json READ_VALUE
 rows.json READ_VALUE
 sides.json READ_VALUE
+prop.json READ_TYPE

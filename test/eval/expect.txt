@@ -379,6 +379,7 @@ arith odd => 1
 arith tie => 4
 arith under => 1
 arith notYes => 0
+arith smaller => 4
 bayesnash pipeVick1 => 1
 bayesnash pipeRes1 => 1
 bayesnash pipeRes1b => 1

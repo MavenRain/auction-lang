@@ -13,3 +13,5 @@ auction-overflow.lang TYPE_MISMATCH
 auction3-size.lang EVAL_MATRIX_SIZE
 opengame-size.lang EVAL_MATRIX_SIZE
 opengame-overflow.lang TYPE_MISMATCH
+fuel.lang EVAL_FUEL
+depth.lang JSON_DEPTH
