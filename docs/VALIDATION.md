@@ -388,3 +388,17 @@ theorem checks. `langc check` gives exit 0, `langc build` gives
 14 main groups (proofs 13, proof refusals 98), 1386 checks in total, and 0
 failures. No kernel rule changes, so there is no mutant run, and the kernel
 sweep stays at 99 of 101.
+
+M6 session 3 (2026-10-13) adds the proof file `test/proof/ok/l8.lang` for
+the explicit 2-bidder allocation of Ch. 6.4. It has 47 theorem checks, so
+the 14 proof files have 487 theorem checks. `langc check` gives exit 0,
+`langc build` gives one instance (`l8Inst : Flag = true`, the `decide`
+check on the 4-type instance of `examples/mechanism.lang`), and
+`langc verify` gives exit 0. The gate compares the check output with
+`l8.out` and the proof JSON with `l8.json`. Three negative probes on
+temporary copies are refused: the tie value 1/3 (`RULE_RING`), the
+revenue 13/7 (`RULE_DECIDE`) and the feasibility bound 1/2 (`RULE_CERT`).
+The gate has 1357 checks in the 14 main groups (proofs 14, proof refusals
+98), 1387 checks in total, and 0 failures. No kernel rule changes and
+`src/front` does not change, so there is no mutant run, and the kernel
+sweep stays at 99 of 101.

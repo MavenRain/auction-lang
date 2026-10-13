@@ -749,7 +749,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c) and Ch 5 and App C (session 2); 13 proof files with 440 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2) and the explicit 2-bidder allocation of Ch 6.4 (session 3); 14 proof files with 487 theorem checks |
 
 M0 has these slices:
 
@@ -872,6 +872,18 @@ checks for Ch 5 and App C, with no new kernel rule. The 13 proof files hold
 proof refusals, and 1386 checks in total, with 0 failures. App D and the
 Harris inequality for 2 variables are not built.
 
+M6 session 3 (2026-10-13) builds the explicit 2-bidder allocation of Ch 6.4:
+`test/proof/ok/l8.lang` has 47 theorem checks, with no new kernel rule. The
+higher nonnegative virtual value wins, and a tie splits 1/2. If the discrete
+virtual value is nondecreasing on the grid (regularity, a hypothesis), the
+interim allocation of bidder 1 is nondecreasing, and
+`virtual_value_auction_attains_bound` gives IC, IR and the expected virtual
+surplus as the revenue. The proofs compare virtual values only through
+`ratLe` flags, so no `Ne` fact is necessary. The 14 proof files hold 487
+theorem checks. The gate has 1357 checks in 14 main groups, including 98
+proof refusals, and 1387 checks in total, with 0 failures. Ironing is not
+built.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -993,7 +1005,7 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l7.lang` use the rules in this form. Two
+`test/proof/ok/l1.lang` to `l8.lang` use the rules in this form. Two
 usage facts: `ring` treats a term that `natInd` opens as an atom, and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).

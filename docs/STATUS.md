@@ -374,6 +374,30 @@ across a `ratDiv` by a sum hits the R8 (a) limit, see Known limits). The 13
 proof files have 440 theorem checks. The gate has 1356 checks in 14 main
 groups, 1386 checks with the C regressions, and 0 failures.
 
+M6 session 3 is done (2026-10-13): the explicit 2-bidder allocation of
+Ch. 6.4 (slice F). `test/proof/ok/l8.lang` has 47 theorem checks: 34 copied
+helpers (the closure of `virtual_value_auction_attains_bound` from
+`l4.lang`, and two `l7.lang` helpers) and 13 new theorems. Its new defs are
+`l8H` and `l8W` (the higher nonnegative virtual value wins, and a tie splits
+1/2), `l8Q` (the interim allocation of bidder 1), `l8Phi` (the discrete
+virtual value) and the instance `l8Inst`. The book theorems are
+`two_bidder_allocation_feasible` (the two shares sum to at most 1),
+`two_bidder_tie_split`, `two_bidder_interim_monotone` (a nondecreasing
+virtual value gives a nondecreasing interim allocation) and
+`two_bidder_auction_attains_bound` (regularity, a hypothesis on the
+discrete virtual value, gives IC, IR and the expected virtual surplus as
+the revenue). `l8InstanceCheck` checks the 4-type instance of
+`examples/mechanism.lang` by `decide`: `l8Phi` is `mcPhi`, the instance is
+regular, `l8W` is `mcOptq`, `l8Q` is `mcOptQ`, and the revenue is 13/8.
+The proofs compare virtual values only through `ratLe` flags, so there is
+no division and no `Ne` fact. There is no new kernel rule, and
+`src/front` does not change, so there is no mutant run. Not built: a Prop
+instance of the main theorem at 4 types (there is no Fin-from-Nat
+constructor, so the regularity Prop for an open type needs a Nat case
+split; the `decide` check pins the instance), and ironing. The 14 proof
+files have 487 theorem checks. The gate has 1357 checks in 14 main
+groups, 1387 checks with the C regressions, and 0 failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
