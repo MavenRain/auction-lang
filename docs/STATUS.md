@@ -260,6 +260,35 @@ two-object instances, guarding against counting the same goods twice.
 Current state: 10 proof files, 95 proof refusals, 1345 gate tests (the
 14 gate rows).
 
+M5 slice L5 is done (2026-10-12): the Ch 4, Ch 2 and App A ports, as
+proof terms in test/proof/ok/l5.lang (65 theorems, 28 defs; 14
+theorems are copies from l1.lang, 8 from l1b.lang and 12 from l3.lang;
+the examples/commonvalue.lang defs are copies by line number). Ch 4:
+winners_curse_grid, on every signal grid the conditional mean of a
+nondecreasing value given a win (the rival signal below m) is at most
+the unconditional mean, stated cross-multiplied for nonnegative
+weights (l5LowerLe and l5UpperGe bound the two partial sums by the
+value at m, two sumRat_split transports and one cert close it);
+winners_curse_uniform (s + s/2 < s + 1/2 for s < 1, all Rat s);
+winners_curse_uniform_grid, winners_curse_discrete and
+wallet_naive_bid_loses_grid (decide over the commonvalue witnesses).
+Ch 2: wallet_first_price_best_reply and wallet_second_price_best_reply
+(the bids z and 2z are best replies for all Rat signals, a square
+slack), the grid instances and wallet_revenue_equivalence. App A:
+sumRat_mul_sumRat (the product rule), expect_linear, expect_const,
+expect_indep_mul, total_expectation (field with the marginal as the
+divisor, the cvMeanV shape), max_cdf_two (P(max < k) = P(X < k)^2 on
+any grid by the indicator product l5IndMax and l3SumBelow),
+uniform_max_two_grid and uniform_min_two_grid (the exact sums
+(4K^3 - 3K^2 - K)/6 and (2K^3 - 3K^2 + K)/6 of the max and the min of
+two uniform draws on a grid of size k, by natInd on the row
+recurrences) and their means (2/3 and 1/3 in the limit, N/(N+1) and
+(N-1)/(N+1) for N = 2). No kernel change, no new refusal, no mutants.
+Not in this slice: the NatLe m n form of the grid curse, the
+continuous naive bid loss, total expectation over a flat joint, order
+statistics for N > 2 and the overflow items of L4. Current state: 11
+proof files, 95 proof refusals, 1346 gate tests (the 14 gate rows).
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
