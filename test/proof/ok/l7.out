@@ -1,0 +1,25 @@
+theorem sumRat_nonneg ok
+theorem sumRat_const_zero ok
+theorem sumRat_congr ok
+theorem sumRat_add ok
+theorem sumRat_const_mul ok
+theorem sumRat_le ok
+theorem sumRat_swap ok
+theorem l1FlagRefl ok
+theorem l1FlagYesNeNo ok
+theorem sumRat_mul_sumRat ok
+theorem l7AffiliatedOfFlag ok
+theorem cor_prior_affiliated ok
+theorem anti_prior_not_affiliated ok
+theorem independent_prior_affiliated ok
+theorem l7LeOfEq ok
+theorem l7Half ok
+theorem l7SumSplit ok
+theorem l7SumSymLe ok
+theorem l7OrdPt ok
+theorem chebyshev_sum_inequality ok
+theorem affiliated_cond_expectation_increasing ok
+theorem l7IndNonneg ok
+theorem l7UpMono ok
+theorem mlrp_implies_fosd ok
+ok

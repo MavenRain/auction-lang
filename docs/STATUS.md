@@ -356,6 +356,24 @@ e1cbd8e. The gate has 1355 checks in 14 main groups, 1385 checks with the
 C regressions, and 0 failures. The k3b mutant sweep kills 21 of 21 and
 the k1 sweep kills 31 of 33, so the kernel sweep kills 99 of 101.
 
+M6 session 2 is done (2026-10-13): Ch. 5 and App. C (slice D).
+`test/proof/ok/l7.lang` has 24 theorem checks: 10 copied helpers and 14 new
+theorems. Its new defs are `IsMonoFin`, `IsAffiliated2`, `l7AffAt` and
+`l7AffFlag`. `IsAffiliated2` is affiliation of two signals on a finite grid
+as a Prop. `l7AffFlag` is the same condition as a Flag, and the bridge
+theorem `l7AffiliatedOfFlag` lets `decide` check a chosen prior. The
+correlated prior of `affiliated.lang` is affiliated, the anti-correlated
+prior is not, and every product prior is affiliated. The finite lemmas are
+the Chebyshev sum inequality (the Harris inequality on a chain), the
+increasing conditional expectation, and MLRP implies FOSD of the
+conditionals. The last two are in cross-multiplied form. There is no new
+kernel rule, and `src/front/nf.c` and `src/front/check.c` do not change, so
+there is no mutant run. Not built: the Harris inequality for 2 variables,
+App. D, and the division form of the conditional expectation (a `cert`
+across a `ratDiv` by a sum hits the R8 (a) limit, see Known limits). The 13
+proof files have 440 theorem checks. The gate has 1356 checks in 14 main
+groups, 1386 checks with the C regressions, and 0 failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

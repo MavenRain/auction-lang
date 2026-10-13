@@ -378,3 +378,13 @@ all 21 are killed. The k1 sweep kills 31 of 33 (mutants 24 and 25 are
 equivalent), so the kernel sweep kills 99 of 101, with 0 build failures.
 Every proof `.out` and `.json` file is byte-equal to e1cbd8e, except
 `k3b.out` (3 new lines).
+
+M6 session 2 (2026-10-13) adds the proof file `test/proof/ok/l7.lang` for
+Ch. 5 and App. C. It has 24 theorem checks, so the 13 proof files have 440
+theorem checks. `langc check` gives exit 0, `langc build` gives
+`{"auction-lang":1,"instances":[]}` because the file has no instance, and
+`langc verify` gives exit 0. The gate compares the check output with
+`l7.out` and the proof JSON with `l7.json`. The gate has 1356 checks in the
+14 main groups (proofs 13, proof refusals 98), 1386 checks in total, and 0
+failures. No kernel rule changes, so there is no mutant run, and the kernel
+sweep stays at 99 of 101.

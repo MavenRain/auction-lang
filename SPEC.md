@@ -749,6 +749,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c) and Ch 5 and App C (session 2); 13 proof files with 440 theorem checks |
 
 M0 has these slices:
 
@@ -864,6 +865,12 @@ in total, with 0 failures. The kernel mutant sweep kills 90 of 92 mutants
 goldens. `README.md` `## Book coverage` shows which book results hold for all
 sizes, and section 11 has the final rules. Not built in M5: the Ch 5 and App C
 affiliation definitions and finite lemmas.
+
+M6 session 2 (2026-10-13) builds them: `test/proof/ok/l7.lang` has 24 theorem
+checks for Ch 5 and App C, with no new kernel rule. The 13 proof files hold
+440 theorem checks. The gate has 1356 checks in 14 main groups, including 98
+proof refusals, and 1386 checks in total, with 0 failures. App D and the
+Harris inequality for 2 variables are not built.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
@@ -986,7 +993,7 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l6.lang` use the rules in this form. Two
+`test/proof/ok/l1.lang` to `l7.lang` use the rules in this form. Two
 usage facts: `ring` treats a term that `natInd` opens as an atom, and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).
