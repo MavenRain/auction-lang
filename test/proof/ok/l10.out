@@ -1,0 +1,13 @@
+theorem l1FlagYesNeNo ok
+theorem l9Tri ok
+theorem l10LeOfNotLt ok
+theorem l10SCases ok
+theorem l10Half ok
+theorem l10D1 ok
+theorem l10DHalf ok
+theorem l10D0 ok
+theorem l10SPDom ok
+theorem sequential_round2_truthful_dominant ok
+theorem l10AgreeCheck ok
+theorem sequential_nonmonotone_not_equilibrium ok
+ok

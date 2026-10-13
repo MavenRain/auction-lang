@@ -749,7 +749,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3) and the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4); 15 proof files with 509 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4) and the sequential game form of Ch 7 (session 5); 16 proof files with 521 theorem checks |
 
 M0 has these slices:
 
@@ -897,6 +897,22 @@ literal. The 15 proof files hold 509 theorem checks. The gate has 1358
 checks in 14 main groups, including 98 proof refusals, and 1388 checks in
 total, with 0 failures. The form with more than 2 values is not built.
 
+M6 session 5 (2026-10-13) builds the sequential game form of ch. 7 with
+finite witnesses: `test/proof/ok/l10.lang` has 12 theorem checks, with no
+new kernel rule. Two identical objects are sold in 2 rounds of second price
+to 3 unit demand bidders with values on the Fin 4 grid of
+`examples/combinatorial.lang`, and a round 1 winner leaves. A round 2 bid is
+a function of the own value and the round 1 outcome (a `Flag`: won or lost).
+`sequential_round2_truthful_dominant` proves that a truthful round 2 bid is
+dominant for every history and all Rat values, round 1 prices, rival bids
+and round 2 strategies; a tie splits 1/2. `decide` checks that the grid cell
+agrees with `muSeqCellRef` of `examples/multiunit.lang` on 4096 cells, and
+that the round 1 profile 0, 1, 1/4, 5/4 for the values 0 to 3 is not
+monotone and is not an equilibrium against the bids k/4 for k < 13. The 16
+proof files hold 521 theorem checks. The gate has 1359 checks in 14 main
+groups, including 98 proof refusals, and 1389 checks in total, with 0
+failures. The continuous results of 7.2 are not built.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -1018,7 +1034,7 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l9.lang` use the rules in this form. Two
+`test/proof/ok/l1.lang` to `l10.lang` use the rules in this form. Two
 usage facts: `ring` treats a term that `natInd` opens as an atom, and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).

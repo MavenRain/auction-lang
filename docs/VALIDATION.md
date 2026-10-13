@@ -418,3 +418,19 @@ place of the v = 0 payoff in `l9GridAgree` (`RULE_DECIDE`). The gate has
 checks in total, and 0 failures. No kernel rule changes and `src/front`
 does not change, so there is no mutant run, and the kernel sweep stays at
 99 of 101.
+
+M6 session 5 (2026-10-13) adds the proof file `test/proof/ok/l10.lang` for
+ch. 7, the sequential game form with finite witnesses. It has 12 theorem
+checks, so the 16 proof files have 521 theorem checks. `langc check` gives
+exit 0, `langc build` gives 2 instances (the `decide` flags `l10Agree` and
+`l10NotMonoNotEq`, both `true`), and `langc verify` gives exit 0. The gate
+compares the check output with `l10.out` and the proof JSON with `l10.json`.
+Three negative probes on temporary copies are refused: the tie value 1/3 in
+the copied `l9S` (`TYPE_MISMATCH` in `l10SCases`), the monotone profile 0,
+1/4, 1, 5/4 in `l10B` (`RULE_DECIDE` in
+`sequential_nonmonotone_not_equilibrium`) and `muMax z x` in place of `muMed
+z x y` in `muSeqCellRef` (`RULE_DECIDE` in `l10AgreeCheck`). The gate has
+1359 checks in the 14 main groups (proofs 16, proof refusals 98), 1389
+checks in total, and 0 failures. No kernel rule changes and `src/front` does
+not change, so there is no mutant run, and the kernel sweep stays at 99 of
+101.

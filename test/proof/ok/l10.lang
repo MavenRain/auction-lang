@@ -1,0 +1,61 @@
+-- M6 s5 (M5 slice G part 1): M&M ch. 7, the sequential game form, finite
+-- witnesses. Two identical objects are sold in 2 rounds of second price to 3
+-- unit demand bidders, and a round 1 winner leaves. A round 2 bid is a
+-- function of the own value and the round 1 outcome h (a Flag: won or lost).
+-- For all Rat values, histories, round 1 prices, rival bids and round 2
+-- strategies, the truthful round 2 bid is dominant. A decide check ties the
+-- grid cell to examples/multiunit.lang, and shows that one round 1 profile
+-- that is not monotone in the value is not an equilibrium.
+-- Copies from test/proof/ok/l9.lang lines 9, 16 and 31, examples/combinatorial.lang line 4 and examples/multiunit.lang lines 7 to 9, 68, 69 and 93 (a file cannot import another file).
+theorem l1FlagYesNeNo : Eq Flag flagYes flagNo -> False := fun e => natLtIrrefl 0 (transport (fun (f : Flag) => NatLt 0 (flagIf f 1 0)) e (decide (natLt 0 1)))
+def l9S : (r z : Rat) -> Rat := fun (r z : Rat) => flagIf (ratLt r z) 1/1 (flagIf (ratLe r z) 1/2 0/1)
+theorem l9Tri : (a : Rat) -> (b : Rat) -> Or (RatLt a b) (RatLe b a) := fun a => fun b => flagCases (fun (d : Flag) => Eq Flag (ratLe b a) d -> Or (RatLt a b) (RatLe b a)) (fun e => orRight (RatLt a b) (RatLe b a) e) (fun e => orLeft (RatLt a b) (RatLe b a) (orElim (RatLe b a) (RatLe a b) (RatLt a b) (ratLeTotal b a) (fun h => absurd (l1FlagYesNeNo (trans (symm h) e)) (RatLt a b)) (fun h => ratLtOfLeNe a b h (fun eab => l1FlagYesNeNo (trans (symm (transport (fun (t : Rat) => RatLe t a) eab (ratLeRefl a))) e))))) (ratLe b a) refl
+def cbV : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratOfNat (finVal t)
+def muMin : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) x y
+def muMax : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) y x
+def muInd : (c : Flag) -> Rat := fun (c : Flag) => flagIf c 1/1 0/1
+def muTop : (x y1 y2 : Rat) -> Rat := fun (x y1 y2 : Rat) => flagIf (flagAnd (ratLe y1 x) (ratLe y2 x)) (ratDiv 1/1 (ratAdd 1/1 (ratAdd (muInd (ratEq x y1)) (muInd (ratEq x y2))))) 0/1
+def muMed : (x y z : Rat) -> Rat := fun (x y z : Rat) => muMax (muMin x y) (muMin (muMax x y) z)
+def muSeqCellRef : (v u w z x y : Rat) -> Rat := fun (v u w z x y : Rat) => ratAdd (ratMul (muTop z x y) (ratSub v (muMed z x y))) (ratAdd (ratMul (muTop x z y) (muMax 0/1 (ratSub v w))) (ratMul (muTop y z x) (muMax 0/1 (ratSub v u))))
+-- The payoff for the history h: won (flagYes) pays the round 1 price p1 and
+-- leaves; lost (flagNo) bids z in round 2 against the rival bid c and pays c
+-- when it wins (a tie splits 1/2, as l9S).
+def l10Pay : (v : Rat) -> (h : Flag) -> (p1 z c : Rat) -> Rat := fun (v : Rat) (h : Flag) (p1 z c : Rat) => flagIf h (ratSub v p1) (ratMul (l9S c z) (ratSub v c))
+theorem l10LeOfNotLt : (r : Rat) -> (z : Rat) -> Eq Flag (ratLt r z) flagNo -> RatLe z r := fun r => fun z => fun e => orElim (RatLt r z) (RatLe z r) (RatLe z r) (l9Tri r z) (fun h => absurd (l1FlagYesNeNo (trans (symm h) e)) (RatLe z r)) (fun h => h)
+-- The 3 values of a share with their facts: l9S r z is 1 when r < z, 1/2
+-- when r <= z and z <= r, and 0 when z <= r.
+theorem l10SCases : (P : Rat -> Prop) -> (r : Rat) -> (z : Rat) -> (RatLt r z -> P 1/1) -> (RatLe r z -> RatLe z r -> P 1/2) -> (RatLe z r -> P 0/1) -> P (l9S r z) := fun P => fun r => fun z => fun h1 => fun hh => fun h0 => flagCases (fun (d : Flag) => Eq Flag (ratLt r z) d -> P (flagIf d 1/1 (flagIf (ratLe r z) 1/2 0/1))) (fun e => h1 e) (fun e => flagCases (fun (d2 : Flag) => Eq Flag (ratLe r z) d2 -> P (flagIf flagNo 1/1 (flagIf d2 1/2 0/1))) (fun e2 => hh e2 (l10LeOfNotLt r z e)) (fun e2 => h0 (l10LeOfNotLt r z e)) (ratLe r z) refl) (ratLt r z) refl
+-- A scaled fact: x <= y gives 0 <= (y - x) 1/2.
+theorem l10Half : (x : Rat) -> (y : Rat) -> RatLe x y -> RatLe 0/1 (ratMul 1/2 (ratSub y x)) := fun x => fun y => fun h => ratMulNonneg 1/2 (ratSub y x) (decide (ratLe 0/1 1/2)) (cert 0/1 (ratSub y x) (RatLe x y) h)
+-- For each own share s in {1, 1/2, 0}: s (v - c) <= l9S c v (v - c).
+theorem l10D1 : (v : Rat) -> (c : Rat) -> RatLe (ratMul 1/1 (ratSub v c)) (ratMul (l9S c v) (ratSub v c)) := fun v => fun c => l10SCases (fun (t : Rat) => RatLe (ratMul 1/1 (ratSub v c)) (ratMul t (ratSub v c))) c v (fun h => ratLeRefl (ratMul 1/1 (ratSub v c))) (fun h1 => fun h2 => cert (ratMul 1/1 (ratSub v c)) (ratMul 1/2 (ratSub v c)) (RatLe 0/1 (ratMul 1/2 (ratSub c v))) (l10Half v c h2)) (fun h => cert (ratMul 1/1 (ratSub v c)) (ratMul 0/1 (ratSub v c)) (RatLe v c) h)
+theorem l10DHalf : (v : Rat) -> (c : Rat) -> RatLe (ratMul 1/2 (ratSub v c)) (ratMul (l9S c v) (ratSub v c)) := fun v => fun c => l10SCases (fun (t : Rat) => RatLe (ratMul 1/2 (ratSub v c)) (ratMul t (ratSub v c))) c v (fun h => cert (ratMul 1/2 (ratSub v c)) (ratMul 1/1 (ratSub v c)) (RatLe 0/1 (ratMul 1/2 (ratSub v c))) (l10Half c v (cert c v (RatLt c v) h))) (fun h1 => fun h2 => ratLeRefl (ratMul 1/2 (ratSub v c))) (fun h => cert (ratMul 1/2 (ratSub v c)) (ratMul 0/1 (ratSub v c)) (RatLe 0/1 (ratMul 1/2 (ratSub c v))) (l10Half v c h))
+theorem l10D0 : (v : Rat) -> (c : Rat) -> RatLe (ratMul 0/1 (ratSub v c)) (ratMul (l9S c v) (ratSub v c)) := fun v => fun c => l10SCases (fun (t : Rat) => RatLe (ratMul 0/1 (ratSub v c)) (ratMul t (ratSub v c))) c v (fun h => cert (ratMul 0/1 (ratSub v c)) (ratMul 1/1 (ratSub v c)) (RatLt c v) h) (fun h1 => fun h2 => cert (ratMul 0/1 (ratSub v c)) (ratMul 1/2 (ratSub v c)) (RatLe 0/1 (ratMul 1/2 (ratSub v c))) (l10Half c v h1)) (fun h => ratLeRefl (ratMul 0/1 (ratSub v c)))
+-- Second price with a split tie: the bid v is at least as good as any bid z.
+theorem l10SPDom : (v : Rat) -> (z : Rat) -> (c : Rat) -> RatLe (ratMul (l9S c z) (ratSub v c)) (ratMul (l9S c v) (ratSub v c)) := fun v => fun z => fun c => l10SCases (fun (s : Rat) => RatLe (ratMul s (ratSub v c)) (ratMul (l9S c v) (ratSub v c))) c z (fun h => l10D1 v c) (fun h1 => fun h2 => l10DHalf v c) (fun h => l10D0 v c)
+-- M&M ch. 7, sequential sale: the truthful round 2 bid is dominant for every
+-- history h, all Rat values v, round 1 prices p1 and rival bids c, and every
+-- round 2 strategy b2 (a function of the own value and the history).
+theorem sequential_round2_truthful_dominant : (b2 : (v : Rat) -> (h : Flag) -> Rat) -> (v : Rat) -> (h : Flag) -> (p1 : Rat) -> (c : Rat) -> RatLe (l10Pay v h p1 (b2 v h) c) (l10Pay v h p1 v c) := fun b2 => fun v => fun h => fun p1 => fun c => flagCases (fun (d : Flag) => RatLe (l10Pay v d p1 (b2 v d) c) (l10Pay v d p1 v c)) (ratLeRefl (ratSub v p1)) (l10SPDom v (b2 v flagNo) c) h
+-- The grid cell: own value v and round 1 bid z, rival values u and w with
+-- round 1 bids x and y, and the round 2 strategy b2 for all bidders. The
+-- round 1 winner pays the middle bid; when a rival wins, the own round 2
+-- rival is the other one.
+def l10Cell : (b2 : (v : Rat) -> (h : Flag) -> Rat) -> (v u w z x y : Rat) -> Rat := fun (b2 : (v : Rat) -> (h : Flag) -> Rat) (v u w z x y : Rat) => ratAdd (ratMul (muTop z x y) (l10Pay v flagYes (muMed z x y) (b2 v flagNo) (b2 w flagNo))) (ratAdd (ratMul (muTop x z y) (l10Pay v flagNo 0/1 (b2 v flagNo) (b2 w flagNo))) (ratMul (muTop y z x) (l10Pay v flagNo 0/1 (b2 v flagNo) (b2 u flagNo))))
+def l10T2 : (v : Rat) -> (h : Flag) -> Rat := fun (v : Rat) (h : Flag) => v
+def l10Bid : (k : Fin 13) -> Rat := fun (k : Fin 13) => ratMul 1/4 (ratOfNat (finVal k))
+-- Interim utility of the value t with the round 1 bid z when the rivals use
+-- b1 in round 1; the values are i.i.d. on cbV with probability 1/4 each.
+def l10U : (b1 : (t : Fin 4) -> Rat) -> (b2 : (v : Rat) -> (h : Flag) -> Rat) -> (t : Fin 4) -> (z : Rat) -> Rat := fun (b1 : (t : Fin 4) -> Rat) (b2 : (v : Rat) -> (h : Flag) -> Rat) (t : Fin 4) (z : Rat) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul 1/16 (l10Cell b2 (cbV t) (cbV u) (cbV w) z (b1 u) (b1 w))))
+-- b1 is an equilibrium (with truthful round 2 bids) when no grid bid k/4,
+-- k < 13, gains for any value.
+def l10Eq : (b1 : (t : Fin 4) -> Rat) -> Flag := fun (b1 : (t : Fin 4) -> Rat) => allFin 4 (fun (t : Fin 4) => allFin 13 (fun (k : Fin 13) => ratLe (l10U b1 l10T2 t (l10Bid k)) (l10U b1 l10T2 t (b1 t))))
+-- With truthful round 2 bids, l10Cell agrees with muSeqCellRef on the grid.
+def l10Agree : Flag := allFin 4 (fun (v : Fin 4) => allFin 4 (fun (u : Fin 4) => allFin 4 (fun (w : Fin 4) => allFin 4 (fun (z : Fin 4) => allFin 4 (fun (x : Fin 4) => allFin 4 (fun (y : Fin 4) => ratEq (l10Cell l10T2 (cbV v) (cbV u) (cbV w) (cbV z) (cbV x) (cbV y)) (muSeqCellRef (cbV v) (cbV u) (cbV w) (cbV z) (cbV x) (cbV y))))))))
+-- The chosen round 1 profile: the values 0, 1, 2, 3 bid 0, 1, 1/4, 5/4. It
+-- is not monotone (the value 2 bids less than the value 1), and it is not an
+-- equilibrium: the value 1 gains with the bid 1/2.
+def l10B : (t : Fin 4) -> Rat := fun (t : Fin 4) => flagIf (finEq t 1) 1/1 (flagIf (finEq t 2) 1/4 (flagIf (finEq t 3) 5/4 0/1))
+def l10NotMonoNotEq : Flag := flagAnd (ratLt (l10B 2) (l10B 1)) (flagAnd (ratLt (l10U l10B l10T2 1 (l10B 1)) (l10U l10B l10T2 1 1/2)) (flagNot (l10Eq l10B)))
+theorem l10AgreeCheck : Holds l10Agree := decide l10Agree
+theorem sequential_nonmonotone_not_equilibrium : Holds l10NotMonoNotEq := decide l10NotMonoNotEq

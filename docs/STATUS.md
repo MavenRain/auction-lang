@@ -427,6 +427,37 @@ run. Not built: the form with more than 2 values. The 15 proof files have
 509 theorem checks. The gate has 1358 checks in 14 main groups, 1388
 checks with the C regressions, and 0 failures.
 
+M6 session 5 is done (2026-10-13): the sequential game form of ch. 7 with
+finite witnesses (slice G part 1). `test/proof/ok/l10.lang` has 12 theorem
+checks: 2 copied theorems (`l1FlagYesNeNo` and `l9Tri` from `l9.lang`) and
+10 new theorems. It also copies the def `l9S` from `l9.lang`, `cbV` from
+`examples/combinatorial.lang`, and `muMin`, `muMax`, `muInd`, `muTop`,
+`muMed` and `muSeqCellRef` from `examples/multiunit.lang`. The game form has
+2 identical objects, 2 rounds of second price and 3 unit demand bidders with
+values on the Fin 4 grid, and a round 1 winner leaves. The history h is a
+`Flag` (won or lost in round 1). `l10Pay` is the payoff: a winner gets the
+value minus the round 1 price, and a loser gets the round 2 share against
+the rival bid (a tie splits 1/2) times the value minus the rival bid. A
+round 2 strategy is a function b2 of the own value and h. The book theorems
+are `sequential_round2_truthful_dominant` (for all b2, Rat values v,
+histories h, round 1 prices and rival bids, the payoff of the bid b2 v h is
+at most the payoff of the bid v) and
+`sequential_nonmonotone_not_equilibrium`. The second theorem uses `decide`
+on the chosen round 1 profile `l10B`: the values 0, 1, 2 and 3 bid 0, 1, 1/4
+and 5/4. The profile is not monotone (the value 2 bids less than the value
+1), the value 1 gains with the bid 1/2, and `l10Eq l10B` (deviations k/4 for
+k < 13, truthful round 2 bids) is `flagNo`. `l10AgreeCheck` uses `decide` to
+check that `l10Cell` with truthful round 2 bids agrees with `muSeqCellRef`
+on all 4096 value and bid cells. `l10SPDom` gives the round 2 step:
+`l10SCases` splits each share into its 3 values, and `l10D1`, `l10DHalf` and
+`l10D0` split again on the truthful bid. As found (a python search, not a
+gate check): on the grid k/4, no symmetric pure round 1 profile (13^4
+profiles) is an equilibrium with truthful round 2 bids, monotone or not.
+There is no new kernel rule, and `src/front` does not change, so there is no
+mutant run. The 16 proof files have 521 theorem checks. The gate has 1359
+checks in 14 main groups, 1389 checks with the C regressions, and 0
+failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
