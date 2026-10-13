@@ -1,0 +1,3 @@
+-- M6 L: cert needs Ne Rat d 0/1 for a divisor that is not a literal: RULE_CERT.
+-- The bound holds when ratDiv x y is an atom (the M5 view), so the refusal pins the Ne check.
+theorem bad : (x : Rat) -> (y : Rat) -> RatLe (ratDiv x y) (ratAdd (ratDiv x y) 1/1) := fun x => fun y => cert (ratDiv x y) (ratAdd (ratDiv x y) 1/1) True trivial

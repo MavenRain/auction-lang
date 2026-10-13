@@ -1,0 +1,2 @@
+-- M6 L: a ring hypothesis must have the form Ne Rat d 0/1: RULE_RING.
+theorem bad : (x : Rat) -> RatLe 0/1 x -> Eq Rat x x := fun x => fun h => ring x x (RatLe 0/1 x) h

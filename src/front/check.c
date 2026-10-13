@@ -1764,7 +1764,7 @@ static const struct {
   const char *code;
   uint32_t args;
 } NF_RULES[] = {
-  {"ring", NF_RING, "RULE_RING", 2u},
+  {"ring", NF_RING, "RULE_RING", 3u},
   {"ringNat", NF_RING_NAT, "RULE_RING_NAT", 2u},
   {"field", NF_FIELD, "RULE_FIELD", 3u},
   {"cert", NF_CERT, "RULE_CERT", 3u},

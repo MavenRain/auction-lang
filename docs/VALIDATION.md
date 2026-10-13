@@ -367,3 +367,14 @@ not instances, so `k1.json` stays empty and the theorem count stays 413. The k1
 mutant list has 3 new rows (the type chain in `kernel_app_type`, the Prop test
 in `is_instance` and in `instance_type`), and all 3 are killed: k1 31 of 33,
 the kernel sweep 93 of 95, with 0 build failures.
+
+M6 sessions 1b and 1c (2026-10-13) close L (K3b): each divisor that is not a
+literal needs a `Ne` fact in `ring`, `field`, `cert` and `certLt`, and `ring`
+takes `(H : Prop) -> H`. `test/proof/ok/k3b.lang` has 3 new theorems, so the
+12 proof files have 416 theorem checks. There are 3 new proof refusals, 98 in
+total. The gate has 1355 checks in the 14 main groups, 1385 checks in total,
+and 0 failures. The k3b mutant list has 21 rows (6 new, row 13 changed), and
+all 21 are killed. The k1 sweep kills 31 of 33 (mutants 24 and 25 are
+equivalent), so the kernel sweep kills 99 of 101, with 0 build failures.
+Every proof `.out` and `.json` file is byte-equal to e1cbd8e, except
+`k3b.out` (3 new lines).

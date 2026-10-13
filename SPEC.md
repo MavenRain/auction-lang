@@ -870,7 +870,7 @@ affiliation definitions and finite lemmas.
 The file `kernel/rules.lang` declares these rules:
 
 ```
-rule ring : (a : Rat) -> (b : Rat) -> Eq Rat a b
+rule ring : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> Eq Rat a b
 rule ringNat : (a : Nat) -> (b : Nat) -> Eq Nat a b
 rule field : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> Eq Rat a b
 rule cert : (a : Rat) -> (b : Rat) -> (H : Prop) -> H -> RatLe a b
@@ -901,11 +901,11 @@ for `decide`.
   `natMod`, `natMax` and `natMin` are not ring operations, so they stay
   atoms.
 - A division by a nonzero literal is a multiplication by its inverse. A
-  division by the literal 0 is refused. In `ring` and `cert`, a division
-  by a term that is not a literal is one atom (the full `ratDiv` term).
-  In `field`, each such divisor `d` needs the fact `Ne Rat d 0/1` in `H`.
-  The checker finds the fact by conversion. If no fact agrees, the rule
-  is refused.
+  division by the literal 0 is refused. In `ring`, `field`, `cert` and
+  `certLt`, each divisor `d` that is not a literal needs the fact
+  `Ne Rat d 0/1` in `H` (M6 L). The checker finds the fact by conversion.
+  If no fact agrees, the rule is refused (`NF_DIVISOR`). Thus the Rat
+  rules never make an atom of a `ratDiv` term.
 - A term that traps is refused.
 - The limits are 64 atoms, 1024 terms, degree 32 and 32 hypotheses. A
   larger normal form, or a coefficient out of range, is refused.
@@ -915,42 +915,72 @@ for `decide`.
 - `ring`, `ringNat` and `field` accept when `N_a * D_b = N_b * D_a` as
   polynomials.
 - The hypothesis `H` is `True` (no fact), one fact, or `And P Q`
-  (nested). A `field` fact is `Ne Rat d 0/1`. A `cert` or `certLt` fact
-  is `RatLe x y` or `RatLt x y`.
+  (nested). A `ring` or `field` fact is `Ne Rat d 0/1`. A `cert` or
+  `certLt` fact is `Ne Rat d 0/1`, `RatLe x y` or `RatLt x y`.
+- The checker reads `H` in two passes. Pass 0 records each `Ne` fact.
+  Pass 1 (`cert` and `certLt` only) reads each `RatLe` and `RatLt` fact.
+  Thus a comparison can divide by `d` when the `Ne` fact for `d` comes
+  after it in `H`. `ring` and `field` refuse a fact that is not a `Ne`
+  fact (`NF_HYP`).
 - A closed true comparison evaluates to `Eq Flag flagYes flagYes`, so its
   endpoints and comparison kind are erased. `cert` and `certLt` treat this
   as a redundant fact with contribution 0 and no strictness. Closed false
   comparisons are refused. The application still checks the proof of `H`.
 - Each unreduced fact has the coefficient 1. To use a scaled fact, make it first
   with `ratMulNonneg`.
-- `cert` accepts when `b - a - (the sum of y_i - x_i over the facts)`
-  normalizes to a constant `k` with `k >= 0`. `certLt` accepts when
-  `k > 0`, or when `k = 0` and at least one fact is `RatLt`.
+- The remainder `b - a - (the sum of y_i - x_i over the facts)` has the
+  normal form `N / D`. The remainder is the constant `k = 0` when `N = 0`,
+  for each `D` (ruling R8 (a), M6 L). It is the constant `k = N / D` when
+  `N` and `D` are both constants. Otherwise the rule is refused
+  (`NF_NOT_CONST`).
+- `cert` accepts when `k >= 0`. `certLt` accepts when `k > 0`, or when
+  `k = 0` and at least one fact is `RatLt`.
+- Limit of the R8 (a) form: the normal form does not cancel a common
+  factor of `N` and `D`. Thus a remainder that is a nonzero constant only
+  after that cancellation is refused. An example is
+  `cert (ratDiv x y) (ratAdd (ratDiv x y) 1/1) (Ne Rat y 0/1) h`: the
+  remainder is 1, but its normal form is `D / D` and `D` is not a
+  constant.
 
 ### 11.3 Soundness
 
-- `ring`: equal normal forms give a commutative ring identity over Q. The
-  identity is true for all values of the atoms.
+- `ring` with no division: equal normal forms give a commutative ring
+  identity over Q. The identity is true for all values of the atoms.
 - `ringNat`: in Nat mode each coefficient is a non-negative integer. N is
   a subset of Q and the operations agree, so the identity is true in N.
-- `field`: each `D` is a product of divisors that `H` shows are not 0.
-  So the cross-multiplied identity gives `a = b`.
+- `ring` and `field` with a division: each `D` is a product of divisors
+  that `H` shows are not 0. So the cross-multiplied identity gives
+  `a = b`.
 - `cert`: `b - a = k + sum(y_i - x_i)` is a polynomial identity. Each
   `y_i - x_i` is at least 0 by its fact, and more than 0 for a `RatLt`
   fact. So `b - a >= k >= 0`. For `certLt`, `b - a > 0`.
-- An atom can trap at some values of the variables, for example
+- The `cert` clause for `N = 0` (R8 (a)): `b - a - sum(y_i - x_i) = 0 / D`
+  is an identity of rational functions. `D` is a product of divisors
+  that `H` shows are not 0, so `D` is not 0 when the facts hold. Thus
+  `0 / D = 0` and `b - a = sum(y_i - x_i) >= 0`, that is `k = 0`. When
+  `N` and `D` are both constants, `D` is not 0 and `k = N / D`.
+- A term can trap at some values of the variables, for example
   `ratDiv x y` at `y = 0/1`. As for the table rules, a rule at a trap
-  proves nothing: conversion never makes a trap equal to a term.
+  proves nothing: conversion never makes a trap equal to a term. Since
+  M6 L, the Rat rules also need a proof of `Ne Rat y 0/1` for such a
+  divisor `y`.
 
 ### 11.4 Refusals and tests
 
 - The refusal codes are `RULE_RING`, `RULE_RING_NAT`, `RULE_FIELD`,
   `RULE_CERT`, `RULE_CERT_LT` and `RULE_SQ_NONNEG`. A typing failure at
   an argument of one of these rules also gives the code of the rule.
-- `test/proof/ok/k3b.lang` has 14 theorems. Among them are `sumRat_add`,
+- `test/proof/ok/k3b.lang` has 17 theorems. Among them are `sumRat_add`,
   `sumRat_const_mul`, `sumRat_le`, and `2xy <= x^2 + y^2` (by `cert`
-  with `sqNonneg (ratSub x y)`).
-- `test/proof/refuse/k3b-*.lang` has 10 refusals.
+  with `sqNonneg (ratSub x y)`). M6 L adds `k3bRingDiv` (`ring` with a
+  `Ne` fact), `k3bCertDiv` (`cert` with the remainder `0 / D`) and
+  `k3bCertDivLate` (the `Ne` fact comes after the comparison in `H`).
+- `test/proof/refuse/k3b-*.lang` has 13 refusals. M6 L adds three:
+  `k3b-ring-div` (`RULE_RING`: no `Ne` fact for a divisor),
+  `k3b-cert-div` (`RULE_CERT`: the same for `cert`) and `k3b-ring-hyp`
+  (`RULE_RING`: a `ring` fact that is not a `Ne` fact). The two div
+  refusals are true identities when the division is an atom (the M5
+  form), so they detect a removed `Ne` check.
 
 This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
@@ -958,4 +988,10 @@ certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
 `test/proof/ok/l1.lang` to `l6.lang` use the rules in this form. Two
 usage facts: `ring` treats a term that `natInd` opens as an atom, and
-`field` with a nested `ratDiv` by the same divisor needs one `Ne` fact.
+a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
+rule since M6 L).
+
+M6 L (2026-10-13, USER ruling R4 (b), form b1) changes `ring`: it takes
+`(H : Prop) -> H`, as `field` does, and each `ring` call in the proof
+tests adds `True trivial`. In `ring`, `field`, `cert` and `certLt`, each
+divisor that is not a literal needs a `Ne` fact (section 11.1).

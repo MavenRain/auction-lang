@@ -74,7 +74,7 @@ typedef struct {
   const Value *atom[NF_ATOMS_MAX];
   Sort atom_sort[NF_ATOMS_MAX];
   uint32_t atoms;
-  const Value *nonzero[NF_HYPS_MAX]; /* field: the divisors with a proof */
+  const Value *nonzero[NF_HYPS_MAX]; /* the divisors with a Ne fact */
   uint32_t nonzeros;
   NfVerdict fail;
   const Value *at;
@@ -350,16 +350,14 @@ static Kind kind_of(const Value *v, Sort sort) {
 
 static int nf_term(Nf *n, const Value *v, Sort sort, Frac *out);
 
-/* X / Y. A literal divisor must not be 0. Another divisor makes an atom,
-   except in field, where a hypothesis must give Ne Rat Y 0/1. */
+/* X / Y. A literal divisor must not be 0. Another divisor needs a
+   hypothesis Ne Rat Y 0/1 (ring, field, cert and certLt; M6 L). */
 static int nf_div(Nf *n, const Value *v, Frac *out) {
   const Value *y = v->args[1];
   Frac a;
   Frac b;
   if (y->kind == VAL_RAT && y->num == 0)
     return nf_fail(n, NF_DIV_ZERO, v);
-  if (y->kind != VAL_RAT && n->rule != NF_FIELD)
-    return atom_frac(n, v, SORT_RAT, out);
   if (y->kind != VAL_RAT && !nonzero_has(n, y))
     return nf_fail(n, NF_DIVISOR, y);
   return nf_term(n, v->args[0], SORT_RAT, &a) && nf_term(n, y, SORT_RAT, &b) && frac_mul(n, a, b, 1, out);
@@ -408,20 +406,28 @@ static int is_eq(const Value *v, Op sort) {
   return v != NULL && v->kind == VAL_OP && v->op == OP_EQ && v->argc == 3u && val_is(v->args[0], sort);
 }
 
-/* One hypothesis H. field: Ne Rat d 0/1 records d. cert: RatLe x y or
-   RatLt x y adds y - x to SUM; RatLt sets *STRICT. */
-static int nf_fact(Nf *n, const Value *h, Frac *sum, int *strict) {
+/* One hypothesis H. Pass 0 records d from each Ne Rat d 0/1. Pass 1 (cert
+   and certLt): RatLe x y or RatLt x y adds y - x to SUM; RatLt sets
+   *STRICT. With two passes a comparison can divide by d when the Ne fact
+   for d comes after it in H. ring and field take Ne facts only. */
+static int nf_fact(Nf *n, const Value *h, uint32_t pass, Frac *sum, int *strict) {
   const Value *eq = h->kind == VAL_PI ? h->dom : NULL;
   const Value *cmp = is_eq(h, OP_FLAG) && val_is(h->args[2], OP_FLAG_YES) ? h->args[1] : NULL;
   Frac x;
   Frac y;
   Frac e;
-  if (n->rule == NF_FIELD) {
-    if (!is_eq(eq, OP_RAT) || eq->args[2]->kind != VAL_RAT || eq->args[2]->num != 0 || !rule_app(n->m, closure_apply(n->m, h, val_var(n->m, n->level)), "False", 0u, NULL) || n->nonzeros == NF_HYPS_MAX)
+  if (is_eq(eq, OP_RAT) && eq->args[2]->kind == VAL_RAT && eq->args[2]->num == 0 && rule_app(n->m, closure_apply(n->m, h, val_var(n->m, n->level)), "False", 0u, NULL)) {
+    if (pass == 1u)
+      return 1;
+    if (n->nonzeros == NF_HYPS_MAX)
       return nf_fail(n, NF_HYP, h);
     n->nonzero[n->nonzeros++] = eq->args[1];
     return 1;
   }
+  if (n->rule == NF_RING || n->rule == NF_FIELD)
+    return nf_fail(n, NF_HYP, h);
+  if (pass == 0u)
+    return 1;
   /* Evaluation erases the endpoints of a closed true comparison. Treat
      Eq Flag flagYes flagYes as a redundant fact, without strictness: it
      could have come from either RatLe or RatLt. The witness is still
@@ -435,15 +441,15 @@ static int nf_fact(Nf *n, const Value *h, Frac *sum, int *strict) {
 }
 
 /* The hypotheses H: True, one fact, or And P Q. */
-static int nf_hyps(Nf *n, const Value *h, Frac *sum, int *strict) {
+static int nf_hyps(Nf *n, const Value *h, uint32_t pass, Frac *sum, int *strict) {
   const Value *pq[2];
   if (h == NULL)
     return nf_fail(n, NF_HYP, NULL);
   if (rule_app(n->m, h, "True", 0u, NULL))
     return 1;
   if (rule_app(n->m, h, "And", 2u, pq))
-    return nf_hyps(n, pq[0], sum, strict) && nf_hyps(n, pq[1], sum, strict);
-  return nf_fact(n, h, sum, strict);
+    return nf_hyps(n, pq[0], pass, sum, strict) && nf_hyps(n, pq[1], pass, sum, strict);
+  return nf_fact(n, h, pass, sum, strict);
 }
 
 /* N_a * D_b = N_b * D_a. Each D is a product of nonzero divisors. */
@@ -458,17 +464,18 @@ static NfVerdict nf_equal(Nf *n, const Value *a, const Value *b, Sort sort) {
 }
 
 /* b - a - SUM must be a constant k: k >= 0 for cert; for certLt, k > 0, or
-   k = 0 with a strict hypothesis. */
+   k = 0 with a strict hypothesis. A remainder N / D with N = 0 is k = 0:
+   D is a product of divisors that have a Ne fact (M6 L). */
 static NfVerdict nf_cert(Nf *n, const Value *a, const Value *b, Frac sum, int strict) {
   Frac x;
   Frac y;
   Frac r;
   Q kn;
-  Q kd;
+  Q kd = q_make(1, 1);
   int s;
   if (!nf_term(n, a, SORT_RAT, &x) || !nf_term(n, b, SORT_RAT, &y) || !frac_add(n, y, x, 1, &r) || !frac_add(n, r, sum, 1, &r))
     return n->fail;
-  if (!poly_value(r.n, &kn) || !poly_value(r.d, &kd) || kd.num == 0) {
+  if (!poly_value(r.n, &kn) || (kn.num != 0 && (!poly_value(r.d, &kd) || kd.num == 0))) {
     nf_fail(n, NF_NOT_CONST, NULL);
     return n->fail;
   }
@@ -490,18 +497,16 @@ NfVerdict nf_check(Machine *m, uint32_t level, NfRule rule, const Value *a, cons
   n.rule = rule;
   n.fail = NF_OK;
   switch (rule) {
-  case NF_RING:
-    verdict = nf_equal(&n, a, b, SORT_RAT);
-    break;
   case NF_RING_NAT:
     verdict = nf_equal(&n, a, b, SORT_NAT);
     break;
+  case NF_RING:
   case NF_FIELD:
-    verdict = frac_const(&n, q_make(0, 1), &sum) && nf_hyps(&n, hyps, &sum, &strict) ? nf_equal(&n, a, b, SORT_RAT) : n.fail;
+    verdict = frac_const(&n, q_make(0, 1), &sum) && nf_hyps(&n, hyps, 0u, &sum, &strict) ? nf_equal(&n, a, b, SORT_RAT) : n.fail;
     break;
   case NF_CERT:
   case NF_CERT_LT:
-    verdict = frac_const(&n, q_make(0, 1), &sum) && nf_hyps(&n, hyps, &sum, &strict) ? nf_cert(&n, a, b, sum, strict) : n.fail;
+    verdict = frac_const(&n, q_make(0, 1), &sum) && nf_hyps(&n, hyps, 0u, &sum, &strict) && nf_hyps(&n, hyps, 1u, &sum, &strict) ? nf_cert(&n, a, b, sum, strict) : n.fail;
     break;
   }
   *at = n.at;
@@ -523,7 +528,7 @@ const char *nf_text(NfVerdict verdict) {
   case NF_DIV_ZERO:
     return "a division by 0";
   case NF_HYP:
-    return "a hypothesis does not have the expected form (field: Ne Rat d 0/1; cert: RatLe x y or RatLt x y; joined with And, or True)";
+    return "a hypothesis does not have the expected form (Ne Rat d 0/1; cert also: RatLe x y or RatLt x y; joined with And, or True)";
   case NF_TRAP:
     return "a term traps";
   case NF_LARGE:

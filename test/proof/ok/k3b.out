@@ -12,4 +12,7 @@ theorem k3bCertLtHyp ok
 theorem sumRat_add ok
 theorem sumRat_const_mul ok
 theorem sumRat_le ok
+theorem k3bRingDiv ok
+theorem k3bCertDiv ok
+theorem k3bCertDivLate ok
 ok

@@ -1,2 +1,2 @@
 -- M5 K3b: ring refuses a false identity (x - y is not x + y): RULE_RING.
-theorem bad : (x : Rat) -> (y : Rat) -> Eq Rat (ratSub x y) (ratAdd x y) := fun x => fun y => ring (ratSub x y) (ratAdd x y)
+theorem bad : (x : Rat) -> (y : Rat) -> Eq Rat (ratSub x y) (ratAdd x y) := fun x => fun y => ring (ratSub x y) (ratAdd x y) True trivial

@@ -6,10 +6,10 @@
 #include "front/core.h"
 
 typedef enum {
-  NF_RING,     /* ring a b : Eq Rat a b */
+  NF_RING,     /* ring a b H h : Eq Rat a b; H gives Ne Rat d 0/1 */
   NF_RING_NAT, /* ringNat a b : Eq Nat a b */
   NF_FIELD,    /* field a b H h : Eq Rat a b; H gives Ne Rat d 0/1 */
-  NF_CERT,     /* cert a b H h : RatLe a b; H gives RatLe x y and RatLt x y */
+  NF_CERT,     /* cert a b H h : RatLe a b; H gives RatLe, RatLt and Ne facts */
   NF_CERT_LT   /* certLt a b H h : RatLt a b */
 } NfRule;
 
@@ -18,7 +18,7 @@ typedef enum {
   NF_DIFFER,    /* the two normal forms are not equal */
   NF_NOT_CONST, /* cert: the remainder is not a constant */
   NF_NEGATIVE,  /* cert: the remainder is negative (certLt: not positive) */
-  NF_DIVISOR,   /* field: a divisor has no proof that it is not 0 */
+  NF_DIVISOR,   /* a divisor that is not a literal has no Ne fact */
   NF_DIV_ZERO,  /* a division by the literal 0 */
   NF_HYP,       /* a hypothesis that does not have the expected form */
   NF_TRAP,      /* a term traps */
@@ -27,7 +27,7 @@ typedef enum {
 } NfVerdict;
 
 /* Checks RULE on the values A and B at LEVEL, with the hypotheses HYPS (a
-   Prop value; NULL for ring and ringNat). *AT gets the term of a refusal, or
+   Prop value; NULL for ringNat). *AT gets the term of a refusal, or
    NULL. */
 NfVerdict nf_check(Machine *m, uint32_t level, NfRule rule, const Value *a, const Value *b, const Value *hyps, const Value **at);
 const char *nf_text(NfVerdict verdict);

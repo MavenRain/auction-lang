@@ -333,13 +333,28 @@ has three such defs (`k1.json` stays empty), and `test/read/prop.json` checks
 that the reader refuses the type `And True True` (`READ_TYPE`). K (K3a):
 `examples/arith.lang` has the instance `smaller`, which calls `natMin`. M(i):
 `test/emit/fuel.lang` reaches `EVAL_FUEL` and `test/emit/depth.lang` reaches
-`JSON_DEPTH` (see Known limits). L (K3b) is not built in session 1: ring and
-cert still make an atom of a division by a term that is not a literal (USER
-ruling R4 (b), the next session). The gate has 1352 checks in 14 main groups
+`JSON_DEPTH` (see Known limits). L (K3b) is not built in session 1 (see the
+M6 session 1b paragraph). The gate has 1352 checks in 14 main groups
 (evals 579, build refusals 17, reads 396 and read refusals 30; the other
 groups are as above), 1382 checks with the C regressions, and 0 failures. The
 k1 mutant sweep kills 31 of 33 (mutants 24 and 25 are equivalent), so the
 kernel sweep kills 93 of 95.
+
+M6 sessions 1b and 1c are done (2026-10-13): L (K3b), the divisor that is
+not a literal (USER ruling R4 (b), form b1). `ring` now takes
+`(H : Prop) -> H`, as `field` does. Each of the 160 `ring` calls in the
+proof tests adds `True trivial`. In `ring`, `field`, `cert` and `certLt`,
+each divisor `d` that is not a literal needs the fact `Ne Rat d 0/1` in
+`H`, else the rule is refused (`NF_DIVISOR`). The rules no longer make an
+atom of a `ratDiv` term. `cert` and `certLt` read `H` in two passes, so a
+comparison can divide by `d` when the `Ne` fact for `d` comes after it.
+A `cert` remainder `N / D` with `N = 0` is the constant 0 (ruling R8 (a);
+see Known limits). `test/proof/ok/k3b.lang` has 3 new theorems (416
+theorem checks in total), and there are 3 new proof refusals (98 in
+total). Every other proof `.out` and `.json` file is byte-equal to
+e1cbd8e. The gate has 1355 checks in 14 main groups, 1385 checks with the
+C regressions, and 0 failures. The k3b mutant sweep kills 21 of 21 and
+the k1 sweep kills 31 of 33, so the kernel sweep kills 99 of 101.
 
 ## Known limits
 
@@ -388,6 +403,12 @@ kernel sweep kills 93 of 95.
   The cut at 200 levels stays for a type (`src/front/eval.c:9`; the
   writer refuses such a type, see above) and for a value in a diagnostic,
   which prints "..." past 200 levels.
+- The `cert` and `certLt` remainder `N / D` must have `N = 0`, or `N` and
+  `D` must both be constants (`SPEC.md` section 11.2, ruling R8 (a)). The
+  normal form does not cancel a common factor of `N` and `D`. Thus a
+  remainder that is a nonzero constant only after that cancellation is
+  refused with `RULE_CERT`, for example
+  `cert (ratDiv x y) (ratAdd (ratDiv x y) 1/1) (Ne Rat y 0/1) h`.
 
 ## Internal boundaries
 

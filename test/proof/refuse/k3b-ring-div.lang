@@ -1,0 +1,3 @@
+-- M6 L: ring needs Ne Rat d 0/1 for a divisor that is not a literal: RULE_RING.
+-- The identity holds when ratDiv x y is an atom (the M5 view), so the refusal pins the Ne check.
+theorem bad : (x : Rat) -> (y : Rat) -> Eq Rat (ratAdd (ratDiv x y) 1/1) (ratAdd 1/1 (ratDiv x y)) := fun x => fun y => ring (ratAdd (ratDiv x y) 1/1) (ratAdd 1/1 (ratDiv x y)) True trivial
