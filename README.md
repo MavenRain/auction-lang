@@ -81,39 +81,62 @@ samples. When a finite model differs from the continuous model, the
 example describes the difference and checks its result ("as found").
 The table gives partial coverage of the book.
 
-| Book section | Example | What is checked |
-|---|---|---|
-| Ch. 2 and 3.1, private values | the 22 examples of M0 to M3, for example `truthful.lang` | the auction-cat results at fixed sizes |
-| 3.1.1, the first price bid | `discrete.lang` | for continuous uniform values on [0, 1], the payoff formula for the bid (n - 1) v / n is checked against report samples z = k/8, for n = 2 and n = 3 |
-| 3.1.4, entry fees | `entryfee.lang` | with i.i.d. values uniform on {0, 1, 2, 3}, the entry cutoff equilibrium and equal reserve and entry fee revenues; the best cutoff is 2, with fee 1 and revenue 25/16 for 2 bidders, or fee 1/2 and revenue 61/32 for 3 bidders |
-| 3.2, correlated values | `correlated.lang` | second price truthful bids are dominant; first price equilibria on a grid; revenues for an independent and a correlated prior. As found: first price revenue 3/4 is more than second price revenue 8/11 for the correlated prior |
-| 3.3, risk aversion | `riskaverse.lang` | with continuous uniform values and utility sqrt(x), sampled best replies for bids 2v/3 and 4v/5; 2v/3 is more than v/2; the revenue formulas give first price more than second price (4/9 and 1/3 for 2 bidders, 3/5 and 1/2 for 3 bidders) |
-| 3.4, discrete values | `discrete.lang` | the two-value mixed strategy formula at bid samples (upper support endpoint 5/3, the continuous bid distribution G); first and second price revenue formulas both give 11/9; no symmetric pure equilibrium on the chosen bid grid of 1/8 |
-| Ch. 4, common values | `commonvalue.lang` | for 2 bidders with common value V = s + t and independent uniform [0, 1] signals, sampled best replies for first price b(s) = s and second price b(s) = 2s, with revenue formulas 2/3; on discrete signals, the winner's curse, failure of the naive bid to be an equilibrium, and equilibrium checks for second price 2s. As found: the finite independent-signal model gives first price 13/9 in one of 3 symmetric pure equilibria and second price 10/9 |
-| Ch. 5 and App. C, affiliated signals | `affiliated.lang` | affiliation on chosen pair and triple priors; prices under second price and English strategy formulas transplanted to discrete signals. As found: the second price formula fails the equilibrium check for both priors with 3 bidders; its revenue exceeds the English price formula. This comparison is not an equilibrium revenue ranking; the English strategies are not checked for equilibrium |
-| Ch. 6, mechanism design | `mechanism.lang` | incentive compatibility on discrete types, the revelation principle, the payment band, discrete virtual values, the optimal auction (revenue 13/8 = the expected virtual surplus), VCG dominance. As found: revenue equivalence fails (53/64, 7/8 and 17/16 with the same allocation); second price with the optimal reserve 2 gets 25/16, less than 13/8 |
-| Ch. 7, identical units | `multiunit.lang` | for 3 unit demand bidders and 2 units, uniform price truthful bids are dominant on the bid grid (revenue 9/8), and 2 pay as bid equilibria are checked; a separate bidder wanting 2 units gains by reducing demand, while multi unit Vickrey reports are dominant on the report grid. As found: pay as bid revenues are 63/64 and 293/256; the sequential sale has no monotone symmetric pure equilibrium on the chosen bid grid; the conditional-expectation bidding rule transplanted to discrete values fails the equilibrium check and gives E[p1] = 62/105 > E[p2] = 9/16 |
-| Ch. 7, two objects | `combinatorial.lang` | VCG truthful reports are dominant and individually rational; low revenue and an outcome that is not in the core; revenue that is not monotone in the bidders; expected revenue 25/32; the exposure problem of a synergy bidder in two separate second price auctions |
+Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
+rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
+accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
+to `l6.lang` hold 325 theorem checks for the book, and `k1.lang` to
+`k3b.lang` hold 88 for the kernel rules. A file cannot import another
+file, so the files identify their copied helpers, and a helper
+counts once per file. The column `Proved for all sizes (M5)` names the
+theorems that hold for every grid size, every value or every prior, with
+their file, subject to each theorem's hypotheses. A result at the M4
+sizes by `decide` is marked as such.
 
-M4 does not cover:
+| Book section | Example | What is checked | Proved for all sizes (M5) |
+|---|---|---|---|
+| Ch. 2 and 3.1, private values | the 22 examples of M0 to M3, for example `truthful.lang` | the auction-cat results at fixed sizes | `l1.lang`: `fpsb_spsb_same_allocation`, `fpsb_revenue_ge_spsb`, `english_revenue_eq_spsb`, `dutch_revenue_eq_fpsb`, `vickrey_truthful_dominant` (every n), `vickrey_truthful_is_bayes_nash`; `l1b.lang`: `fpsb_revenue_eq_max`, `spsb_revenue_eq_min`, `dutch_revenue_ge_english`, the `fpsbReserve_*`, `spsbReserve_*` and `reserveRevenue_*` theorems; `l6.lang`: `vickrey3_truthful_dominant`, `vickrey3_truthful_best_response` (3 bidders) |
+| 3.1.1, the first price bid | `discrete.lang` | for continuous uniform values on [0, 1], the payoff formula for the bid (n - 1) v / n is checked against report samples z = k/8, for n = 2 and n = 3 | `l2.lang`: `fpsb_uniform_bid_best_reply_n2` (all Rat values and reports), `fpsb_uniform_bid_best_reply_n3` (nonnegative values and reports). The payoff polynomial is a definition |
+| 3.1.4, entry fees | `entryfee.lang` | with i.i.d. values uniform on {0, 1, 2, 3}, the entry cutoff equilibrium and equal reserve and entry fee revenues; the best cutoff is 2, with fee 1 and revenue 25/16 for 2 bidders, or fee 1/2 and revenue 61/32 for 3 bidders | `l2.lang`: `spsb_reserve_half_optimal_uniform`, `spsb_reserve_half_revenue_uniform`, `spsb_no_reserve_revenue_uniform`, `spsb_reserve_above_support_revenue_uniform`, `spsb_reserve_support_boundary_revenue_uniform` (two uniform bidders, every reserve r at least 0, the revenue R as a definition); `l6.lang`: `entry_fee_closed_form` (for K > 0 and c <= K, the fee at cutoff c on a uniform grid of K values is c * c / K) |
+| 3.2, correlated values | `correlated.lang` | second price truthful bids are dominant; first price equilibria on a grid; revenues for an independent and a correlated prior. As found: first price revenue 3/4 is more than second price revenue 8/11 for the correlated prior | `l2.lang`: `vickrey_truthful_best_response_joint` (3.2.1, the conditional belief of any joint prior) |
+| 3.3, risk aversion | `riskaverse.lang` | with continuous uniform values and utility sqrt(x), sampled best replies for bids 2v/3 and 4v/5; 2v/3 is more than v/2; the revenue formulas give first price more than second price (4/9 and 1/3 for 2 bidders, 3/5 and 1/2 for 3 bidders) | `l2.lang`: `vickrey_truthful_dominant_utility`, `vickrey_truthful_best_response_utility` (each increasing utility u : Nat -> Rat) |
+| 3.4, discrete values | `discrete.lang` | the two-value mixed strategy formula at bid samples (upper support endpoint 5/3, the continuous bid distribution G); first and second price revenue formulas both give 11/9; no symmetric pure equilibrium on the chosen bid grid of 1/8 | `l2.lang`: `ds_high_indifferent`, `ds_high_above_bbar_worse`, `ds_G_at_bbar`, `ds_G_at_vL`, `ds_revenue_equivalence` (all vL, vH and p), `ds_book_revenue`, `ds_book_bbar`. The indifference and G identities require nonzero divisors. Not proved: no pure symmetric equilibrium for all Rat bids (the grid check only) |
+| Ch. 4, common values | `commonvalue.lang` | for 2 bidders with common value V = s + t and independent uniform [0, 1] signals, sampled best replies for first price b(s) = s and second price b(s) = 2s, with revenue formulas 2/3; on discrete signals, the winner's curse, failure of the naive bid to be an equilibrium, and equilibrium checks for second price 2s. As found: the finite independent-signal model gives first price 13/9 in one of 3 symmetric pure equilibria and second price 10/9 | `l5.lang`: `winners_curse_grid` (every signal grid, every nondecreasing value), `winners_curse_uniform` (all Rat s < 1), `wallet_first_price_best_reply`, `wallet_second_price_best_reply` (the wallet game, all Rat signals), `wallet_revenue_equivalence`; `l6.lang`: `winners_curse_grid_le`, `wallet_naive_bid_loses` (every Rat signal 0 < s < 1); at the M4 sizes by `decide`: `winners_curse_uniform_grid`, `winners_curse_discrete`, `wallet_naive_bid_loses_grid` |
+| App. A, probability and order statistics | none (the M4 examples use instances) | none | `l5.lang`: `sumRat_mul_sumRat`, `expect_linear`, `expect_const`, `expect_indep_mul`, `total_expectation`, `max_cdf_two` (any grid), `uniform_max_two_grid`, `uniform_min_two_grid` and their means (two uniform draws on a grid of size k, exact sums); `l6.lang`: `total_expectation_flat`. Conditional expectations require nonzero mass in each row; the grid means require k > 0. Not proved: order statistics for N > 2 |
+| Ch. 5 and App. C, affiliated signals | `affiliated.lang` | affiliation on chosen pair and triple priors; prices under second price and English strategy formulas transplanted to discrete signals. As found: the second price formula fails the equilibrium check for both priors with 3 bidders; its revenue exceeds the English price formula. This comparison is not an equilibrium revenue ranking; the English strategies are not checked for equilibrium | none. The affiliation definitions and finite lemmas were not built in M5 (see the list below) |
+| Ch. 6, mechanism design | `mechanism.lang` | incentive compatibility on discrete types, the revelation principle, the payment band, discrete virtual values, the optimal auction (revenue 13/8 = the expected virtual surplus), VCG dominance. As found: revenue equivalence fails (53/64, 7/8 and 17/16 with the same allocation); second price with the optimal reserve 2 gets 25/16, less than 13/8 | `l3.lang`: `revelation_principle` (6.1), `ic_monotone`, `ic_payment_band` (6.2), `ic_ir_payment_upper`, `ic_payment_lower` (6.3), `ic_ir_revenue_le_virtual_surplus` (6.4, every IC and IR mechanism, every prior and type count), `revenue_equivalence`, `revenue_equivalence_via_allocation` (3.1.3, the Vickrey payment identity for all n and priors, and equality of envelope-defined payments for equal allocations); `l4.lang`: `virtual_value_auction_attains_bound` (6.4, every monotone nonnegative Q), `vcg_truthful_dominant` (6.5, assuming an efficient allocation), `vcg_individually_rational` (also assuming pivot payments and nonnegative own valuations) |
+| Ch. 7, identical units | `multiunit.lang` | for 3 unit demand bidders and 2 units, uniform price truthful bids are dominant on the bid grid (revenue 9/8), and 2 pay as bid equilibria are checked; a separate bidder wanting 2 units gains by reducing demand, while multi unit Vickrey reports are dominant on the report grid. As found: pay as bid revenues are 63/64 and 293/256; the sequential sale has no monotone symmetric pure equilibrium on the chosen bid grid; the conditional-expectation bidding rule transplanted to discrete values fails the equilibrium check and gives E[p1] = 62/105 > E[p2] = 9/16 | `l4.lang`: `uniform_price_unit_demand_dominant` (3 bidders, 2 units, all Rat values and bids), `multi_unit_vickrey_dominant` (the VCG instance at Fin 3); at the M4 sizes by `decide`: `demand_reduction` |
+| Ch. 7, two objects | `combinatorial.lang` | VCG truthful reports are dominant and individually rational; low revenue and an outcome that is not in the core; revenue that is not monotone in the bidders; expected revenue 25/32; the exposure problem of a synergy bidder in two separate second price auctions | `l4.lang`: `two_object_vcg_dominant` (the VCG instance at Fin 4, all values, assuming an efficient allocation), `two_object_vcg_ir` (also assuming pivot payments and nonnegative own valuations); at the M4 sizes by `decide`: `revenue_not_monotone`, `vcg_outcome_not_in_core`, `exposure_problem` |
+
+Not covered after M5:
 
 - Appendix B, the differential equations of the equilibrium bids. The
   examples check closed forms at sample points, or discrete analogues.
 - The exercises.
-- General results for all n or all distributions. The checks use 2 or 3
-  bidders and grids of at most 13 points.
-- In ch. 5, first price equilibrium bidding and the effects of risk
-  aversion with affiliated signals (sections 5.3 and 5.6).
-- In ch. 6, the bound "each incentive compatible and individually
-  rational mechanism gets at most the expected virtual surplus" for all
-  mechanisms, ironing, and the correlated and common value extensions
-  (sections 6.4.2 and 6.4.4).
-- In ch. 7, sequential profiles that are not monotone, and package
-  auctions other than VCG, or the optimal multiple-object auction.
-- The continuous results whose assumptions change in examples marked
-  "as found". Prices under strategies that fail an equilibrium check
-  do not establish an equilibrium revenue ranking or a failure of the
+- Every result for a general continuous distribution F (densities and
+  integrals): the derivation of the first price bid formula, revenue
+  equivalence and the optimal auction with densities, the linkage
+  ranking (5.5), risk aversion with a general F (3.3.1), the correlated
+  comparison (3.2.3), affiliated first price and risk aversion (5.3 and
+  5.6) and the martingale property (7.2). A continuous payoff or
+  revenue formula enters a theorem as a definition.
+- Ch. 5 and App. C for all sizes: the affiliation definitions and finite
+  lemmas were not built in M5. The example `affiliated.lang` is the
+  coverage. Prices under strategies that fail an equilibrium check do
+  not establish an equilibrium revenue ranking or a failure of the
   martingale property at equilibrium.
+- In ch. 3, no pure symmetric equilibrium for all Rat bids (3.4). The
+  grid check is in `discrete.lang`.
+- In ch. 6, the explicit 2-bidder allocation to the highest nonnegative
+  virtual value under a regular prior (`virtual_value_auction_attains_bound`
+  takes the monotone allocation as a hypothesis; the 4-type instance is
+  `mcOptICIR` in `mechanism.lang`), ironing, and the correlated and
+  common value extensions (sections 6.4.2 and 6.4.4).
+- In ch. 7, sequential profiles that are not monotone, package auctions
+  other than VCG, and the optimal multiple-object auction.
+- Mechanism matrices for every number of bidders: auction-cat has 2 and
+  3 bidder mechanisms. Order statistics for N > 2.
+- The continuous results whose assumptions change in examples marked
+  "as found".
 
 ## Files
 

@@ -748,6 +748,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M2 | Queries and reads, or the contract |
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
+| M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 
 M0 has these slices:
 
@@ -854,7 +855,17 @@ The nine M4 example slices are implemented (2026-10-11). The gate has
 remains partial; `README.md` lists the checked models and the remaining
 coverage by chapter.
 
-## 11. Checked rules: ring, field and cert (M5 K3b, draft)
+M5 is done (2026-10-12). The slices K1, K2, K3a, K3b, L1, L1b, L2, L3, L4, L5
+and L6 give it. The kernel has 72 rules, and 12 proof files hold 413 theorem
+checks. The gate has 1347 checks in 14 main groups, including 95 proof
+refusals, plus 21 C typed reader and 9 C certificate regressions: 1377 checks
+in total, with 0 failures. The kernel mutant sweep kills 90 of 92 mutants
+(2 equivalent k1 mutants), and all 85 M4 mutants stay killed. The proof JSON is byte-equal to its
+goldens. `README.md` `## Book coverage` shows which book results hold for all
+sizes, and section 11 has the final rules. Not built in M5: the Ch 5 and App C
+affiliation definitions and finite lemmas.
+
+## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
 
@@ -941,6 +952,10 @@ for `decide`.
   with `sqNonneg (ratSub x y)`).
 - `test/proof/refuse/k3b-*.lang` has 10 refusals.
 
-Note (draft): this section differs from `m5-design.md` 3.5. There the
-certificate is a list of non-negative coefficients. Here the certificate
-is the Prop `H`, and each fact has the coefficient 1.
+This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
+certificate as a list of nonnegative coefficients. The implemented
+certificate is the Prop `H`: each fact has the coefficient 1, and a
+scaled fact comes from `ratMulNonneg`. The proof files
+`test/proof/ok/l1.lang` to `l6.lang` use the rules in this form. Two
+usage facts: `ring` treats a term that `natInd` opens as an atom, and
+`field` with a nested `ratDiv` by the same divisor needs one `Ne` fact.

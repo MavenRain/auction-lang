@@ -328,6 +328,20 @@ repository, that turns it to 0. All 85 mutants are killed: entryfee 7,
 discrete 8, riskaverse 9, commonvalue 11, correlated 9, affiliated 6,
 mechanism 15, combinatorial 7, multiunit 13.
 
+All 85 M4 mutants run again on the M5 kernel (2026-10-12, session 13), and
+all 85 are killed. The M5 gate has 1347 checks in 14 main groups: examples 31,
+parse refusals 10, check refusals 85, proofs 12, proof refusals 95, evals 578,
+json builds 31, build refusals 15, round trips 31, reads 395, read refusals 29,
+verify refusals 6, limits 15 and queries 14. It also runs 21 C typed reader
+and 9 C certificate regressions, for 1377 checks in total and 0 failures.
+There are 12 proof files with 413 theorem checks and 95 proof refusals.
+The kernel mutant sweep kills 90 of 92
+mutants, listed by list: k1 28 of 30, k2 27 of 27, k3 17 of 17, k3b 15 of 15
+and l1b 3 of 3, with 0 build failures. The k1 mutants 24 and 25 survive. They
+are equivalent (USER ruling 2026-10-12), so their rows stay. The sweep restores
+every source file, and `git status` shows no change after it. The gate compares
+each proof JSON with its golden by `cmp`, so the JSON is byte-equal.
+
 The cost of each example, measured with `/usr/bin/time -l` (one run, no
 sandbox). The size is the maximum resident set size (1 MB = 10^6 bytes).
 

@@ -10,7 +10,10 @@ and M3 are done. After M3, slice E1 sets the depth limit of a value line
 (O18). `SPEC.md` section 9 records the rulings on O1 to O18. Milestone
 M4 (book coverage) adds 9 examples. They check finite models and sampled
 continuous payoff formulas for selected results of Menezes and Monteiro,
-chapters 3 to 7. Book coverage remains partial.
+chapters 3 to 7. Milestone M5 (proofs, the slices K1 to K3b and L1 to
+L6) adds the `Prop` sort, the `theorem` form, 72 kernel rules and 12
+proof files with 413 theorem checks. `README.md` `## Book coverage`
+names the results proved for all sizes and the results not covered.
 
 ## Implemented
 
@@ -297,6 +300,28 @@ and 6 new ones: winners_curse_grid_le (the NatLe m n form), total_expectation_fl
 bidders, the rival pair read through finMax), entry_fee_closed_form (the fee at
 cutoff c on the uniform grid of K values is c * c / K). No kernel rule was added.
 Current state: 12 proof files, 95 proof refusals, gate 1347 checks, 0 failures.
+
+M5 is integrated (2026-10-12, session 13). `README.md` has the new column
+`Proved for all sizes (M5)` in `## Book coverage`. It names the proof file and
+the theorems for each book section. `SPEC.md` section 11 is final, and
+`docs/VALIDATION.md` has the M5 counts. There are 12 proof files in
+`test/proof/ok` with 413 theorem checks: the K files have 88 (k1 15, k1a 4,
+k2 39, k3 16, k3b 14) and the L files have 325 (l1 26, l1b 49, l2 33, l3 51,
+l4 55, l5 65, l6 46). A file cannot import another file. The files identify
+their copied helpers. The gate has 1347 checks in 14 main groups:
+31 examples, 10 parse refusals, 85 check refusals,
+12 proofs, 95 proof refusals, 578 evals, 31 json builds, 15 build refusals,
+31 round trips, 395 reads, 29 read refusals, 6 verify refusals, 15 limits and
+14 queries. It also runs 21 C typed reader and 9 C certificate regressions,
+for 1377 checks in total and 0 failures. The kernel mutant sweep kills 90 of 92
+mutants: k1 28 of 30
+(mutants 24 and 25 are equivalent, USER ruling 2026-10-12, the rows stay),
+k2 27 of 27, k3 17 of 17, k3b 15 of 15 and l1b 3 of 3, with 0 build failures.
+The 85 M4 mutants run again on the M5 kernel, and all 85 are killed. Every
+proof JSON is byte-equal to its golden (the gate compares each one with
+`cmp`). Not built in M5: the Ch 5 and App C affiliation definitions and finite
+lemmas (turn 11 of the plan slipped) and the items under `Not covered after
+M5` in `README.md`.
 
 ## Known limits
 
