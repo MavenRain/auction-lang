@@ -84,12 +84,13 @@ The table gives partial coverage of the book.
 Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
 rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
 accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
-to `l8.lang` hold 396 theorem checks for the book, and `k1.lang` to
-`k3b.lang` hold 91 for the kernel rules: 487 in total. M6 session 2
-adds `l7.lang` (Ch. 5 and App. C), and M6 session 3 adds `l8.lang`
-(the explicit 2-bidder allocation of ch. 6.4). A file cannot import
-another file, so the files identify their copied helpers, and a helper
-counts once per file. The column `Proved for all sizes (M5)` names the
+to `l9.lang` hold 418 theorem checks for the book, and `k1.lang` to
+`k3b.lang` hold 91 for the kernel rules: 509 in total. M6 session 2
+adds `l7.lang` (Ch. 5 and App. C), M6 session 3 adds `l8.lang` (the
+explicit 2-bidder allocation of ch. 6.4), and M6 session 4 adds
+`l9.lang` (no pure symmetric equilibrium in 3.4 for all Rat bids). A
+file cannot import another file, so the files identify their copied
+helpers, and a helper counts once per file. The column `Proved for all sizes (M5)` names the
 theorems that hold for every grid size, every value or every prior, with
 their file, subject to each theorem's hypotheses. A result at the M4
 sizes by `decide` is marked as such.
@@ -101,7 +102,7 @@ sizes by `decide` is marked as such.
 | 3.1.4, entry fees | `entryfee.lang` | with i.i.d. values uniform on {0, 1, 2, 3}, the entry cutoff equilibrium and equal reserve and entry fee revenues; the best cutoff is 2, with fee 1 and revenue 25/16 for 2 bidders, or fee 1/2 and revenue 61/32 for 3 bidders | `l2.lang`: `spsb_reserve_half_optimal_uniform`, `spsb_reserve_half_revenue_uniform`, `spsb_no_reserve_revenue_uniform`, `spsb_reserve_above_support_revenue_uniform`, `spsb_reserve_support_boundary_revenue_uniform` (two uniform bidders, every reserve r at least 0, the revenue R as a definition); `l6.lang`: `entry_fee_closed_form` (for K > 0 and c <= K, the fee at cutoff c on a uniform grid of K values is c * c / K) |
 | 3.2, correlated values | `correlated.lang` | second price truthful bids are dominant; first price equilibria on a grid; revenues for an independent and a correlated prior. As found: first price revenue 3/4 is more than second price revenue 8/11 for the correlated prior | `l2.lang`: `vickrey_truthful_best_response_joint` (3.2.1, the conditional belief of any joint prior) |
 | 3.3, risk aversion | `riskaverse.lang` | with continuous uniform values and utility sqrt(x), sampled best replies for bids 2v/3 and 4v/5; 2v/3 is more than v/2; the revenue formulas give first price more than second price (4/9 and 1/3 for 2 bidders, 3/5 and 1/2 for 3 bidders) | `l2.lang`: `vickrey_truthful_dominant_utility`, `vickrey_truthful_best_response_utility` (each increasing utility u : Nat -> Rat) |
-| 3.4, discrete values | `discrete.lang` | the two-value mixed strategy formula at bid samples (upper support endpoint 5/3, the continuous bid distribution G); first and second price revenue formulas both give 11/9; no symmetric pure equilibrium on the chosen bid grid of 1/8 | `l2.lang`: `ds_high_indifferent`, `ds_high_above_bbar_worse`, `ds_G_at_bbar`, `ds_G_at_vL`, `ds_revenue_equivalence` (all vL, vH and p), `ds_book_revenue`, `ds_book_bbar`. The indifference and G identities require nonzero divisors. Not proved: no pure symmetric equilibrium for all Rat bids (the grid check only) |
+| 3.4, discrete values | `discrete.lang` | the two-value mixed strategy formula at bid samples (upper support endpoint 5/3, the continuous bid distribution G); first and second price revenue formulas both give 11/9; no symmetric pure equilibrium on the chosen bid grid of 1/8 | `l2.lang`: `ds_high_indifferent`, `ds_high_above_bbar_worse`, `ds_G_at_bbar`, `ds_G_at_vL`, `ds_revenue_equivalence` (all vL, vH and p), `ds_book_revenue`, `ds_book_bbar`. The indifference and G identities require nonzero divisors. `l9.lang`: `no_pure_symmetric_equilibrium` (all vL < vH, 0 < p < 1 and all Rat bids bL and bH), `no_pure_equilibrium_half` (vL = 0, vH = 1 and p = 1/2, as in `discrete.lang`), `l9GridCheck` (by `decide`, the payoff agrees with the grid of `discrete.lang`) |
 | Ch. 4, common values | `commonvalue.lang` | for 2 bidders with common value V = s + t and independent uniform [0, 1] signals, sampled best replies for first price b(s) = s and second price b(s) = 2s, with revenue formulas 2/3; on discrete signals, the winner's curse, failure of the naive bid to be an equilibrium, and equilibrium checks for second price 2s. As found: the finite independent-signal model gives first price 13/9 in one of 3 symmetric pure equilibria and second price 10/9 | `l5.lang`: `winners_curse_grid` (every signal grid, every nondecreasing value), `winners_curse_uniform` (all Rat s < 1), `wallet_first_price_best_reply`, `wallet_second_price_best_reply` (the wallet game, all Rat signals), `wallet_revenue_equivalence`; `l6.lang`: `winners_curse_grid_le`, `wallet_naive_bid_loses` (every Rat signal 0 < s < 1); at the M4 sizes by `decide`: `winners_curse_uniform_grid`, `winners_curse_discrete`, `wallet_naive_bid_loses_grid` |
 | App. A, probability and order statistics | none (the M4 examples use instances) | none | `l5.lang`: `sumRat_mul_sumRat`, `expect_linear`, `expect_const`, `expect_indep_mul`, `total_expectation`, `max_cdf_two` (any grid), `uniform_max_two_grid`, `uniform_min_two_grid` and their means (two uniform draws on a grid of size k, exact sums); `l6.lang`: `total_expectation_flat`. Conditional expectations require nonzero mass in each row; the grid means require k > 0. Not proved: order statistics for N > 2 |
 | Ch. 5 and App. C, affiliated signals | `affiliated.lang` | affiliation on chosen pair and triple priors; prices under second price and English strategy formulas transplanted to discrete signals. As found: the second price formula fails the equilibrium check for both priors with 3 bidders; its revenue exceeds the English price formula. This comparison is not an equilibrium revenue ranking; the English strategies are not checked for equilibrium | `l7.lang` (M6 session 2): the defs `IsAffiliated2` (affiliation of two signals on a finite grid, App. C) and `IsMonoFin`; `cor_prior_affiliated` and `anti_prior_not_affiliated` (the two priors of `affiliated.lang`, by `decide` through the bridge `l7AffiliatedOfFlag`); `independent_prior_affiliated` (every product prior, all sizes); `chebyshev_sum_inequality` (the Harris inequality on a chain: weights at least 0, two monotone functions); `affiliated_cond_expectation_increasing` (for an affiliated prior and a monotone a, E[a(X) given Y = y] is at most E[a(X) given Y = z] when y is at most z); `mlrp_implies_fosd` (the conditional upper tail P(X at least k given Y = y) increases in y). The last two are cross-multiplied, with no division |
@@ -125,8 +126,9 @@ Not covered after M5:
   2-D grid), and App. D. In ch. 5, prices under strategies that fail an
   equilibrium check do not establish an equilibrium revenue ranking or a
   failure of the martingale property at equilibrium.
-- In ch. 3, no pure symmetric equilibrium for all Rat bids (3.4). The
-  grid check is in `discrete.lang`.
+- In ch. 3, no pure symmetric equilibrium (3.4) for more than 2 values
+  (bid functions Fin k -> Rat). `l9.lang` proves it for 2 values and all
+  Rat bids.
 - In ch. 6, ironing (a prior whose discrete virtual value is not
   nondecreasing: `two_bidder_auction_attains_bound` in `l8.lang` takes
   regularity as a hypothesis), and the correlated and common value

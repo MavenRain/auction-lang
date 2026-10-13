@@ -749,7 +749,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2) and the explicit 2-bidder allocation of Ch 6.4 (session 3); 14 proof files with 487 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3) and the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4); 15 proof files with 509 theorem checks |
 
 M0 has these slices:
 
@@ -884,6 +884,19 @@ theorem checks. The gate has 1357 checks in 14 main groups, including 98
 proof refusals, and 1387 checks in total, with 0 failures. Ironing is not
 built.
 
+M6 session 4 (2026-10-13) builds the no pure symmetric equilibrium result
+of 3.4 for all Rat bids: `test/proof/ok/l9.lang` has 22 theorem checks,
+with no new kernel rule. The model is the model of `examples/discrete.lang`:
+two values vL < vH, the high value with probability p (0 < p < 1), first
+price, and a tie splits 1/2. For each pure strategy (bL, bH), the proof
+gives a deviation that gains. It splits on the order of bL and bH, and of
+bH and vH, and it applies the equilibrium Pi at one explicit bid for each
+case and type, with no `Exists`. Each deviation step is a positive term
+with a literal factor (`l9Pos`), so no divisor is a term that is not a
+literal. The 15 proof files hold 509 theorem checks. The gate has 1358
+checks in 14 main groups, including 98 proof refusals, and 1388 checks in
+total, with 0 failures. The form with more than 2 values is not built.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -1005,7 +1018,7 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l8.lang` use the rules in this form. Two
+`test/proof/ok/l1.lang` to `l9.lang` use the rules in this form. Two
 usage facts: `ring` treats a term that `natInd` opens as an atom, and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).

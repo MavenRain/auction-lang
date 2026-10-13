@@ -402,3 +402,19 @@ The gate has 1357 checks in the 14 main groups (proofs 14, proof refusals
 98), 1387 checks in total, and 0 failures. No kernel rule changes and
 `src/front` does not change, so there is no mutant run, and the kernel
 sweep stays at 99 of 101.
+
+M6 session 4 (2026-10-13) adds the proof file `test/proof/ok/l9.lang` for
+3.4, no pure symmetric equilibrium for all Rat bids. It has 22 theorem
+checks, so the 15 proof files have 509 theorem checks. `langc check` gives
+exit 0, `langc build` gives 4 instances (`dsTick : Rat = 1/8` and the
+`decide` flags `l9GridAgree`, `l9GridNoEq` and `l9Grid`, all `true`), and
+`langc verify` gives exit 0. The gate compares the check output with
+`l9.out` and the proof JSON with `l9.json`. Three negative probes on
+temporary copies are refused: the tie value 1/3 in `l9STie`
+(`TYPE_MISMATCH`), the witness step 1/2 in place of 1/4 in `l9Pool1`
+(`RULE_CERT_LT`: the remainder is not a constant) and the v = 1 payoff in
+place of the v = 0 payoff in `l9GridAgree` (`RULE_DECIDE`). The gate has
+1358 checks in the 14 main groups (proofs 15, proof refusals 98), 1388
+checks in total, and 0 failures. No kernel rule changes and `src/front`
+does not change, so there is no mutant run, and the kernel sweep stays at
+99 of 101.

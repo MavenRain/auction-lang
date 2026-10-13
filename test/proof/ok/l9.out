@@ -1,0 +1,23 @@
+theorem l1FlagYesNeNo ok
+theorem l3NoOfNot ok
+theorem l9SWin ok
+theorem l9STie ok
+theorem l9SLose ok
+theorem l9PayAt ok
+theorem l9LeAt ok
+theorem l9NeOfPos ok
+theorem l9Pos ok
+theorem l9Tri ok
+theorem l9EqL ok
+theorem l9EqH ok
+theorem l9Pool1 ok
+theorem l9Pool2 ok
+theorem l9Up ok
+theorem l9Mid ok
+theorem l9Down ok
+theorem l9Pool ok
+theorem l9Sep ok
+theorem no_pure_symmetric_equilibrium ok
+theorem no_pure_equilibrium_half ok
+theorem l9GridCheck ok
+ok

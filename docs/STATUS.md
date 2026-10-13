@@ -398,6 +398,35 @@ split; the `decide` check pins the instance), and ironing. The 14 proof
 files have 487 theorem checks. The gate has 1357 checks in 14 main
 groups, 1387 checks with the C regressions, and 0 failures.
 
+M6 session 4 is done (2026-10-13): no pure symmetric equilibrium in 3.4
+for all Rat bids (slice E). `test/proof/ok/l9.lang` has 22 theorem checks:
+2 copied helpers (`l1FlagYesNeNo` and `l3NoOfNot` from `l3.lang`) and 20
+new theorems. It also copies the defs `dsTick`, `dsShare` and `dsGridPay`
+from `examples/discrete.lang`. Its new defs are `l9S` (the share of a bid
+against the rival bid: a win gives 1, a tie 1/2 and a loss 0), `l9W` (the
+expected share against the pure strategy (bL, bH)), `l9Pay` (the payoff),
+`l9Eq` (the equilibrium Prop, a Pi over all deviations z : Rat) and the
+grid defs `l9G`, `l9GridAgree`, `l9GridNoEq` and `l9Grid`. The book
+theorems are `no_pure_symmetric_equilibrium` (for all Rat vL < vH,
+0 < p < 1, bL and bH, the pair (bL, bH) is not an equilibrium) and
+`no_pure_equilibrium_half` (vL = 0, vH = 1 and p = 1/2, as in
+`discrete.lang`). The proof has five cases, with a = bL and c = bH. If
+a = c = b < vH, the high type bids b + (vH - b)/4 (`l9Pool1`). If a = c = b
+and vH <= b, the low type bids b - 1 (`l9Pool2`). If a < c < vH, the high
+type bids c + (vH - c) p/4 (`l9Up`). If a < c and vH <= c, the high type
+bids the midpoint of a and c (`l9Mid`, the only case that uses p < 1). If
+c < a, the low type bids c and the high type bids a, and the sum of the two
+conditions gives vH <= vL (`l9Down`). This last case applies the Pi two
+times (one witness for each type), with no `Exists`. `l9Pos` (a product of
+two positive terms is positive) gives each deviation step as a positive
+term with a literal factor. `l9GridCheck` uses `decide` to check that
+`l9Pay` agrees with `dsGridPay` on the grid k/8 for v = 0 and v = 1, and
+that no grid pair is an equilibrium against grid deviations. There is no
+new kernel rule, and `src/front` does not change, so there is no mutant
+run. Not built: the form with more than 2 values. The 15 proof files have
+509 theorem checks. The gate has 1358 checks in 14 main groups, 1388
+checks with the C regressions, and 0 failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
