@@ -201,6 +201,34 @@ bids (3.4) and the 3-bidder second price dominance (Vickrey3.lean:99).
 Current state: 8 proof files, 95 proof refusals, 1343 gate tests (the
 14 gate rows).
 
+M5 slice L3 is done (2026-10-12): the Ch 6 part 1 ports and the
+envelope form of 3.1.3, as proof terms in test/proof/ok/l3.lang (51
+theorems, 16 defs; 14 theorems are copies from l1.lang and 2 from
+l1b.lang). The Ch 6 mechanism is Nat-indexed: types 0 to n - 1 on the
+unit grid, interim allocation Q and payment P : Nat -> Rat, IsICNat and
+IsIRNat as Prop defs (examples/mechanism.lang holds the 4-type grid
+checks). 6.1: a best reply to a message mechanism gives an incentive
+compatible direct mechanism (revelation_principle). 6.2: IC gives
+Q (k + 1) >= Q k (adjacent and gap form) and the payment band
+k (Q (k + 1) - Q k) <= P (k + 1) - P k <= (k + 1) (Q (k + 1) - Q k)
+(`cert` after a `transport` along ofNatAdd). 6.3: with IR the payment
+is at most the envelope payment k Q k - sum_{j < k} Q j, and with IC
+alone at least that minus Q k - Q 0 - P 0 (natInd with
+sumRat_succ_right). 6.4: the expected revenue sum_k f k P k is at most
+sum_k f k (envelope payment k), which equals the virtual surplus
+sum_j Q j (j f j - sum_{k > j} f k) by a swap of sums (Abel summation);
+f phi is in the product form, no division by f. 3.1.3: vickrey_envelope
+(Envelope.lean:226), vickrey_utility_plus_payment (:305),
+vickrey_payment_formula (:350), revenue_equivalence (:392) and
+revenue_equivalence_via_allocation (:400) for all n and all priors, by
+a Nat-indexed envelope identity (natInd) and the split of sumRat n at
+k (sumRat_split from l1b). No kernel change, no new refusal, no
+mutants. Not in this slice (overflow turn): the no pure symmetric
+equilibrium result for all Rat bids (3.4), the 3-bidder second price
+dominance (Vickrey3.lean:99) and the 3.1.4 entry fee closed form.
+Current state: 9 proof files, 95 proof refusals, 1344 gate tests (the
+14 gate rows).
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
