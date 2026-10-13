@@ -226,7 +226,38 @@ k (sumRat_split from l1b). No kernel change, no new refusal, no
 mutants. Not in this slice (overflow turn): the no pure symmetric
 equilibrium result for all Rat bids (3.4), the 3-bidder second price
 dominance (Vickrey3.lean:99) and the 3.1.4 entry fee closed form.
-Current state: 9 proof files, 95 proof refusals, 1344 gate tests (the
+
+M5 slice L4 is done (2026-10-12): the Ch 6 part 2 and Ch 7 ports, as
+proof terms in test/proof/ok/l4.lang (55 theorems, 60 defs; 14
+theorems are copies from l1.lang, 2 from l1b.lang and 18 from l3.lang;
+the examples/multiunit.lang and examples/combinatorial.lang defs are
+copies by line number). 6.4: virtual_value_auction_attains_bound,
+every monotone nonnegative interim allocation Q (IsMonoNat) with the
+envelope payment l3Env Q is IC and IR and its expected revenue is the
+virtual surplus l3VS n f Q, the bound of
+ic_ir_revenue_le_virtual_surplus in l3.lang; the IC proof bounds the
+gap sum between the true type and the report by natInd (l4BelowGe,
+l4BelowLe). 6.5: VCG with outcomes Fin m and 2 bidders,
+vcg_truthful_dominant for every efficient rule and
+vcg_individually_rational for an attained Clarke pivot (IsPivot) and
+nonnegative values. 7.1: uniform_price_unit_demand_dominant (3
+bidders, 2 units, all Rat values and bids, so every grid),
+demand_reduction (decide over examples/multiunit.lang muAu) and
+multi_unit_vickrey_dominant (the VCG instance at Fin 3 with marginal
+values and the rival valuing the remaining units). 7.3:
+two_object_vcg_dominant and two_object_vcg_ir (the two-bidder VCG
+instance at Fin 4 with complementary bundles), revenue_not_monotone,
+vcg_outcome_not_in_core and
+exposure_problem (decide over the examples/combinatorial.lang
+witnesses). No kernel change, no new refusal, no mutants. Not in this
+slice: the explicit 2-bidder allocation to the highest nonnegative
+virtual value under a regular prior (its monotonicity is the IsMonoNat
+hypothesis; the 4-type check is mcOptICIR and mcRevIsVS in
+examples/mechanism.lang) and the overflow items (3.4 for all Rat bids,
+the 3-bidder second price dominance, the 3.1.4 entry fee closed form).
+The L4 welfare regressions check every outcome of the multi-unit and
+two-object instances, guarding against counting the same goods twice.
+Current state: 10 proof files, 95 proof refusals, 1345 gate tests (the
 14 gate rows).
 
 ## Known limits
