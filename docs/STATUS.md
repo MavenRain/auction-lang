@@ -289,6 +289,15 @@ continuous naive bid loss, total expectation over a flat joint, order
 statistics for N > 2 and the overflow items of L4. Current state: 11
 proof files, 95 proof refusals, 1346 gate tests (the 14 gate rows).
 
+M5 slice L6 is done (2026-10-12): the overflow turn. test/proof/ok/l6.lang
+holds 46 theorems: 40 helpers copied by line number from l5.lang and l1.lang,
+and 6 new ones: winners_curse_grid_le (the NatLe m n form), total_expectation_flat
+(a flat joint on Fin (natMul m n)), wallet_naive_bid_loses (every Rat signal s with
+0 < s < 1), vickrey3_truthful_dominant and vickrey3_truthful_best_response (three
+bidders, the rival pair read through finMax), entry_fee_closed_form (the fee at
+cutoff c on the uniform grid of K values is c * c / K). No kernel rule was added.
+Current state: 12 proof files, 95 proof refusals, gate 1347 checks, 0 failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
