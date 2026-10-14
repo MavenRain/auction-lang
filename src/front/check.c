@@ -1701,6 +1701,7 @@ static const struct {
   {"natMaxLub", "RULE_NAT_MAX_LUB"},
   {"andSpec", "RULE_AND_SPEC"},
   {"notSpec", "RULE_NOT_SPEC"},
+  {"natEqSpec", "RULE_NAT_EQ_SPEC"},
   {"allFinSpec", "RULE_ALL_FIN_SPEC"},
   {"allFinIntro", "RULE_ALL_FIN_INTRO"},
   {"finValLt", "RULE_FIN_VAL_LT"},

@@ -237,6 +237,7 @@ definitions.
   rule natMaxLub : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a c -> NatLe b c -> NatLe (natMax a b) c
   rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
   rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
+  rule natEqSpec : (a : Nat) -> (b : Nat) -> Iff (Holds (natEq a b)) (Eq Nat a b)
   rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
   rule allFinIntro : (n : Nat) -> (p : Fin n -> Flag) -> ((i : Fin n) -> Holds (p i)) -> Holds (allFin n p)
   rule finValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n
@@ -762,7 +763,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
-| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang` |
+| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang` |
 
 M0 has these slices:
 
@@ -1058,6 +1059,28 @@ theorem checks: 480 for the book and 138 for the kernel rules in
 `k1.lang` to `k6.lang`. The gate has 1381 checks in 14 main groups,
 1411 checks in total, with 0 failures. The kernel mutant sweep kills
 126 / 128 mutants (k3.mut has 4 new rows, k3 44 / 44).
+
+M7 session 2b (2026-10-14, H3 part 2; ruling H3c = a, the default)
+adds the kernel rule `natEqSpec`: `Holds (natEq a b)` if and only if
+`Eq Nat a b`, for each a and b. Before this session, no kernel rule
+named `natEq`, `finEq` or `ratEq`, so an open proof could not use a
+`natEq` fact. The general proofs of the two C1 limits need one: the
+`l12IsHob` branch `natEq (finVal m) 0` and the `finEq` reindexing of the
+second highest split. A wrong argument gives `RULE_NAT_EQ_SPEC` (2 new
+proof refusals). Three more proof refusals check that `natEqSpec 2 3`
+does not give `Eq Nat 2 3` from `Holds (natEq 2 2)` or from
+`Holds (natLe 2 3)`, and does not give `Holds (natEq 2 3)` from
+`Eq Nat 2 2` (120 proof refusals in total). The kernel has 83 rules.
+`test/proof/ok/k7.lang` has 18 theorem checks: the rule at closed
+values, the two directions for each a and b, and the open facts
+`natEq (natAdd a 1) 0 = flagNo`,
+`natEq (natAdd a 1) (natAdd b 1) = natEq a b`,
+`finEq (finSucc n i) (finZero n) = flagNo` and
+`finEq (finSucc n i) (finSucc n j) = finEq i j`. The 22 proof files
+hold 636 theorem checks: 480 for the book and 156 for the kernel rules
+in `k1.lang` to `k7.lang`. The gate has 1387 checks in 14 main groups,
+1417 checks in total, with 0 failures. The kernel mutant sweep kills
+131 / 133 mutants (k3.mut has 5 new rows, k3 49 / 49).
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 

@@ -77,6 +77,8 @@ rule maxR : (a : Nat) -> (b : Nat) -> NatLe b (natMax a b)
 rule natMaxLub : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a c -> NatLe b c -> NatLe (natMax a b) c
 rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
 rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
+-- M7 H3 (s2b). natEq agrees with Eq Nat (USER ruling H3c (a)).
+rule natEqSpec : (a : Nat) -> (b : Nat) -> Iff (Holds (natEq a b)) (Eq Nat a b)
 rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
 -- M7 H3 (s1). The converse of allFinSpec (USER ruling H3a (a)).
 rule allFinIntro : (n : Nat) -> (p : Fin n -> Flag) -> ((i : Fin n) -> Holds (p i)) -> Holds (allFin n p)

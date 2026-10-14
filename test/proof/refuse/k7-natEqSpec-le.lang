@@ -1,0 +1,2 @@
+-- M7 s2b: Holds (natLe 2 3) does not give Eq Nat 2 3 (kernel rule natEqSpec).
+theorem bad : Eq Nat 2 3 := andLeft (Holds (natLe 2 3) -> Eq Nat 2 3) (Eq Nat 2 3 -> Holds (natLe 2 3)) (natEqSpec 2 3) (decide (natLe 2 3))

@@ -1,0 +1,19 @@
+theorem k7FlagRefl ok
+theorem k7FlagYesNeNo ok
+theorem k7LeSucc ok
+theorem k7EqYes3 ok
+theorem k7EqBack3 ok
+theorem k7EqNo23 ok
+theorem k7EqSound ok
+theorem k7EqComplete ok
+theorem k7EqRefl ok
+theorem k7EqSymm ok
+theorem k7EqInj ok
+theorem k7SuccNeZero ok
+theorem k7SuccZeroNo ok
+theorem k7SuccSucc ok
+theorem k7FinEq ok
+theorem k7FinEqSelf ok
+theorem k7FinSuccZero ok
+theorem k7FinSuccSucc ok
+ok

@@ -1,0 +1,2 @@
+-- M7 s2b: a Flag in the place of a (kernel rule natEqSpec).
+theorem bad : True := natEqSpec flagYes

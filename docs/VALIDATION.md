@@ -523,3 +523,19 @@ a constant function of that proof. The k3.mut rows go from 40 to 44
 (k3 44 / 44 killed), the k1.mut rerun gives 31 / 33, and the kernel sweep
 gives 126 / 128. The gate has 1381 checks in the 14 main groups (proofs 21,
 proof refusals 115), 1411 checks in total, and 0 failures.
+
+M7 session 2b (2026-10-14) adds the kernel rule `natEqSpec`
+(`kernel/rules.lang`, one `KERNEL_CODES` row in `src/front/check.c`)
+and the proof file `test/proof/ok/k7.lang` with 18 theorem checks, so
+the 22 proof files have 636 theorem checks. `langc check` gives exit 0,
+`langc build` gives no instances, and `langc verify` gives exit 0. Two
+proof refusals (`k7-natEqSpec.lang`, `k7-natEqSpec-b.lang`) give
+`RULE_NAT_EQ_SPEC` for a Flag in the place of a Nat. Three proof
+refusals check the rule at 2 and 3: `k7-natEqSpec-ne.lang` and
+`k7-natEqSpec-le.lang` give `RULE_AND_LEFT`, and
+`k7-natEqSpec-refl.lang` gives `RULE_AND_RIGHT`. The k3.mut rows go from
+44 to 49 (k3 49 / 49 killed): the rule with a wrong pair in each
+direction, with `natLe` in the place of `natEq`, with one direction
+only, and the code row. The k1.mut rerun gives 31 / 33, and the kernel
+sweep gives 131 / 133. The gate has 1387 checks in the 14 main groups
+(proofs 22, proof refusals 120), 1417 checks in total, and 0 failures.

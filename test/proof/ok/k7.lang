@@ -1,0 +1,24 @@
+-- M7 s2b (H3 part 2): the kernel rule natEqSpec (USER ruling H3c (a)).
+-- Helpers (copies of l12.lang lines 6 and 7 and of the l13 draft lemma l13LeSucc).
+theorem k7FlagRefl : (b : Flag) -> Eq Flag b b := fun b => refl
+theorem k7FlagYesNeNo : Eq Flag flagYes flagNo -> False := fun e => natLtIrrefl 0 (transport (fun (f : Flag) => NatLt 0 (flagIf f 1 0)) e (decide (natLt 0 1)))
+theorem k7LeSucc : (a : Nat) -> (b : Nat) -> NatLe (natAdd a 1) (natAdd b 1) -> NatLe a b := fun a => fun b => fun h => ofNatLeRev a b (cert (ratOfNat a) (ratOfNat b) (RatLe (ratOfNat (natAdd a 1)) (ratOfNat (natAdd b 1))) (ofNatLe (natAdd a 1) (natAdd b 1) h))
+-- Closed values.
+theorem k7EqYes3 : Eq Nat 3 3 := andLeft (Holds (natEq 3 3) -> Eq Nat 3 3) (Eq Nat 3 3 -> Holds (natEq 3 3)) (natEqSpec 3 3) (decide (natEq 3 3))
+theorem k7EqBack3 : Holds (natEq 3 3) := andRight (Holds (natEq 3 3) -> Eq Nat 3 3) (Eq Nat 3 3 -> Holds (natEq 3 3)) (natEqSpec 3 3) refl
+theorem k7EqNo23 : Eq Nat 2 3 -> False := fun e => k7FlagYesNeNo (trans (symm (andRight (Holds (natEq 2 3) -> Eq Nat 2 3) (Eq Nat 2 3 -> Holds (natEq 2 3)) (natEqSpec 2 3) e)) (k7FlagRefl flagNo))
+-- Open values: the two directions, for each a and b.
+theorem k7EqSound : (a : Nat) -> (b : Nat) -> Holds (natEq a b) -> Eq Nat a b := fun a => fun b => fun h => andLeft (Holds (natEq a b) -> Eq Nat a b) (Eq Nat a b -> Holds (natEq a b)) (natEqSpec a b) h
+theorem k7EqComplete : (a : Nat) -> (b : Nat) -> Eq Nat a b -> Holds (natEq a b) := fun a => fun b => fun e => andRight (Holds (natEq a b) -> Eq Nat a b) (Eq Nat a b -> Holds (natEq a b)) (natEqSpec a b) e
+theorem k7EqRefl : (a : Nat) -> Holds (natEq a a) := fun a => k7EqComplete a a refl
+theorem k7EqSymm : (a : Nat) -> (b : Nat) -> Holds (natEq a b) -> Holds (natEq b a) := fun a => fun b => fun h => k7EqComplete b a (symm (k7EqSound a b h))
+-- natEq on a successor: the open facts that the l13 reindexing needs.
+theorem k7EqInj : (a : Nat) -> (b : Nat) -> Eq Nat (natAdd a 1) (natAdd b 1) -> Eq Nat a b := fun a => fun b => fun e => natLeAntisymm a b (k7LeSucc a b (transport (fun (z : Nat) => NatLe (natAdd a 1) z) e (natLeRefl (natAdd a 1)))) (k7LeSucc b a (transport (fun (z : Nat) => NatLe z (natAdd a 1)) e (natLeRefl (natAdd a 1))))
+theorem k7SuccNeZero : (a : Nat) -> Eq Nat (natAdd a 1) 0 -> False := fun a => fun e => natLtIrrefl 0 (transport (fun (z : Nat) => NatLt 0 z) e (andRight (NatLt 0 (natAdd a 1) -> NatLe (natAdd 0 1) (natAdd a 1)) (NatLe (natAdd 0 1) (natAdd a 1) -> NatLt 0 (natAdd a 1)) (natLtIffSuccLe 0 (natAdd a 1)) (natAddLe 0 a 1 1 (natZeroLe a) (natLeRefl 1))))
+theorem k7SuccZeroNo : (a : Nat) -> Eq Flag (natEq (natAdd a 1) 0) flagNo := fun a => flagCases (fun (c : Flag) => Eq Flag (natEq (natAdd a 1) 0) c -> Eq Flag (natEq (natAdd a 1) 0) flagNo) (fun e => absurd (k7SuccNeZero a (k7EqSound (natAdd a 1) 0 e)) (Eq Flag (natEq (natAdd a 1) 0) flagNo)) (fun e => e) (natEq (natAdd a 1) 0) (k7FlagRefl (natEq (natAdd a 1) 0))
+theorem k7SuccSucc : (a : Nat) -> (b : Nat) -> Eq Flag (natEq (natAdd a 1) (natAdd b 1)) (natEq a b) := fun a => fun b => flagCases (fun (c : Flag) => Eq Flag (natEq a b) c -> Eq Flag (natEq (natAdd a 1) (natAdd b 1)) (natEq a b)) (fun e0 => trans (k7EqComplete (natAdd a 1) (natAdd b 1) (cong (fun (z : Nat) => natAdd z 1) (k7EqSound a b e0))) (symm e0)) (fun e0 => trans (flagCases (fun (c : Flag) => Eq Flag (natEq (natAdd a 1) (natAdd b 1)) c -> Eq Flag (natEq (natAdd a 1) (natAdd b 1)) flagNo) (fun e1 => absurd (k7FlagYesNeNo (trans (symm (k7EqComplete a b (k7EqInj a b (k7EqSound (natAdd a 1) (natAdd b 1) e1)))) e0)) (Eq Flag (natEq (natAdd a 1) (natAdd b 1)) flagNo)) (fun e1 => e1) (natEq (natAdd a 1) (natAdd b 1)) (k7FlagRefl (natEq (natAdd a 1) (natAdd b 1)))) (symm e0)) (natEq a b) (k7FlagRefl (natEq a b))
+-- finEq through natEqSpec (finEq i j converts to natEq (finVal i) (finVal j)).
+theorem k7FinEq : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Holds (finEq i j) -> Eq (Fin n) i j := fun n => fun i => fun j => fun h => finExt n i j (k7EqSound (finVal i) (finVal j) h)
+theorem k7FinEqSelf : (n : Nat) -> (i : Fin n) -> Holds (finEq i i) := fun n => fun i => k7EqRefl (finVal i)
+theorem k7FinSuccZero : (n : Nat) -> (i : Fin n) -> Eq Flag (finEq (finSucc n i) (finZero n)) flagNo := fun n => fun i => transport (fun (z : Nat) => Eq Flag (natEq (finVal (finSucc n i)) z) flagNo) (symm (finZeroVal n)) (transport (fun (z : Nat) => Eq Flag (natEq z 0) flagNo) (symm (finSuccVal n i)) (k7SuccZeroNo (finVal i)))
+theorem k7FinSuccSucc : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Eq Flag (finEq (finSucc n i) (finSucc n j)) (finEq i j) := fun n => fun i => fun j => transport (fun (z : Nat) => Eq Flag (natEq (finVal (finSucc n i)) z) (natEq (finVal i) (finVal j))) (symm (finSuccVal n j)) (transport (fun (z : Nat) => Eq Flag (natEq z (natAdd (finVal j) 1)) (natEq (finVal i) (finVal j))) (symm (finSuccVal n i)) (k7SuccSucc (finVal i) (finVal j)))

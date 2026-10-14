@@ -113,3 +113,8 @@ k6-allFinIntro-n.lang RULE_ALL_FIN_INTRO
 k6-allFinIntro-p.lang RULE_ALL_FIN_INTRO
 k6-allFinIntro-one.lang RULE_ALL_FIN_INTRO
 k6-allFinIntro-const.lang RULE_ALL_FIN_INTRO
+k7-natEqSpec.lang RULE_NAT_EQ_SPEC
+k7-natEqSpec-b.lang RULE_NAT_EQ_SPEC
+k7-natEqSpec-ne.lang RULE_AND_LEFT
+k7-natEqSpec-refl.lang RULE_AND_RIGHT
+k7-natEqSpec-le.lang RULE_AND_LEFT

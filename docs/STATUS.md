@@ -565,6 +565,14 @@ kernel has 82 rules, the 21 proof files have 618 theorem checks, and the
 gate has 1411 checks with 0 failures. Session 2 uses the rule for the
 general proofs of the two C1 limits.
 
+M7 session 2b is done (2026-10-14): the kernel rule `natEqSpec`
+(ruling H3c = a). `Holds (natEq a b)` holds if and only if `Eq Nat a b`
+holds. `test/proof/ok/k7.lang` has 18 theorem checks, and 5 new proof
+refusals check a wrong argument and three false uses at 2 and 3. The
+kernel has 83 rules, the 22 proof files have 636 theorem checks, and the
+gate has 1417 checks with 0 failures. Session 2c uses the rule for the
+general proofs of the two C1 limits (`l13.lang`).
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
