@@ -84,8 +84,8 @@ The table gives partial coverage of the book.
 Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
 rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
 accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
-to `l12.lang` hold 480 theorem checks for the book, and `k1.lang` to
-`k7.lang` hold 156 for the kernel rules: 636 in total. M6 session 2
+to `l13.lang` hold 536 theorem checks for the book, and `k1.lang` to
+`k7.lang` hold 156 for the kernel rules: 692 in total. M6 session 2
 adds `l7.lang` (Ch. 5 and App. C), M6 session 3 adds `l8.lang` (the
 explicit 2-bidder allocation of ch. 6.4), M6 session 4 adds `l9.lang`
 (no pure symmetric equilibrium in 3.4 for all Rat bids), M6 session 5
@@ -142,10 +142,6 @@ Not covered after M6:
   regularity as a hypothesis), and the correlated and common value
   extensions (sections 6.4.2 and 6.4.4).
 - In ch. 7, the optimal multiple-object auction.
-- For every number of bidders, a general proof that the fold `l12Hob`
-  and the relation `l12IsHob` agree (it needs an `allFin` intro rule),
-  and the split of the second highest bid event (it needs a count lemma
-  over `Fin n`). `l12.lang` checks both at fixed sizes.
 - The continuous results whose assumptions change in examples marked
   "as found".
 

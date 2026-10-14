@@ -543,7 +543,7 @@ checks. The gate has 1375 checks in 14 main groups, 1405 checks with the
 C regressions, and 0 failures. Two items stay closed checks at fixed
 sizes: a general proof that `l12Hob` and `l12IsHob` agree needs an
 `allFin` intro rule, and the split of the second highest bid event for
-every N needs a count lemma over `Fin n`.
+every N needs a count lemma over `Fin n`. M7 session 2c closes both (`l13.lang`).
 
 M6 is done (2026-10-14, session 10, ruling C1 = a, no kernel change).
 The kernel has 81 rules, and the 20 proof files have 606 theorem checks
@@ -572,6 +572,15 @@ refusals check a wrong argument and three false uses at 2 and 3. The
 kernel has 83 rules, the 22 proof files have 636 theorem checks, and the
 gate has 1417 checks with 0 failures. Session 2c uses the rule for the
 general proofs of the two C1 limits (`l13.lang`).
+
+M7 session 2c is done (2026-10-14): the general proofs of the two C1
+limits in `test/proof/ok/l13.lang` (56 theorem checks, no kernel
+change). `l13HobIff` proves that the relation `l12IsHob` and the fold
+`l12Hob` agree for each k, n, x, i and m. `l13CntNat` is the count lemma
+(ruling H3b = a), and `l13SecondSplit` is the split of the second
+highest bid event for each k, n, x and t. The 23 proof files have 692
+theorem checks, and the gate has 1418 checks with 0 failures. H3 is
+done. Session 3 is D2 (the Harris inequality for 2 variables).
 
 ## Known limits
 

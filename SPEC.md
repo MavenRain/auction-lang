@@ -763,7 +763,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
-| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang` |
+| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change) |
 
 M0 has these slices:
 
@@ -1018,7 +1018,7 @@ checks in total, with 0 failures. Limits: the proof of
 relation to the profile. A general proof that the fold and the relation
 agree needs an `allFin` intro rule, and the kernel does not have one. The
 split for every N needs a count lemma over `Fin n`. Both stay closed
-checks at fixed sizes.
+checks at fixed sizes. M7 session 2c closes both (`l13.lang`).
 
 M6 is done (2026-10-14, session 10). Ruling C1 = a: M6 closes with
 the two limits of session 9 recorded, and the kernel does not change.
@@ -1037,7 +1037,7 @@ total, with 0 failures. The kernel mutant sweep kills 122 of 124 mutants
 byte-equal to its goldens. Two limits stay closed checks at fixed
 sizes: a general proof that `l12Hob` and `l12IsHob` agree needs an
 `allFin` intro rule, and the split of the second highest bid event for
-every N needs a count lemma over `Fin n`. Not built in M6 (rulings
+every N needs a count lemma over `Fin n`. M7 session 2c closes both (`l13.lang`). Not built in M6 (rulings
 R1 = a and R3 = a, and there is no file with the exercises): Appendix B,
 the exercises, the results for a general continuous F, the continuous
 results of the examples marked "as found", and bignum `Nat` and `Rat`.
@@ -1081,6 +1081,27 @@ hold 636 theorem checks: 480 for the book and 156 for the kernel rules
 in `k1.lang` to `k7.lang`. The gate has 1387 checks in 14 main groups,
 1417 checks in total, with 0 failures. The kernel mutant sweep kills
 131 / 133 mutants (k3.mut has 5 new rows, k3 49 / 49).
+
+M7 session 2c (2026-10-14, H3 part 2) adds `test/proof/ok/l13.lang`
+with 56 theorem checks. It closes the two C1 limits with open proofs and
+no kernel change. `l13HobIff` proves that `l12IsHob k n x i m` holds if
+and only if `ratOfNat (finVal m)` equals `l12Hob k n x i`, for each k,
+n, x, i and m. The proof is a `natInd` over k on the grid of the
+`l12Hob` sum, not over n. The number of bidders enters through one fact
+only: `l12Others` is monotone in the threshold (`l13OthMono`, by
+`allFinIntro`). `l13ThrEx` gives the least threshold of a monotone Flag
+family on Nat below k, and `l13CntThr` counts it. `l13CntNat` is the
+count lemma (ruling H3b = a): a sum of `l12Ind` values over `Fin n` is
+`ratOfNat c` for a Nat c. `l13SecondSplit` is the split of the second
+highest bid event for each k, n, x and t. Its core `l13SplitCore` is a
+`natInd` over n on an open Flag family. The `finEq` reindexing facts of
+`k7.lang` (copied with the prefix `l13`) rewrite under the binders of
+`sumRat` and `prodRat` with `l13SumExt` and `l13ProdExt`. The file ends
+with closed instances at (k, n) = (3, 3), (2, 4) and (4, 3), and the
+split at (3, 3). There is no new proof refusal and no new mutant row.
+The 23 proof files hold 692 theorem checks: 536 for the book and 156
+for the kernel rules. The gate has 1388 checks in 14 main groups, 1418
+checks in total, with 0 failures.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 

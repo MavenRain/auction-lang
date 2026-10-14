@@ -539,3 +539,13 @@ direction, with `natLe` in the place of `natEq`, with one direction
 only, and the code row. The k1.mut rerun gives 31 / 33, and the kernel
 sweep gives 131 / 133. The gate has 1387 checks in the 14 main groups
 (proofs 22, proof refusals 120), 1417 checks in total, and 0 failures.
+
+M7 session 2c (2026-10-14) adds the proof file `test/proof/ok/l13.lang`
+with 56 theorem checks and no kernel change, so the 23 proof files have
+692 theorem checks. `langc check` gives exit 0, `langc build` gives no
+instances, and `langc verify` gives exit 0. The file copies 11 facts of
+`k7.lang` with the prefix `l13`, because theorem names are per file.
+There are no new proof refusals and no new mutant rows: the session adds
+no rule, so the kernel sweep stays at 131 / 133. The gate has 1388
+checks in the 14 main groups (proofs 23, proof refusals 120), 1418
+checks in total, and 0 failures.
