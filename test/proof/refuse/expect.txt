@@ -108,3 +108,8 @@ k5-prodRatZero.lang RULE_PROD_RAT_ZERO
 k5-prodRatSucc.lang RULE_PROD_RAT_SUCC
 k5-sumProd.lang RULE_SUM_PROD
 k5-prodRat-fn.lang TYPE_MISMATCH
+k6-allFinIntro.lang RULE_ALL_FIN_INTRO
+k6-allFinIntro-n.lang RULE_ALL_FIN_INTRO
+k6-allFinIntro-p.lang RULE_ALL_FIN_INTRO
+k6-allFinIntro-one.lang RULE_ALL_FIN_INTRO
+k6-allFinIntro-const.lang RULE_ALL_FIN_INTRO

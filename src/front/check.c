@@ -1702,6 +1702,7 @@ static const struct {
   {"andSpec", "RULE_AND_SPEC"},
   {"notSpec", "RULE_NOT_SPEC"},
   {"allFinSpec", "RULE_ALL_FIN_SPEC"},
+  {"allFinIntro", "RULE_ALL_FIN_INTRO"},
   {"finValLt", "RULE_FIN_VAL_LT"},
   {"finExt", "RULE_FIN_EXT"},
   {"finCases", "RULE_FIN_CASES"},

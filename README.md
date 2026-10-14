@@ -85,7 +85,7 @@ Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
 rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
 accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
 to `l12.lang` hold 480 theorem checks for the book, and `k1.lang` to
-`k5.lang` hold 126 for the kernel rules: 606 in total. M6 session 2
+`k6.lang` hold 138 for the kernel rules: 618 in total. M6 session 2
 adds `l7.lang` (Ch. 5 and App. C), M6 session 3 adds `l8.lang` (the
 explicit 2-bidder allocation of ch. 6.4), M6 session 4 adds `l9.lang`
 (no pure symmetric equilibrium in 3.4 for all Rat bids), M6 session 5

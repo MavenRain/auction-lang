@@ -1,0 +1,13 @@
+theorem k6IntroYes3 ok
+theorem k6IntroLt3 ok
+theorem k6IntroLt3Decide ok
+theorem k6IntroZero ok
+theorem k6RoundTrip3 ok
+theorem k6RoundTrip ok
+theorem k6RoundTripPoint ok
+theorem k6AllFinIff ok
+theorem k6AllLt ok
+theorem k6AllLt5 ok
+theorem k6AllFinMono ok
+theorem k6AllFinAnd ok
+ok

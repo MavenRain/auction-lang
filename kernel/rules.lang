@@ -78,6 +78,8 @@ rule natMaxLub : (a : Nat) -> (b : Nat) -> (c : Nat) -> NatLe a c -> NatLe b c -
 rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
 rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
 rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
+-- M7 H3 (s1). The converse of allFinSpec (USER ruling H3a (a)).
+rule allFinIntro : (n : Nat) -> (p : Fin n -> Flag) -> ((i : Fin n) -> Holds (p i)) -> Holds (allFin n p)
 rule finValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n
 rule finExt : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Eq Nat (finVal i) (finVal j) -> Eq (Fin n) i j
 -- M5 K3. natMin is a definition (USER ruling 6: Nat min is in for M5).

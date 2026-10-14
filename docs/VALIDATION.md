@@ -511,3 +511,15 @@ Five tie regressions check that `l12Sp` gives the winning utility only
 to the lowest bidder index on tied 2-bidder and 3-bidder profiles.
 The gate has 1375 checks in the 14 main groups (proofs 20, proof
 refusals 110), 1405 checks in total, and 0 failures.
+
+M7 session 1 (2026-10-14) adds the kernel rule `allFinIntro`
+(`kernel/rules.lang`, one `KERNEL_CODES` row in `src/front/check.c`)
+and the proof file `test/proof/ok/k6.lang` with 12 theorem checks, so
+the 21 proof files have 618 theorem checks. `langc check` gives exit 0,
+`langc build` gives no instances, and `langc verify` gives exit 0. Five
+proof refusals (`k6-allFinIntro*.lang`) give `RULE_ALL_FIN_INTRO`: a
+wrong first argument, a wrong n, a wrong p, a proof at one fixed i, and
+a constant function of that proof. The k3.mut rows go from 40 to 44
+(k3 44 / 44 killed), the k1.mut rerun gives 31 / 33, and the kernel sweep
+gives 126 / 128. The gate has 1381 checks in the 14 main groups (proofs 21,
+proof refusals 115), 1411 checks in total, and 0 failures.

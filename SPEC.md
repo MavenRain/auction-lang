@@ -238,6 +238,7 @@ definitions.
   rule andSpec : (x : Flag) -> (y : Flag) -> Iff (Holds (flagAnd x y)) (And (Holds x) (Holds y))
   rule notSpec : (x : Flag) -> Iff (Holds (flagNot x)) (Not (Holds x))
   rule allFinSpec : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> (i : Fin n) -> Holds (p i)
+  rule allFinIntro : (n : Nat) -> (p : Fin n -> Flag) -> ((i : Fin n) -> Holds (p i)) -> Holds (allFin n p)
   rule finValLt : (n : Nat) -> (i : Fin n) -> NatLt (finVal i) n
   rule finExt : (n : Nat) -> (i : Fin n) -> (j : Fin n) -> Eq Nat (finVal i) (finVal j) -> Eq (Fin n) i j
   ```
@@ -761,6 +762,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
+| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang` |
 
 M0 has these slices:
 
@@ -1039,6 +1041,23 @@ R1 = a and R3 = a, and there is no file with the exercises): Appendix B,
 the exercises, the results for a general continuous F, the continuous
 results of the examples marked "as found", and bignum `Nat` and `Rat`.
 `README.md` `Not covered after M6` lists the remaining items.
+
+M7 session 1 (2026-10-14, H3 part 1; rulings S1 = a and H3a = a, the
+defaults) adds the kernel rule `allFinIntro`, the converse of
+`allFinSpec`. From a proof of `(i : Fin n) -> Holds (p i)`, it gives
+`Holds (allFin n p)`. The rule binds n and p one time, so the checker
+types the proof argument against the same n and the same p as the
+conclusion. A proof for a different n, a different p or one fixed i
+gives `RULE_ALL_FIN_INTRO` (5 new proof refusals, 115 in total). The
+kernel has 82 rules. `test/proof/ok/k6.lang` has 12 theorem checks: the
+rule at a closed n and at n = 0, a round trip with `allFinSpec`, the
+open form (`Holds (allFin n p)` if and only if
+`(i : Fin n) -> Holds (p i)`, for each n and p), and uses that make an
+`allFin` fact from a pointwise open proof. The 21 proof files hold 618
+theorem checks: 480 for the book and 138 for the kernel rules in
+`k1.lang` to `k6.lang`. The gate has 1381 checks in 14 main groups,
+1411 checks in total, with 0 failures. The kernel mutant sweep kills
+126 / 128 mutants (k3.mut has 4 new rows, k3 44 / 44).
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 

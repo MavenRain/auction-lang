@@ -1,0 +1,3 @@
+-- M7 s1: one fixed i. A proof of Holds (p i) at i = 0 only does not give allFin 3 of natLt (finVal i) 1 (false at i = 1).
+theorem at0 : Holds (natLt 0 1) := decide (natLt 0 1)
+theorem bad : Holds (allFin 3 (fun (i : Fin 3) => natLt (finVal i) 1)) := allFinIntro 3 (fun (i : Fin 3) => natLt (finVal i) 1) at0

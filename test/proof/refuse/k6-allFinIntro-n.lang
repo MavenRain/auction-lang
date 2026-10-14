@@ -1,0 +1,3 @@
+-- M7 s1: wrong n. A proof over Fin 3 does not give allFin 4 (the statement is false at i = 3).
+theorem lt3 : (i : Fin 3) -> Holds (natLt (finVal i) 3) := fun (i : Fin 3) => finValLt 3 i
+theorem bad : Holds (allFin 4 (fun (i : Fin 4) => natLt (finVal i) 3)) := allFinIntro 4 (fun (i : Fin 4) => natLt (finVal i) 3) lt3

@@ -556,6 +556,15 @@ continuous "as found" results and bignum `Nat` and `Rat` stay out of
 scope (rulings R1 = a and R3 = a). The close record is the M6 paragraph
 at the end of `SPEC.md` section 10.
 
+M7 session 1 is done (2026-10-14): the kernel rule `allFinIntro` (H3
+part 1, ruling H3a = a). It is the converse of `allFinSpec`: a proof of
+`(i : Fin n) -> Holds (p i)` gives `Holds (allFin n p)` for the same n
+and p. `test/proof/ok/k6.lang` has 12 theorem checks, and 5 new proof
+refusals check a wrong n, a wrong p and a proof at one fixed i. The
+kernel has 82 rules, the 21 proof files have 618 theorem checks, and the
+gate has 1411 checks with 0 failures. Session 2 uses the rule for the
+general proofs of the two C1 limits.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

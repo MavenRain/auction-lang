@@ -1,0 +1,17 @@
+-- M7 s1 (H3 part 1): the kernel rule allFinIntro, the converse of allFinSpec.
+-- Closed n.
+theorem k6IntroYes3 : Holds (allFin 3 (fun (i : Fin 3) => flagYes)) := allFinIntro 3 (fun (i : Fin 3) => flagYes) (fun (i : Fin 3) => decide flagYes)
+theorem k6IntroLt3 : Holds (allFin 3 (fun (i : Fin 3) => natLt (finVal i) 3)) := allFinIntro 3 (fun (i : Fin 3) => natLt (finVal i) 3) (fun (i : Fin 3) => finValLt 3 i)
+theorem k6IntroLt3Decide : Holds (allFin 3 (fun (i : Fin 3) => natLt (finVal i) 3)) := decide (allFin 3 (fun (i : Fin 3) => natLt (finVal i) 3))
+theorem k6IntroZero : (p : Fin 0 -> Flag) -> Holds (allFin 0 p) := fun p => allFinIntro 0 p (fun (i : Fin 0) => absurd (finEmpty i) (Holds (p i)))
+-- A round trip with allFinSpec.
+theorem k6RoundTrip3 : (p : Fin 3 -> Flag) -> Holds (allFin 3 p) -> Holds (allFin 3 p) := fun p => fun h => allFinIntro 3 p (fun (i : Fin 3) => allFinSpec 3 p h i)
+theorem k6RoundTrip : (n : Nat) -> (p : Fin n -> Flag) -> Holds (allFin n p) -> Holds (allFin n p) := fun n => fun p => fun h => allFinIntro n p (fun (i : Fin n) => allFinSpec n p h i)
+theorem k6RoundTripPoint : (n : Nat) -> (p : Fin n -> Flag) -> ((i : Fin n) -> Holds (p i)) -> (i : Fin n) -> Holds (p i) := fun n => fun p => fun h => fun i => allFinSpec n p (allFinIntro n p h) i
+-- The open form: Holds (allFin n p) if and only if (i : Fin n) -> Holds (p i), for every n and p.
+theorem k6AllFinIff : (n : Nat) -> (p : Fin n -> Flag) -> Iff (Holds (allFin n p)) ((i : Fin n) -> Holds (p i)) := fun n => fun p => andIntro (Holds (allFin n p) -> (i : Fin n) -> Holds (p i)) (((i : Fin n) -> Holds (p i)) -> Holds (allFin n p)) (fun h => fun i => allFinSpec n p h i) (fun h => allFinIntro n p h)
+-- Uses: a pointwise open proof gives an allFin fact.
+theorem k6AllLt : (n : Nat) -> Holds (allFin n (fun (i : Fin n) => natLt (finVal i) n)) := fun n => allFinIntro n (fun (i : Fin n) => natLt (finVal i) n) (fun (i : Fin n) => finValLt n i)
+theorem k6AllLt5 : Holds (allFin 5 (fun (i : Fin 5) => natLt (finVal i) 5)) := k6AllLt 5
+theorem k6AllFinMono : (n : Nat) -> (p : Fin n -> Flag) -> (q : Fin n -> Flag) -> ((i : Fin n) -> Holds (p i) -> Holds (q i)) -> Holds (allFin n p) -> Holds (allFin n q) := fun n => fun p => fun q => fun f => fun h => allFinIntro n q (fun (i : Fin n) => f i (allFinSpec n p h i))
+theorem k6AllFinAnd : (n : Nat) -> (p : Fin n -> Flag) -> (q : Fin n -> Flag) -> Holds (allFin n p) -> Holds (allFin n q) -> Holds (allFin n (fun (i : Fin n) => flagAnd (p i) (q i))) := fun n => fun p => fun q => fun hp => fun hq => allFinIntro n (fun (i : Fin n) => flagAnd (p i) (q i)) (fun (i : Fin n) => andRight (Holds (flagAnd (p i) (q i)) -> And (Holds (p i)) (Holds (q i))) (And (Holds (p i)) (Holds (q i)) -> Holds (flagAnd (p i) (q i))) (andSpec (p i) (q i)) (andIntro (Holds (p i)) (Holds (q i)) (allFinSpec n p hp i) (allFinSpec n q hq i)))

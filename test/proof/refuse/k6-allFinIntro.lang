@@ -1,0 +1,2 @@
+-- M7 s1: a wrong argument to the kernel rule allFinIntro gives RULE_ALL_FIN_INTRO.
+theorem bad : True := allFinIntro flagYes
