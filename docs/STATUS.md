@@ -509,6 +509,22 @@ and the k1 rerun kills 31 of 33 (rows 24 and 25 are equivalent and survive, as b
 1369 checks in 14 main groups, 1399 checks with the C regressions, and 0
 failures.
 
+M6 session 8 is done (2026-10-14): the App A product rule for N factors
+(slice H part 2a, ruling H4 = a by default). New in `src`: the built-in
+`prodRat` (`OP_PROD_RAT`: the product of `f i` over `i : Fin n`, and
+`prodRat 0 f` is 1/1; it shares `rule_all_fin` with `allFin` and `sumRat`)
+and the rule codes `RULE_PROD_RAT_ZERO`, `RULE_PROD_RAT_SUCC` and
+`RULE_SUM_PROD`. `kernel/rules.lang` has 3 new rules after `sumRatSucc`:
+`prodRatZero`, `prodRatSucc` and `sumProd` (81 kernel rules).
+`test/proof/ok/k5.lang` has 16 theorem checks, and there are 4 new proof
+refusals (one wrong argument per new rule code and `TYPE_MISMATCH` for a
+function of type `Fin 2 -> Nat` at `prodRat`). The k3 mutant list has 8
+new rows (3 in `eval.c`, 1 in `check.c` and 4 in `kernel/rules.lang`). The
+k3 sweep kills 40 of 40, and the k1 rerun kills 31 of 33 (rows 24 and 25
+are equivalent and survive, as before). The kernel sweep kills 122 of 124.
+The 19 proof files have 570 theorem checks. The gate has 1374 checks in 14
+main groups, 1404 checks with the C regressions, and 0 failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

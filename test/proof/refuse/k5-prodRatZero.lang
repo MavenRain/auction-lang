@@ -1,0 +1,2 @@
+-- M6 s8: a wrong argument to the kernel rule prodRatZero gives RULE_PROD_RAT_ZERO.
+theorem bad : True := prodRatZero flagYes

@@ -284,6 +284,7 @@ static int op_json(Out *o, const Value *type, const Value *v) {
   case OP_RAT_LE:
   case OP_RAT_LT:
   case OP_SUM_RAT:
+  case OP_PROD_RAT:
   case OP_MAT_TABULATE:
   case OP_MAT_OF_FN:
   case OP_MAT_ENTRY:

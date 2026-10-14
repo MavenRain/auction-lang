@@ -470,3 +470,24 @@ statement per new rule. The k3 sweep kills 32 of 32, and the k1 rerun
 kills 31 of 33, so the kernel sweep kills 114 of 116. The gate has
 1369 checks in the 14 main groups (proofs 18, proof refusals 106), 1399
 checks in total, and 0 failures.
+
+M6 session 8 (2026-10-14) adds the proof file `test/proof/ok/k5.lang` for
+the App A product rule for N factors. It has 16 theorem checks, so the 19
+proof files have 570 theorem checks. `langc check` gives exit 0, `langc
+build` gives no instances (the file has theorems only), and `langc verify`
+gives exit 0. The gate compares the check output with `k5.out` and the
+proof JSON with `k5.json`. There are 4 new proof refusals, 110 in total:
+`RULE_PROD_RAT_ZERO`, `RULE_PROD_RAT_SUCC` and `RULE_SUM_PROD` (a wrong
+argument at each rule) and `TYPE_MISMATCH` (a function of type `Fin 2 ->
+Nat` at `prodRat 2`). The k3 mutant list has 8 new rows, 40 in total. In
+`eval.c`: the base 0/1 in place of 1/1 in `reduce_prod_rat`, `rat_add` in
+place of `rat_mul`, and a skip of the factor `f 0`. The loop line of
+`reduce_prod_rat` is the same text as the loop line of `reduce_sum_rat`,
+so a loop bound mutant has no unique anchor, and the skip of one factor
+replaces it. In `check.c`: a `prodRat` result of type `Flag`. In
+`kernel/rules.lang`: `prodRatZero` with 0/1, `prodRatSucc` with `ratAdd`,
+`sumProd` with a free bid b in place of `finProj k n x i`, and `sumProd`
+with `sumRat` in place of `prodRat` on the right side. The k3 sweep kills
+40 of 40, and the k1 rerun kills 31 of 33, so the kernel sweep kills 122
+of 124. The gate has 1374 checks in the 14 main groups (proofs 19, proof
+refusals 110), 1404 checks in total, and 0 failures.

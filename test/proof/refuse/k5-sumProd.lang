@@ -1,0 +1,2 @@
+-- M6 s8: a wrong argument to the kernel rule sumProd gives RULE_SUM_PROD.
+theorem bad : True := sumProd flagYes

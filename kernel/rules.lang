@@ -103,6 +103,13 @@ rule profExt : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (y : Fin (nat
 -- The defining equations of sumRat and of the Nat fold on an open size.
 rule sumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1
 rule sumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i))))
+-- M6 H (s8). prodRat is a built-in (check.c, rule_all_fin; eval.c,
+-- reduce_prod_rat). sumProd is the App A product rule for N factors: a sum
+-- over the profiles of a product of one factor per bidder is the product of
+-- the sums. The 2-factor form is l5.lang sumRat_mul_sumRat.
+rule prodRatZero : (f : Fin 0 -> Rat) -> Eq Rat (prodRat 0 f) 1/1
+rule prodRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (prodRat (natAdd n 1) f) (ratMul (f (finZero n)) (prodRat n (fun i => f (finSucc n i))))
+rule sumProd : (k : Nat) -> (n : Nat) -> (f : Fin n -> Fin k -> Rat) -> Eq Rat (sumRat (natPow k n) (fun (x : Fin (natPow k n)) => prodRat n (fun (i : Fin n) => f i (finProj k n x i)))) (prodRat n (fun (i : Fin n) => sumRat k (f i)))
 rule foldZero : (A : Type 0) -> (f : A -> A) -> (x : A) -> Eq A (fold f x 0) x
 rule foldSucc : (A : Type 0) -> (f : A -> A) -> (x : A) -> (n : Nat) -> Eq A (fold f x (natAdd n 1)) (f (fold f x n))
 rule minL : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) a

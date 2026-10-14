@@ -1,0 +1,17 @@
+theorem k5Prod0 ok
+theorem k5Prod3 ok
+theorem k5SumProd32 ok
+theorem k5SumProd32Value ok
+theorem k5SumProd23 ok
+theorem k5SumProd23Value ok
+theorem k5MaxIndGrid ok
+theorem k5MaxCdf32Sum ok
+theorem k5MaxCdf32 ok
+theorem k5ProdRatZero ok
+theorem k5ProdRatSucc ok
+theorem k5SumProd ok
+theorem k5ProdOne ok
+theorem k5ProdTwo ok
+theorem k5ExpectIndepMul ok
+theorem k5MaxCdf ok
+ok

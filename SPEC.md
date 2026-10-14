@@ -112,6 +112,7 @@ the Meaning column is a section of `design/DESIGN.md`.
 | `ratOfNat` | `Nat -> Rat` | The fraction of a Nat (sections 2 and 5) |
 | `ratEq`, `ratLe`, `ratLt` | `Rat -> Rat -> Flag` | Rat comparison (sections 2 and 5) |
 | `sumRat` | 2 arguments, `Rat` | The sum of a function over `Fin n` (sections 5 and 7) |
+| `prodRat` | 2 arguments, `Rat` | The product of a function over `Fin n`, 1/1 at n = 0 (M6 s8) |
 | `matTabulate`, `matOfFn` | 3 arguments, `Matrix` | A matrix from a function to `Rat`, or the deterministic kernel of a function on `Fin` (section 3) |
 | `matEntry` | 3 arguments, `Rat` | One entry of a matrix (section 3) |
 | `matComp`, `matKron` | 5 and 6 arguments, `Matrix` | Composition and Kronecker product (section 3) |
@@ -281,6 +282,9 @@ definitions.
   rule profExt : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (y : Fin (natPow k n)) -> ((i : Fin n) -> Eq (Fin k) (finProj k n x i) (finProj k n y i)) -> Eq (Fin (natPow k n)) x y
   rule sumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1
   rule sumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i))))
+  rule prodRatZero : (f : Fin 0 -> Rat) -> Eq Rat (prodRat 0 f) 1/1
+  rule prodRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (prodRat (natAdd n 1) f) (ratMul (f (finZero n)) (prodRat n (fun i => f (finSucc n i))))
+  rule sumProd : (k : Nat) -> (n : Nat) -> (f : Fin n -> Fin k -> Rat) -> Eq Rat (sumRat (natPow k n) (fun (x : Fin (natPow k n)) => prodRat n (fun (i : Fin n) => f i (finProj k n x i)))) (prodRat n (fun (i : Fin n) => sumRat k (f i)))
   rule foldZero : (A : Type 0) -> (f : A -> A) -> (x : A) -> Eq A (fold f x 0) x
   rule foldSucc : (A : Type 0) -> (f : A -> A) -> (x : A) -> (n : Nat) -> Eq A (fold f x (natAdd n 1)) (f (fold f x n))
   rule minL : (a : Nat) -> (b : Nat) -> NatLe (natMin a b) a
@@ -756,7 +760,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7); 18 proof files with 554 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8); 19 proof files with 570 theorem checks |
 
 M0 has these slices:
 
@@ -959,6 +963,24 @@ checks in 14 main groups, including 106 proof refusals, and 1399 checks in
 total, with 0 failures. The N-factor product rule and the mechanisms are
 not built.
 
+M6 session 8 adds the App A product rule for N factors (ruling H4 = a by
+default). The built-in `prodRat n f` (2 arguments, `Rat`, the new
+operation `OP_PROD_RAT`) is the product of `f i` over `i : Fin n`, and
+`prodRat 0 f` is 1/1. It shares the check rule of `allFin` and `sumRat`.
+Three kernel rules follow `sumRatSucc`: `prodRatZero`, `prodRatSucc` and
+`sumProd` (81 kernel rules). `sumProd k n f` states that the sum over the
+profiles `x : Fin (natPow k n)` of `prodRat n (fun i => f i (finProj k n x
+i))` is `prodRat n (fun i => sumRat k (f i))`. `test/proof/ok/k5.lang` has
+16 theorem checks: 9 closed checks (`prodRat` values, `sumProd` at k = 3
+and n = 2 and at k = 2 and n = 3, the indicator of the max as a `prodRat`
+of indicators on all profiles at k = 3 and n = 2, and P(max < 2) = 4/9 for
+2 uniform draws on `Fin 3`), one open use of each rule, and 4 App A lemmas
+(`prodRat 1 f` is `f 0`, the 2-factor case, the N-factor form of
+`expect_indep_mul`, and the CDF of the max of N iid draws). The 19 proof
+files hold 570 theorem checks. The gate has 1374 checks in 14 main groups,
+including 110 proof refusals, and 1404 checks in total, with 0 failures.
+The mechanisms for every N are not built.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -1080,7 +1102,7 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l11.lang` and `k4.lang` use the rules in
+`test/proof/ok/l1.lang` to `l11.lang`, `k4.lang` and `k5.lang` use the rules in
 this form. Three usage facts: `ring` treats a term that `natInd` opens as
 an atom, `ringNat` treats `natPow` as an atom (`k4PowOne`), and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat

@@ -624,6 +624,7 @@ static int decode_op(Typed *t, const Value *type, const JsonNode *node, const Va
   case OP_RAT_LE:
   case OP_RAT_LT:
   case OP_SUM_RAT:
+  case OP_PROD_RAT:
   case OP_MAT_TABULATE:
   case OP_MAT_OF_FN:
   case OP_MAT_ENTRY:

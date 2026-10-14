@@ -104,3 +104,7 @@ k4-updProj.lang RULE_UPD_PROJ
 k4-profExt.lang RULE_PROF_EXT
 k4-finProj-size.lang TYPE_FIN_SIZE
 k4-finUpd-bid.lang TYPE_MISMATCH
+k5-prodRatZero.lang RULE_PROD_RAT_ZERO
+k5-prodRatSucc.lang RULE_PROD_RAT_SUCC
+k5-sumProd.lang RULE_SUM_PROD
+k5-prodRat-fn.lang TYPE_MISMATCH

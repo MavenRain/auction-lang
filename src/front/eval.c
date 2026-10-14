@@ -31,7 +31,7 @@ static const char *const OP_NAMES[] = {
   [OP_RAT] = "Rat", [OP_RAT_ADD] = "ratAdd", [OP_RAT_SUB] = "ratSub",
   [OP_RAT_MUL] = "ratMul", [OP_RAT_DIV] = "ratDiv", [OP_RAT_OF_NAT] = "ratOfNat",
   [OP_RAT_EQ] = "ratEq", [OP_RAT_LE] = "ratLe", [OP_RAT_LT] = "ratLt",
-  [OP_SUM_RAT] = "sumRat", [OP_MATRIX] = "Matrix",
+  [OP_SUM_RAT] = "sumRat", [OP_PROD_RAT] = "prodRat", [OP_MATRIX] = "Matrix",
   [OP_MAT_TABULATE] = "matTabulate", [OP_MAT_OF_FN] = "matOfFn",
   [OP_MAT_ENTRY] = "matEntry", [OP_MAT_COMP] = "matComp", [OP_MAT_KRON] = "matKron",
   [OP_MAT_ID_KRON_COMP] = "matIdKronComp", [OP_MAT_EQ] = "matEq", [OP_PROJ] = "?",
@@ -56,7 +56,7 @@ static const unsigned char OP_ARITY[] = {
   [OP_FLAG_NOT] = 1, [OP_FIN] = 1, [OP_ALL_FIN] = 2, [OP_RAT] = 0,
   [OP_RAT_ADD] = 2, [OP_RAT_SUB] = 2, [OP_RAT_MUL] = 2, [OP_RAT_DIV] = 2,
   [OP_RAT_OF_NAT] = 1, [OP_RAT_EQ] = 2, [OP_RAT_LE] = 2, [OP_RAT_LT] = 2,
-  [OP_SUM_RAT] = 2, [OP_MATRIX] = 2, [OP_MAT_TABULATE] = 3,
+  [OP_SUM_RAT] = 2, [OP_PROD_RAT] = 2, [OP_MATRIX] = 2, [OP_MAT_TABULATE] = 3,
   [OP_MAT_OF_FN] = 3, [OP_MAT_ENTRY] = 3, [OP_MAT_COMP] = 5, [OP_MAT_KRON] = 6,
   [OP_MAT_ID_KRON_COMP] = 6, [OP_MAT_EQ] = 2, [OP_PROJ] = 1,
   [OP_PROP] = 0, [OP_RULE] = 0
@@ -1295,6 +1295,29 @@ static const Value *reduce_sum_rat(Machine *m, const Value *const *a, uint32_t n
   return acc;
 }
 
+/* prodRat n f = f 0 * (f 1 * (... * (f (n - 1) * 1))) (M6 H, the App A
+   product rule for N factors), in the same loop as reduce_sum_rat.
+   prodRat 0 f = 1/1. */
+static const Value *reduce_prod_rat(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  const Value *acc;
+  uint64_t i;
+  if (blocked(m, a[0], OP_PROD_RAT, 0, 0, a, n, &out))
+    return out;
+  if (a[0]->kind != VAL_NAT)
+    return internal(m, "a prodRat with a size that is not a Nat");
+  acc = val_rat(m, 1, 1);
+  for (i = a[0]->nat; i > 0 && acc != NULL && acc->kind == VAL_RAT; i--) {
+    const Value *r = apply_value(m, a[1], val_nat(m, i - 1u));
+    if (r == NULL || r->kind == VAL_TRAP)
+      return r;
+    if (r->kind != VAL_RAT)
+      return scrut_of(r) == SCRUT_NEUTRAL ? val_op(m, VAL_STUCK, OP_PROD_RAT, 0, 0, a, n) : internal(m, "a prodRat term that is not a Rat");
+    acc = rat_mul(m, r, acc);
+  }
+  return acc;
+}
+
 #define MATRIX_SIDE_MAX ((uint64_t)1 << 25)
 #define MATRIX_CELLS_MAX ((uint64_t)1 << 25)
 
@@ -1738,6 +1761,8 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
     return rat_test(m, op, a, n);
   case OP_SUM_RAT:
     return reduce_sum_rat(m, a, n);
+  case OP_PROD_RAT:
+    return reduce_prod_rat(m, a, n);
   case OP_MAT_TABULATE:
     return reduce_mat_tabulate(m, a, n);
   case OP_MAT_OF_FN:

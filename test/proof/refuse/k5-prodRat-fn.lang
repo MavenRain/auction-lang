@@ -1,0 +1,2 @@
+-- M6 s8: the function of prodRat 2 has type Fin 2 -> Nat, not Fin 2 -> Rat.
+theorem bad : (f : Fin 2 -> Nat) -> Eq Rat (prodRat 2 f) (prodRat 2 f) := fun f => refl

@@ -84,6 +84,7 @@ typedef enum {
   OP_RAT_LE,
   OP_RAT_LT,
   OP_SUM_RAT,
+  OP_PROD_RAT,
   OP_MATRIX,
   OP_MAT_TABULATE,
   OP_MAT_OF_FN,

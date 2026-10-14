@@ -1,0 +1,31 @@
+-- M6 s8: the App A product rule for N factors. prodRat n f is the product
+-- of f i over i : Fin n (prodRat 0 f = 1/1). sumProd: a sum over the
+-- profiles x : Fin (natPow k n) of a product of one factor per bidder is
+-- the product of the sums. One theorem per built-in and per rule, then App A.
+-- k5Ind copies test/proof/ok/l5.lang line 37 (a file cannot import another file).
+def k5Ind : (c : Flag) -> Rat := fun (c : Flag) => flagIf c 1/1 0/1
+theorem k5Prod0 : Eq Rat (prodRat 0 (fun (i : Fin 0) => 5/1)) 1/1 := refl
+theorem k5Prod3 : Eq Rat (prodRat 3 (fun (i : Fin 3) => ratOfNat (natAdd (finVal i) 2))) 24/1 := refl
+theorem k5SumProd32 : Eq Rat (sumRat (natPow 3 2) (fun (x : Fin (natPow 3 2)) => prodRat 2 (fun (i : Fin 2) => ratOfNat (natAdd (natMul (finVal i) 3) (finVal (finProj 3 2 x i)))))) (prodRat 2 (fun (i : Fin 2) => sumRat 3 (fun (b : Fin 3) => ratOfNat (natAdd (natMul (finVal i) 3) (finVal b))))) := refl
+theorem k5SumProd32Value : Eq Rat (prodRat 2 (fun (i : Fin 2) => sumRat 3 (fun (b : Fin 3) => ratOfNat (natAdd (natMul (finVal i) 3) (finVal b))))) 36/1 := refl
+theorem k5SumProd23 : Eq Rat (sumRat (natPow 2 3) (fun (x : Fin (natPow 2 3)) => prodRat 3 (fun (i : Fin 3) => ratOfNat (natAdd (finVal i) (natMul (finVal (finProj 2 3 x i)) 2))))) (prodRat 3 (fun (i : Fin 3) => sumRat 2 (fun (b : Fin 2) => ratOfNat (natAdd (finVal i) (natMul (finVal b) 2))))) := refl
+theorem k5SumProd23Value : Eq Rat (prodRat 3 (fun (i : Fin 3) => sumRat 2 (fun (b : Fin 2) => ratOfNat (natAdd (finVal i) (natMul (finVal b) 2))))) 48/1 := refl
+-- The max of the bids is below t iff each bid is below t: the indicator of
+-- the max is a prodRat of indicators (all profiles at k = 3, n = 2, t = 2).
+theorem k5MaxIndGrid : Holds (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => ratEq (k5Ind (natLt (natMax (finVal (finProj 3 2 x 0)) (finVal (finProj 3 2 x 1))) 2)) (prodRat 2 (fun (i : Fin 2) => k5Ind (natLt (finVal (finProj 3 2 x i)) 2))))) := decide (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => ratEq (k5Ind (natLt (natMax (finVal (finProj 3 2 x 0)) (finVal (finProj 3 2 x 1))) 2)) (prodRat 2 (fun (i : Fin 2) => k5Ind (natLt (finVal (finProj 3 2 x i)) 2)))))
+-- P(max < 2) for 2 uniform draws on Fin 3: 4/9 as a sum over the profiles and as F(2)^2.
+theorem k5MaxCdf32Sum : Eq Rat (sumRat (natPow 3 2) (fun (x : Fin (natPow 3 2)) => ratMul 1/9 (k5Ind (natLt (natMax (finVal (finProj 3 2 x 0)) (finVal (finProj 3 2 x 1))) 2)))) 4/9 := refl
+theorem k5MaxCdf32 : Eq Rat (prodRat 2 (fun (i : Fin 2) => sumRat 3 (fun (b : Fin 3) => ratMul 1/3 (k5Ind (natLt (finVal b) 2))))) 4/9 := refl
+theorem k5ProdRatZero : (f : Fin 0 -> Rat) -> Eq Rat (prodRat 0 f) 1/1 := fun f => prodRatZero f
+theorem k5ProdRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (prodRat (natAdd n 1) f) (ratMul (f (finZero n)) (prodRat n (fun (i : Fin n) => f (finSucc n i)))) := fun n => fun f => prodRatSucc n f
+theorem k5SumProd : (k : Nat) -> (n : Nat) -> (f : Fin n -> Fin k -> Rat) -> Eq Rat (sumRat (natPow k n) (fun (x : Fin (natPow k n)) => prodRat n (fun (i : Fin n) => f i (finProj k n x i)))) (prodRat n (fun (i : Fin n) => sumRat k (f i))) := fun k => fun n => fun f => sumProd k n f
+-- App A: a product of one factor is the factor, and the 2-factor case.
+theorem k5ProdOne : (f : Fin 1 -> Rat) -> Eq Rat (prodRat 1 f) (f (finZero 0)) := fun f => trans (prodRatSucc 0 f) (trans (cong (fun (x : Rat) => ratMul (f (finZero 0)) x) (prodRatZero (fun (i : Fin 0) => f (finSucc 0 i)))) (ring (ratMul (f (finZero 0)) 1/1) (f (finZero 0)) True trivial))
+theorem k5ProdTwo : (f : Fin 2 -> Rat) -> Eq Rat (prodRat 2 f) (ratMul (f (finZero 1)) (f (finSucc 1 (finZero 0)))) := fun f => trans (prodRatSucc 1 f) (cong (fun (x : Rat) => ratMul (f (finZero 1)) x) (k5ProdOne (fun (i : Fin 1) => f (finSucc 1 i))))
+-- App A independent draws for N bidders: under the product weight of the
+-- p i, the expectation of the product of the g i is the product of the
+-- expectations (the N-factor form of l5.lang expect_indep_mul).
+theorem k5ExpectIndepMul : (k : Nat) -> (n : Nat) -> (p : Fin n -> Fin k -> Rat) -> (g : Fin n -> Fin k -> Rat) -> Eq Rat (sumRat (natPow k n) (fun (x : Fin (natPow k n)) => prodRat n (fun (i : Fin n) => ratMul (p i (finProj k n x i)) (g i (finProj k n x i))))) (prodRat n (fun (i : Fin n) => sumRat k (fun (b : Fin k) => ratMul (p i b) (g i b)))) := fun k => fun n => fun p => fun g => sumProd k n (fun (i : Fin n) => fun (b : Fin k) => ratMul (p i b) (g i b))
+-- App A the CDF of the max of N iid draws: P(all bids below t) = F(t)^N,
+-- F(t) = sumRat k (p b if b < t). The N-factor form of l5.lang max_cdf_two.
+theorem k5MaxCdf : (k : Nat) -> (n : Nat) -> (p : Fin k -> Rat) -> (t : Nat) -> Eq Rat (sumRat (natPow k n) (fun (x : Fin (natPow k n)) => prodRat n (fun (i : Fin n) => ratMul (p (finProj k n x i)) (k5Ind (natLt (finVal (finProj k n x i)) t))))) (prodRat n (fun (i : Fin n) => sumRat k (fun (b : Fin k) => ratMul (p b) (k5Ind (natLt (finVal b) t))))) := fun k => fun n => fun p => fun t => sumProd k n (fun (i : Fin n) => fun (b : Fin k) => ratMul (p b) (k5Ind (natLt (finVal b) t)))

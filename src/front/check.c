@@ -175,6 +175,7 @@ static const Builtin BUILTINS[] = {
   {"ratLe", 2, RULE_RAT2, OP_RAT_LE, OP_FLAG, 0},
   {"ratLt", 2, RULE_RAT2, OP_RAT_LT, OP_FLAG, 0},
   {"sumRat", 2, RULE_ALL_FIN, OP_SUM_RAT, OP_RAT, 0},
+  {"prodRat", 2, RULE_ALL_FIN, OP_PROD_RAT, OP_RAT, 0},
   {"Matrix", 2, RULE_MATRIX_TYPE, OP_MATRIX, OP_NAT, 0},
   {"matTabulate", 3, RULE_MAT_BUILD, OP_MAT_TABULATE, OP_RAT, 0},
   {"matOfFn", 3, RULE_MAT_BUILD, OP_MAT_OF_FN, OP_FIN, 0},
@@ -1168,8 +1169,8 @@ static const Core *rule_fin_upd(Call *k) {
 }
 
 /* allFin n f: f is a Flag test on Fin n. */
-/* sumRat n f shares the rule: the row gives the operation and the result
-   (Flag for allFin, Rat for sumRat). */
+/* sumRat n f and prodRat n f share the rule: the row gives the operation
+   and the result (Flag for allFin, Rat for sumRat and prodRat). */
 static const Core *rule_all_fin(Call *k) {
   Checker *c = k->c;
   const Value *res = tyop(c, k->b->result, 0, NULL, NULL, NULL);
@@ -1718,6 +1719,9 @@ static const struct {
   {"profExt", "RULE_PROF_EXT"},
   {"sumRatZero", "RULE_SUM_RAT_ZERO"},
   {"sumRatSucc", "RULE_SUM_RAT_SUCC"},
+  {"prodRatZero", "RULE_PROD_RAT_ZERO"},
+  {"prodRatSucc", "RULE_PROD_RAT_SUCC"},
+  {"sumProd", "RULE_SUM_PROD"},
   {"foldZero", "RULE_FOLD_ZERO"},
   {"foldSucc", "RULE_FOLD_SUCC"},
   {"minL", "RULE_MIN_L"},
