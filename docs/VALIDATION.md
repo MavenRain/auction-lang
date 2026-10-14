@@ -549,3 +549,13 @@ There are no new proof refusals and no new mutant rows: the session adds
 no rule, so the kernel sweep stays at 131 / 133. The gate has 1388
 checks in the 14 main groups (proofs 23, proof refusals 120), 1418
 checks in total, and 0 failures.
+
+M7 session 3 (2026-10-14) adds the proof file `test/proof/ok/l14.lang`
+with 22 theorem checks and no kernel change, so the 24 proof files have
+714 theorem checks. `langc check` gives exit 0, `langc build` gives no
+instances, and `langc verify` gives exit 0. The file copies 14 facts and
+the def `IsMonoFin` of `l7.lang` with the same names, because theorem
+names are per file. There are no new proof refusals and no new mutant
+rows: the session adds no rule, so the kernel sweep stays at 131 / 133.
+The gate has 1389 checks in the 14 main groups (proofs 24, proof
+refusals 120), 1419 checks in total, and 0 failures.

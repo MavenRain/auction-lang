@@ -1,0 +1,23 @@
+theorem sumRat_nonneg ok
+theorem sumRat_const_zero ok
+theorem sumRat_congr ok
+theorem sumRat_add ok
+theorem sumRat_const_mul ok
+theorem sumRat_le ok
+theorem sumRat_swap ok
+theorem sumRat_mul_sumRat ok
+theorem l7LeOfEq ok
+theorem l7Half ok
+theorem l7SumSplit ok
+theorem l7SumSymLe ok
+theorem l7OrdPt ok
+theorem chebyshev_sum_inequality ok
+theorem l14MulLe ok
+theorem l14LeTrans ok
+theorem l14Inner ok
+theorem l14RowMono ok
+theorem l14Row ok
+theorem l14Pull ok
+theorem harris_two_var ok
+theorem harris_grid ok
+ok

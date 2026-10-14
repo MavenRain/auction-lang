@@ -84,8 +84,8 @@ The table gives partial coverage of the book.
 Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
 rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
 accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
-to `l13.lang` hold 536 theorem checks for the book, and `k1.lang` to
-`k7.lang` hold 156 for the kernel rules: 692 in total. M6 session 2
+to `l14.lang` hold 558 theorem checks for the book, and `k1.lang` to
+`k7.lang` hold 156 for the kernel rules: 714 in total. M6 session 2
 adds `l7.lang` (Ch. 5 and App. C), M6 session 3 adds `l8.lang` (the
 explicit 2-bidder allocation of ch. 6.4), M6 session 4 adds `l9.lang`
 (no pure symmetric equilibrium in 3.4 for all Rat bids), M6 session 5
@@ -130,8 +130,7 @@ Not covered after M6:
   comparison (3.2.3), affiliated first price and risk aversion (5.3 and
   5.6) and the martingale property (7.2). A continuous payoff or
   revenue formula enters a theorem as a definition.
-- In App. C, the Harris inequality for 2 variables (a product prior on a
-  2-D grid), and App. D. In ch. 5, prices under strategies that fail an
+- App. D. In ch. 5, prices under strategies that fail an
   equilibrium check do not establish an equilibrium revenue ranking or a
   failure of the martingale property at equilibrium.
 - In ch. 3, no pure symmetric equilibrium (3.4) for more than 2 values

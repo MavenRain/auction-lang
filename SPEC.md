@@ -763,7 +763,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
-| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change) |
+| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change) |
 
 M0 has these slices:
 
@@ -884,7 +884,8 @@ M6 session 2 (2026-10-13) builds them: `test/proof/ok/l7.lang` has 24 theorem
 checks for Ch 5 and App C, with no new kernel rule. The 13 proof files hold
 440 theorem checks. The gate has 1356 checks in 14 main groups, including 98
 proof refusals, and 1386 checks in total, with 0 failures. App D and the
-Harris inequality for 2 variables are not built.
+Harris inequality for 2 variables are not built. M7 session 3 closes the
+Harris inequality for 2 variables (`l14.lang`).
 
 M6 session 3 (2026-10-13) builds the explicit 2-bidder allocation of Ch 6.4:
 `test/proof/ok/l8.lang` has 47 theorem checks, with no new kernel rule. The
@@ -1102,6 +1103,24 @@ split at (3, 3). There is no new proof refusal and no new mutant row.
 The 23 proof files hold 692 theorem checks: 536 for the book and 156
 for the kernel rules. The gate has 1388 checks in 14 main groups, 1418
 checks in total, with 0 failures.
+
+M7 session 3 (2026-10-14, D2) adds `test/proof/ok/l14.lang` with 22
+theorem checks and no kernel change. It closes the App C limit: the
+Harris inequality for 2 variables on a product prior. Ruling D2a = a
+(the default): the prior is p i times q j on the grid `Fin m` by
+`Fin n`, and each expectation is a nested `sumRat`. Let W h be the
+double sum of p i * q j * h i j. If p and q are not negative and f and g
+increase in each coordinate, then `harris_two_var` proves
+W f * W g <= (sum p * sum q) * W (f g). `harris_grid` is the same
+statement on `Fin k` by `Fin k`. The proof uses the Chebyshev sum
+inequality two times: on each row with the weights q, and on the row
+sums with the weights p. The row sums increase because q is not
+negative (`l14RowMono`, by `sumRat_le`). The file copies the dependency
+closure of `chebyshev_sum_inequality` from `l7.lang` with the same
+names, because theorem names are per file. There is no new proof
+refusal and no new mutant row. The 24 proof files hold 714 theorem
+checks: 558 for the book and 156 for the kernel rules. The gate has 1389
+checks in 14 main groups, 1419 checks in total, with 0 failures.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 

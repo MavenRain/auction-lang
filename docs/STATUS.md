@@ -368,8 +368,8 @@ the Chebyshev sum inequality (the Harris inequality on a chain), the
 increasing conditional expectation, and MLRP implies FOSD of the
 conditionals. The last two are in cross-multiplied form. There is no new
 kernel rule, and `src/front/nf.c` and `src/front/check.c` do not change, so
-there is no mutant run. Not built: the Harris inequality for 2 variables,
-App. D, and the division form of the conditional expectation (a `cert`
+there is no mutant run. Not built: the Harris inequality for 2 variables
+(M7 session 3 closes it in `l14.lang`), App. D, and the division form of the conditional expectation (a `cert`
 across a `ratDiv` by a sum hits the R8 (a) limit, see Known limits). The 13
 proof files have 440 theorem checks. The gate has 1356 checks in 14 main
 groups, 1386 checks with the C regressions, and 0 failures.
@@ -581,6 +581,15 @@ change). `l13HobIff` proves that the relation `l12IsHob` and the fold
 highest bid event for each k, n, x and t. The 23 proof files have 692
 theorem checks, and the gate has 1418 checks with 0 failures. H3 is
 done. Session 3 is D2 (the Harris inequality for 2 variables).
+
+M7 session 3 is done (2026-10-14): the Harris inequality for 2
+variables on a product prior in `test/proof/ok/l14.lang` (22 theorem
+checks, no kernel change, ruling D2a = a). `harris_two_var` proves it on
+the grid `Fin m` by `Fin n` with the prior p i times q j, and
+`harris_grid` proves it on `Fin k` by `Fin k`. The proof uses the
+Chebyshev sum inequality on each row and on the row sums. The 24 proof
+files have 714 theorem checks, and the gate has 1419 checks with 0
+failures. D2 is done. Session 4 is E2 (3.4 for k values).
 
 ## Known limits
 
