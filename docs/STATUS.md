@@ -489,6 +489,26 @@ rule, and `src/front` does not change, so there is no mutant run. The 17
 proof files have 535 theorem checks. The gate has 1360 checks in 14 main
 groups, 1390 checks with the C regressions, and 0 failures.
 
+M6 session 7 is done (2026-10-14): the N-ary profile layer (slice H part 1,
+rulings H1 = a, H2 = a and H3 = a by default). A profile of n bids on the
+grid `Fin k` is a value of `Fin (natPow k n)`, and the bid of bidder i is
+digit i in base k (bidder 0 is the low digit). New in `src`: the Nat
+operation `natPow` (`OP_NAT_POW`: `natPow x 0` is 1, x below 2 has no
+loop, and an overflow traps), the built-ins `finProj` (4 arguments) and
+`finUpd` (5 arguments), `fin_power` (`TYPE_FIN_SIZE` when `natPow k n`
+traps) and the rule codes `RULE_FIN_PROJ` and `RULE_FIN_UPD`.
+`kernel/rules.lang` has 6 new rules after `pairVal`: `powZero`,
+`powSucc`, `projUpd`, `projUpdNe`, `updProj` and `profExt` (78 kernel
+rules). `test/proof/ok/k4.lang` has 19 theorem checks, and there are 8 new
+proof refusals (one wrong argument per new rule code, `TYPE_FIN_SIZE` at
+`finProj 2 64` and `TYPE_MISMATCH` for a bid of type `Fin n` at
+`finUpd`). The k3 mutant list has 15 new rows (4 in `eval.c`, 5 in
+`check.c` and 6 in `kernel/rules.lang`). The k3 sweep kills 32 of 32,
+and the k1 rerun kills 31 of 33 (rows 24 and 25 are equivalent and survive, as before). The kernel sweep kills
+114 of 116. The 18 proof files have 554 theorem checks. The gate has
+1369 checks in 14 main groups, 1399 checks with the C regressions, and 0
+failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

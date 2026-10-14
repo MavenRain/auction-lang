@@ -1,0 +1,20 @@
+theorem k4Pow32 ok
+theorem k4Pow23 ok
+theorem k4Pow00 ok
+theorem k4Pow50 ok
+theorem k4ProjUpdGrid ok
+theorem k4ProjUpdNeGrid ok
+theorem k4UpdProjGrid ok
+theorem k4PowZero ok
+theorem k4PowSucc ok
+theorem k4ProjUpd ok
+theorem k4ProjUpdNe ok
+theorem k4UpdProj ok
+theorem k4ProfExt ok
+theorem k4PowOne ok
+theorem k4UpdTwice ok
+theorem k4Ne01 ok
+theorem k4KeepOther ok
+theorem k4ProfSelf ok
+theorem k4UpdCong ok
+ok

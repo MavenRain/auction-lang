@@ -450,3 +450,23 @@ are refused: the welfare b in place of a for the allocation 2 in `l11W`
 checks in the 14 main groups (proofs 17, proof refusals 98), 1390 checks in
 total, and 0 failures. No kernel rule changes and `src/front` does not
 change, so there is no mutant run, and the kernel sweep stays at 99 of 101.
+
+M6 session 7 (2026-10-14) adds the proof file `test/proof/ok/k4.lang` for
+the N-ary profile layer. It has 19 theorem checks, so the 18 proof files
+have 554 theorem checks. `langc check` gives exit 0, `langc build` gives no
+instances (the file has theorems only), and `langc verify` gives exit 0.
+The gate compares the check output with `k4.out` and the proof JSON with
+`k4.json`. There are 8 new proof refusals, 106 in total: `RULE_POW_ZERO`,
+`RULE_POW_SUCC`, `RULE_PROJ_UPD`, `RULE_PROJ_UPD_NE`, `RULE_UPD_PROJ` and
+`RULE_PROF_EXT` (a wrong argument at each rule), `TYPE_FIN_SIZE`
+(`finProj 2 64`: `natPow 2 64` is not below 2^64) and `TYPE_MISMATCH` (a
+bid of type `Fin 2` at `finUpd 3 2`). The k3 mutant list has 15 new rows,
+32 in total. In `eval.c`: the overflow test of `natPow`, the value at x
+below 2, the loop bound and the bound x below 2. In `check.c`: `natMul` in
+place of `natPow` in the profile size, no `natMod` in `finProj`, no factor
+p on the new bid in `finUpd`, a bid of type `Fin n` at `finUpd` and a
+`finProj` result of type `Fin n`. In `kernel/rules.lang`: one wrong
+statement per new rule. The k3 sweep kills 32 of 32, and the k1 rerun
+kills 31 of 33, so the kernel sweep kills 114 of 116. The gate has
+1369 checks in the 14 main groups (proofs 18, proof refusals 106), 1399
+checks in total, and 0 failures.

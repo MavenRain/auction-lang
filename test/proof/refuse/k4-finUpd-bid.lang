@@ -1,0 +1,2 @@
+-- M6 s7: the bid of finUpd 3 2 has type Fin 3, not Fin 2.
+theorem bad : (x : Fin (natPow 3 2)) -> (i : Fin 2) -> (b : Fin 2) -> Eq (Fin (natPow 3 2)) (finUpd 3 2 x i b) (finUpd 3 2 x i b) := fun x => fun i => fun b => refl

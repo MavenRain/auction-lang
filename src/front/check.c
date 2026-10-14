@@ -73,6 +73,8 @@ typedef enum {
   RULE_FIN_VAL,
   RULE_FIN_PAIR,
   RULE_FIN_PART,
+  RULE_FIN_PROJ,
+  RULE_FIN_UPD,
   RULE_FIN_SUB,
   RULE_FIN_ZERO,
   RULE_FIN_SUCC,
@@ -144,6 +146,7 @@ static const Builtin BUILTINS[] = {
   {"natDiv", 2, RULE_NAT2, OP_NAT_DIV, OP_NAT, 0},
   {"natMod", 2, RULE_NAT2, OP_NAT_MOD, OP_NAT, 0},
   {"natMax", 2, RULE_NAT2, OP_NAT_MAX, OP_NAT, 0},
+  {"natPow", 2, RULE_NAT2, OP_NAT_POW, OP_NAT, 0},
   {"flagIf", 3, RULE_FLAG_IF, OP_FLAG_IF, OP_FLAG, 0},
   {"flagAnd", 2, RULE_FLAGS, OP_FLAG_AND, OP_FLAG, 0},
   {"flagNot", 1, RULE_FLAGS, OP_FLAG_NOT, OP_FLAG, 0},
@@ -152,6 +155,8 @@ static const Builtin BUILTINS[] = {
   {"finPair", 4, RULE_FIN_PAIR, OP_NAT_ADD, OP_FIN, 0},
   {"finFirst", 3, RULE_FIN_PART, OP_NAT_MOD, OP_FIN, 0},
   {"finSecond", 3, RULE_FIN_PART, OP_NAT_DIV, OP_FIN, 1},
+  {"finProj", 4, RULE_FIN_PROJ, OP_NAT_MOD, OP_FIN, 0},
+  {"finUpd", 5, RULE_FIN_UPD, OP_NAT_ADD, OP_FIN, 0},
   {"finSub", 2, RULE_FIN_SUB, OP_NAT_SUB, OP_FIN, 0},
   {"finZero", 1, RULE_FIN_ZERO, OP_NAT, OP_FIN, 0},
   {"finSucc", 2, RULE_FIN_SUCC, OP_NAT_ADD, OP_FIN, 0},
@@ -1112,6 +1117,56 @@ static const Core *rule_fin_part(Call *k) {
   return op3(c, k->b->op, 0, 2, x, m, NULL);
 }
 
+/* Fin (natPow k n), the type of a profile of n bids on the grid Fin k (M6 H).
+   A size past 2^64-1 is refused. */
+static const Value *fin_power(Call *k, const Core *g, const Core *n) {
+  Checker *c = k->c;
+  const Value *size = here(c, op3(c, OP_NAT_POW, 0, 2, g, n, NULL));
+  if (size != NULL && size->kind == VAL_TRAP) {
+    (void)FAIL(c, "TYPE_FIN_SIZE", "%s needs a size natPow k n below 2^64", k->b->name);
+    return NULL;
+  }
+  return fin_type(c, size);
+}
+
+/* The bid of bidder i in the profile x: digit i of x in base k. Bidder 0 is
+   the low digit, as the first part of a finPair. */
+static const Core *proj_core(Checker *c, const Core *g, const Core *x, const Core *i) {
+  const Core *p = op3(c, OP_NAT_POW, 0, 2, g, i, NULL);
+  return op3(c, OP_NAT_MOD, 0, 2, op3(c, OP_NAT_DIV, 0, 2, x, p, NULL), g, NULL);
+}
+
+/* finProj k n x i = natMod (natDiv x (natPow k i)) k : Fin k, for
+   x : Fin (natPow k n) and i : Fin n (M6 H). */
+static const Core *rule_fin_proj(Call *k) {
+  Checker *c = k->c;
+  const Core *g = check(c, k->args[0], nat_type(c));
+  const Core *n = g == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  const Value *xt = n == NULL ? NULL : fin_power(k, g, n);
+  const Core *x = xt == NULL ? NULL : check(c, k->args[2], xt);
+  const Core *i = x == NULL ? NULL : check(c, k->args[3], fin_type(c, here(c, n)));
+  k->type = i == NULL ? NULL : fin_type(c, here(c, g));
+  return k->type == NULL ? NULL : proj_core(c, g, x, i);
+}
+
+/* finUpd k n x i b = natAdd (natSub x (natMul p (finProj k n x i)))
+   (natMul p b) : Fin (natPow k n), with p = natPow k i and b : Fin k: the
+   profile x with the bid of bidder i replaced by b (M6 H). */
+static const Core *rule_fin_upd(Call *k) {
+  Checker *c = k->c;
+  const Core *g = check(c, k->args[0], nat_type(c));
+  const Core *n = g == NULL ? NULL : check(c, k->args[1], nat_type(c));
+  const Value *xt = n == NULL ? NULL : fin_power(k, g, n);
+  const Core *x = xt == NULL ? NULL : check(c, k->args[2], xt);
+  const Core *i = x == NULL ? NULL : check(c, k->args[3], fin_type(c, here(c, n)));
+  const Core *b = i == NULL ? NULL : check(c, k->args[4], fin_type(c, here(c, g)));
+  const Core *p = b == NULL ? NULL : op3(c, OP_NAT_POW, 0, 2, g, i, NULL);
+  k->type = p == NULL ? NULL : xt;
+  return k->type == NULL ? NULL : op3(c, OP_NAT_ADD, 0, 2,
+    op3(c, OP_NAT_SUB, 0, 2, x, op3(c, OP_NAT_MUL, 0, 2, p, proj_core(c, g, x, i), NULL), NULL),
+    op3(c, OP_NAT_MUL, 0, 2, p, b, NULL), NULL);
+}
+
 /* allFin n f: f is a Flag test on Fin n. */
 /* sumRat n f shares the rule: the row gives the operation and the result
    (Flag for allFin, Rat for sumRat). */
@@ -1325,6 +1380,10 @@ static const Core *rule(Call *k) {
     return rule_fin_pair(k);
   case RULE_FIN_PART:
     return rule_fin_part(k);
+  case RULE_FIN_PROJ:
+    return rule_fin_proj(k);
+  case RULE_FIN_UPD:
+    return rule_fin_upd(k);
   case RULE_FIN_SUB:
     return rule_fin_sub(k);
   case RULE_FIN_ZERO:
@@ -1651,6 +1710,12 @@ static const struct {
   {"pairFirst", "RULE_PAIR_FIRST"},
   {"pairSecond", "RULE_PAIR_SECOND"},
   {"pairVal", "RULE_PAIR_VAL"},
+  {"powZero", "RULE_POW_ZERO"},
+  {"powSucc", "RULE_POW_SUCC"},
+  {"projUpd", "RULE_PROJ_UPD"},
+  {"projUpdNe", "RULE_PROJ_UPD_NE"},
+  {"updProj", "RULE_UPD_PROJ"},
+  {"profExt", "RULE_PROF_EXT"},
   {"sumRatZero", "RULE_SUM_RAT_ZERO"},
   {"sumRatSucc", "RULE_SUM_RAT_SUCC"},
   {"foldZero", "RULE_FOLD_ZERO"},

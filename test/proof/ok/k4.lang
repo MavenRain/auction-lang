@@ -1,0 +1,26 @@
+-- M6 s7: the N-ary profile layer. A profile of n bids on the grid Fin k is
+-- a value of Fin (natPow k n). finProj k n x i is the bid of bidder i and
+-- finUpd k n x i b sets it to b. One theorem per built-in and per rule.
+theorem k4Pow32 : Eq Nat (natPow 3 2) 9 := refl
+theorem k4Pow23 : Eq Nat (natPow 2 3) 8 := refl
+theorem k4Pow00 : Eq Nat (natPow 0 0) 1 := refl
+theorem k4Pow50 : Eq Nat (natPow 5 0) 1 := refl
+theorem k4ProjUpdGrid : Holds (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => allFin 2 (fun (i : Fin 2) => allFin 3 (fun (b : Fin 3) => finEq (finProj 3 2 (finUpd 3 2 x i b) i) b)))) := decide (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => allFin 2 (fun (i : Fin 2) => allFin 3 (fun (b : Fin 3) => finEq (finProj 3 2 (finUpd 3 2 x i b) i) b))))
+theorem k4ProjUpdNeGrid : Holds (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => allFin 2 (fun (i : Fin 2) => allFin 3 (fun (b : Fin 3) => allFin 2 (fun (j : Fin 2) => flagIf (finEq i j) flagYes (finEq (finProj 3 2 (finUpd 3 2 x i b) j) (finProj 3 2 x j))))))) := decide (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => allFin 2 (fun (i : Fin 2) => allFin 3 (fun (b : Fin 3) => allFin 2 (fun (j : Fin 2) => flagIf (finEq i j) flagYes (finEq (finProj 3 2 (finUpd 3 2 x i b) j) (finProj 3 2 x j)))))))
+theorem k4UpdProjGrid : Holds (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => allFin 2 (fun (i : Fin 2) => finEq (finUpd 3 2 x i (finProj 3 2 x i)) x))) := decide (allFin (natPow 3 2) (fun (x : Fin (natPow 3 2)) => allFin 2 (fun (i : Fin 2) => finEq (finUpd 3 2 x i (finProj 3 2 x i)) x)))
+theorem k4PowZero : (k : Nat) -> Eq Nat (natPow k 0) 1 := fun k => powZero k
+theorem k4PowSucc : (k : Nat) -> (n : Nat) -> Eq Nat (natPow k (natAdd n 1)) (natMul k (natPow k n)) := fun k => fun n => powSucc k n
+theorem k4ProjUpd : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (b : Fin k) -> Eq (Fin k) (finProj k n (finUpd k n x i b) i) b := fun k => fun n => fun x => fun i => fun b => projUpd k n x i b
+theorem k4ProjUpdNe : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (b : Fin k) -> (j : Fin n) -> Ne (Fin n) i j -> Eq (Fin k) (finProj k n (finUpd k n x i b) j) (finProj k n x j) := fun k => fun n => fun x => fun i => fun b => fun j => fun h => projUpdNe k n x i b j h
+theorem k4UpdProj : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> Eq (Fin (natPow k n)) (finUpd k n x i (finProj k n x i)) x := fun k => fun n => fun x => fun i => updProj k n x i
+theorem k4ProfExt : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (y : Fin (natPow k n)) -> ((i : Fin n) -> Eq (Fin k) (finProj k n x i) (finProj k n y i)) -> Eq (Fin (natPow k n)) x y := fun k => fun n => fun x => fun y => fun h => profExt k n x y h
+-- natPow 1 n = 1 for each n: natInd with powZero, powSucc and ringNat.
+theorem k4PowOne : (n : Nat) -> Eq Nat (natPow 1 n) 1 := natInd (fun (n : Nat) => Eq Nat (natPow 1 n) 1) (powZero 1) (fun k => fun h => trans (powSucc 1 k) (trans (ringNat (natMul 1 (natPow 1 k)) (natPow 1 k)) h))
+-- Two updates of bidder i: the last bid stays.
+theorem k4UpdTwice : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (a : Fin k) -> (b : Fin k) -> Eq (Fin k) (finProj k n (finUpd k n (finUpd k n x i a) i b) i) b := fun k => fun n => fun x => fun i => fun a => fun b => projUpd k n (finUpd k n x i a) i b
+-- A deviation of bidder 0 keeps the bid of bidder 1 (n = 2).
+theorem k4Ne01 : Ne (Fin 2) 0 1 := fun e => natLtIrrefl 1 (transport (fun (f : Fin 2) => NatLt (finVal f) 1) e (decide (natLt 0 1)))
+theorem k4KeepOther : (k : Nat) -> (x : Fin (natPow k 2)) -> (b : Fin k) -> Eq (Fin k) (finProj k 2 (finUpd k 2 x 0 b) 1) (finProj k 2 x 1) := fun k => fun x => fun b => projUpdNe k 2 x 0 b 1 k4Ne01
+-- profExt with a proof for each bidder.
+theorem k4ProfSelf : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> Eq (Fin (natPow k n)) x x := fun k => fun n => fun x => profExt k n x x (fun i => refl)
+theorem k4UpdCong : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (y : Fin (natPow k n)) -> (j : Fin n) -> (b : Fin k) -> ((i : Fin n) -> Eq (Fin k) (finProj k n x i) (finProj k n y i)) -> Eq (Fin (natPow k n)) (finUpd k n x j b) (finUpd k n y j b) := fun k => fun n => fun x => fun y => fun j => fun b => fun h => cong (fun (z : Fin (natPow k n)) => finUpd k n z j b) (profExt k n x y h)

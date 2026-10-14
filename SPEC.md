@@ -98,12 +98,13 @@ the Meaning column is a section of `design/DESIGN.md`.
 
 | Operation | Type | Meaning (design section) |
 |---|---|---|
-| `natAdd`, `natSub`, `natMul`, `natDiv`, `natMod`, `natMax` | `Nat -> Nat -> Nat` | Nat arithmetic. `natAdd` and `natMul` trap on overflow. `natSub` stops at 0. (section 2) |
+| `natAdd`, `natSub`, `natMul`, `natDiv`, `natMod`, `natMax`, `natPow` | `Nat -> Nat -> Nat` | Nat arithmetic. `natAdd`, `natMul` and `natPow` trap on overflow. `natSub` stops at 0. `natPow x 0` is 1. (section 2) |
 | `natEq`, `natLe`, `natLt` | `Nat -> Nat -> Flag` | Nat comparison (section 2) |
 | `flagIf` | 3 arguments | `flagIf c x y` is x if c is `flagYes`, and y if not (section 2) |
 | `flagAnd`, `flagNot` | 2 and 1 arguments, `Flag` | Flag logic (section 2) |
 | `finVal` | 1 argument, `Nat` | The value of a `Fin n` (section 2) |
 | `finPair`, `finFirst`, `finSecond` | 4, 3 and 3 arguments, `Fin` | A joint value of `Fin (natMul x y)` and its 2 parts. The first part is the low digit. (section 2) |
+| `finProj`, `finUpd` | 4 and 5 arguments, `Fin` | A profile of n bids on the grid `Fin k` is a value of `Fin (natPow k n)`. `finProj k n x i : Fin k` is the bid of bidder i (digit i in base k, bidder 0 is the low digit). `finUpd k n x i b` sets that bid to b. A size `natPow k n` that is not below 2^64 gives `TYPE_FIN_SIZE`. (M6 session 7) |
 | `finSub`, `finMax` | 2 arguments, `Fin` | Fin subtraction and maximum (section 2) |
 | `finEq`, `finLt`, `finLe` | 2 arguments, `Flag` | Fin comparison (section 2) |
 | `allFin` | 2 arguments, `Flag` | A predicate is true on each value of `Fin n` (sections 5 and 7) |
@@ -272,6 +273,12 @@ definitions.
   rule pairFirst : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin m) (finFirst m n (finPair m n a b)) a
   rule pairSecond : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin n) (finSecond m n (finPair m n a b)) b
   rule pairVal : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq Nat (finVal (finPair m n a b)) (natAdd (natMul m (finVal b)) (finVal a))
+  rule powZero : (k : Nat) -> Eq Nat (natPow k 0) 1
+  rule powSucc : (k : Nat) -> (n : Nat) -> Eq Nat (natPow k (natAdd n 1)) (natMul k (natPow k n))
+  rule projUpd : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (b : Fin k) -> Eq (Fin k) (finProj k n (finUpd k n x i b) i) b
+  rule projUpdNe : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (b : Fin k) -> (j : Fin n) -> Ne (Fin n) i j -> Eq (Fin k) (finProj k n (finUpd k n x i b) j) (finProj k n x j)
+  rule updProj : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> Eq (Fin (natPow k n)) (finUpd k n x i (finProj k n x i)) x
+  rule profExt : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (y : Fin (natPow k n)) -> ((i : Fin n) -> Eq (Fin k) (finProj k n x i) (finProj k n y i)) -> Eq (Fin (natPow k n)) x y
   rule sumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1
   rule sumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i))))
   rule foldZero : (A : Type 0) -> (f : A -> A) -> (x : A) -> Eq A (fold f x 0) x
@@ -749,7 +756,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5) and the package auctions of Ch 7 (session 6); 17 proof files with 535 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7); 18 proof files with 554 theorem checks |
 
 M0 has these slices:
 
@@ -932,6 +939,26 @@ The 17 proof files hold 535 theorem checks. The gate has 1360 checks in 14
 main groups, including 98 proof refusals, and 1390 checks in total, with 0
 failures. The optimal multiple-object auction is not built.
 
+M6 session 7 (2026-10-14) adds the N-ary profile layer (slice H part 1).
+A profile of n bids on the grid `Fin k` is a value of `Fin (natPow k n)`.
+The bid of bidder i is digit i of the profile in base k, and bidder 0 is the
+low digit (as the first part of `finPair`). `natPow` is a new Nat operation:
+`natPow x 0` is 1, and an overflow traps as in `natMul`. `finProj k n x i`
+is `natMod (natDiv x (natPow k i)) k : Fin k`, and `finUpd k n x i b` is
+`natAdd (natSub x (natMul p (finProj k n x i))) (natMul p b)` with
+`p = natPow k i`. A size `natPow k n` that is not below 2^64 gives
+`TYPE_FIN_SIZE`. Six kernel rules follow `pairVal`: `powZero`, `powSucc`,
+`projUpd`, `projUpdNe`, `updProj` and `profExt` (78 kernel rules).
+`test/proof/ok/k4.lang` has 19 theorem checks: 4 `refl` values of
+`natPow`, 3 `decide` checks at k = 3 and n = 2 (`projUpd`, `projUpdNe` and
+`updProj`), one open use of each rule, and 6 lemmas (`natPow 1 n` is 1 by
+`natInd`, two updates of one bidder keep the last bid, bidder 0 is not
+bidder 1, a deviation of bidder 0 keeps the bid of bidder 1, and 2 uses of
+`profExt`). The 18 proof files hold 554 theorem checks. The gate has 1369
+checks in 14 main groups, including 106 proof refusals, and 1399 checks in
+total, with 0 failures. The N-factor product rule and the mechanisms are
+not built.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -1053,8 +1080,9 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l11.lang` use the rules in this form. Two
-usage facts: `ring` treats a term that `natInd` opens as an atom, and
+`test/proof/ok/l1.lang` to `l11.lang` and `k4.lang` use the rules in
+this form. Three usage facts: `ring` treats a term that `natInd` opens as
+an atom, `ringNat` treats `natPow` as an atom (`k4PowOne`), and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).
 

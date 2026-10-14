@@ -270,6 +270,7 @@ static int op_json(Out *o, const Value *type, const Value *v) {
   case OP_NAT_DIV:
   case OP_NAT_MOD:
   case OP_NAT_MAX:
+  case OP_NAT_POW:
   case OP_NAT_LT:
   case OP_FLAG_AND:
   case OP_FLAG_NOT:

@@ -1,0 +1,2 @@
+-- M6 s7: a wrong argument to the kernel rule powSucc gives RULE_POW_SUCC.
+theorem bad : True := powSucc flagYes

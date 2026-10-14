@@ -90,6 +90,16 @@ rule finSuccVal : (n : Nat) -> (i : Fin n) -> Eq Nat (finVal (finSucc n i)) (nat
 rule pairFirst : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin m) (finFirst m n (finPair m n a b)) a
 rule pairSecond : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq (Fin n) (finSecond m n (finPair m n a b)) b
 rule pairVal : (m : Nat) -> (n : Nat) -> (a : Fin m) -> (b : Fin n) -> Eq Nat (finVal (finPair m n a b)) (natAdd (natMul m (finVal b)) (finVal a))
+-- M6 H. A profile of n bids on the grid Fin k is a Fin (natPow k n). The bid
+-- of bidder i is digit i in base k (finProj; bidder 0 is the low digit), and
+-- finUpd replaces it. natPow, finProj and finUpd are built-ins (check.c,
+-- rule_fin_proj, rule_fin_upd).
+rule powZero : (k : Nat) -> Eq Nat (natPow k 0) 1
+rule powSucc : (k : Nat) -> (n : Nat) -> Eq Nat (natPow k (natAdd n 1)) (natMul k (natPow k n))
+rule projUpd : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (b : Fin k) -> Eq (Fin k) (finProj k n (finUpd k n x i b) i) b
+rule projUpdNe : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> (b : Fin k) -> (j : Fin n) -> Ne (Fin n) i j -> Eq (Fin k) (finProj k n (finUpd k n x i b) j) (finProj k n x j)
+rule updProj : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (i : Fin n) -> Eq (Fin (natPow k n)) (finUpd k n x i (finProj k n x i)) x
+rule profExt : (k : Nat) -> (n : Nat) -> (x : Fin (natPow k n)) -> (y : Fin (natPow k n)) -> ((i : Fin n) -> Eq (Fin k) (finProj k n x i) (finProj k n y i)) -> Eq (Fin (natPow k n)) x y
 -- The defining equations of sumRat and of the Nat fold on an open size.
 rule sumRatZero : (f : Fin 0 -> Rat) -> Eq Rat (sumRat 0 f) 0/1
 rule sumRatSucc : (n : Nat) -> (f : Fin (natAdd n 1) -> Rat) -> Eq Rat (sumRat (natAdd n 1) f) (ratAdd (f (finZero n)) (sumRat n (fun i => f (finSucc n i))))

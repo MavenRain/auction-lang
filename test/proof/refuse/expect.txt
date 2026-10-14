@@ -96,3 +96,11 @@ k3b-ring.lang RULE_RING
 k3b-ringNat.lang RULE_RING_NAT
 k3b-sqNonneg.lang RULE_SQ_NONNEG
 l1b-natMaxLub.lang RULE_NAT_MAX_LUB
+k4-powZero.lang RULE_POW_ZERO
+k4-powSucc.lang RULE_POW_SUCC
+k4-projUpd.lang RULE_PROJ_UPD
+k4-projUpdNe.lang RULE_PROJ_UPD_NE
+k4-updProj.lang RULE_UPD_PROJ
+k4-profExt.lang RULE_PROF_EXT
+k4-finProj-size.lang TYPE_FIN_SIZE
+k4-finUpd-bid.lang TYPE_MISMATCH

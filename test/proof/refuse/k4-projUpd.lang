@@ -1,0 +1,2 @@
+-- M6 s7: a wrong argument to the kernel rule projUpd gives RULE_PROJ_UPD.
+theorem bad : True := projUpd flagYes

@@ -1,0 +1,2 @@
+-- M6 s7: natPow 2 64 is not below 2^64, so finProj 2 64 has no profile type.
+theorem bad : Eq (Fin 2) (finProj 2 64 0 0) 0 := refl

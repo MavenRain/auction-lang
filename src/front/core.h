@@ -68,6 +68,7 @@ typedef enum {
   OP_NAT_DIV,
   OP_NAT_MOD,
   OP_NAT_MAX,
+  OP_NAT_POW,
   OP_NAT_LT,
   OP_FLAG_AND,
   OP_FLAG_NOT,

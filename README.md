@@ -85,12 +85,14 @@ Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
 rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
 accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
 to `l11.lang` hold 444 theorem checks for the book, and `k1.lang` to
-`k3b.lang` hold 91 for the kernel rules: 535 in total. M6 session 2
+`k4.lang` hold 110 for the kernel rules: 554 in total. M6 session 2
 adds `l7.lang` (Ch. 5 and App. C), M6 session 3 adds `l8.lang` (the
 explicit 2-bidder allocation of ch. 6.4), M6 session 4 adds `l9.lang`
 (no pure symmetric equilibrium in 3.4 for all Rat bids), M6 session 5
 adds `l10.lang` (the sequential game form of ch. 7), and M6 session 6
-adds `l11.lang` (package auctions of ch. 7). A file cannot import
+adds `l11.lang` (package auctions of ch. 7). M6 session 7 adds `k4.lang`
+(the N-ary profile layer: `natPow`, `finProj`, `finUpd` and 6 kernel
+rules). A file cannot import
 another file, so the files identify their copied
 helpers, and a helper counts once per file. The column `Proved for all sizes (M5)` names the
 theorems that hold for every grid size, every value or every prior, with

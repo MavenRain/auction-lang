@@ -26,7 +26,7 @@ static const char *const OP_NAMES[] = {
   [OP_CONG] = "cong", [OP_NAT_ADD] = "natAdd", [OP_NAT_SUB] = "natSub",
   [OP_NAT_MUL] = "natMul", [OP_NAT_EQ] = "natEq", [OP_NAT_LE] = "natLe",
   [OP_FLAG_IF] = "flagIf", [OP_NAT_DIV] = "natDiv", [OP_NAT_MOD] = "natMod",
-  [OP_NAT_MAX] = "natMax", [OP_NAT_LT] = "natLt", [OP_FLAG_AND] = "flagAnd",
+  [OP_NAT_MAX] = "natMax", [OP_NAT_POW] = "natPow", [OP_NAT_LT] = "natLt", [OP_FLAG_AND] = "flagAnd",
   [OP_FLAG_NOT] = "flagNot", [OP_FIN] = "Fin", [OP_ALL_FIN] = "allFin",
   [OP_RAT] = "Rat", [OP_RAT_ADD] = "ratAdd", [OP_RAT_SUB] = "ratSub",
   [OP_RAT_MUL] = "ratMul", [OP_RAT_DIV] = "ratDiv", [OP_RAT_OF_NAT] = "ratOfNat",
@@ -52,7 +52,7 @@ static const unsigned char OP_ARITY[] = {
   [OP_PAYLOAD] = 1, [OP_SYMM] = 1, [OP_TRANS] = 2, [OP_TRANSPORT] = 3,
   [OP_CONG] = 2, [OP_NAT_ADD] = 2, [OP_NAT_SUB] = 2, [OP_NAT_MUL] = 2,
   [OP_NAT_EQ] = 2, [OP_NAT_LE] = 2, [OP_FLAG_IF] = 3, [OP_NAT_DIV] = 2,
-  [OP_NAT_MOD] = 2, [OP_NAT_MAX] = 2, [OP_NAT_LT] = 2, [OP_FLAG_AND] = 2,
+  [OP_NAT_MOD] = 2, [OP_NAT_MAX] = 2, [OP_NAT_POW] = 2, [OP_NAT_LT] = 2, [OP_FLAG_AND] = 2,
   [OP_FLAG_NOT] = 1, [OP_FIN] = 1, [OP_ALL_FIN] = 2, [OP_RAT] = 0,
   [OP_RAT_ADD] = 2, [OP_RAT_SUB] = 2, [OP_RAT_MUL] = 2, [OP_RAT_DIV] = 2,
   [OP_RAT_OF_NAT] = 1, [OP_RAT_EQ] = 2, [OP_RAT_LE] = 2, [OP_RAT_LT] = 2,
@@ -848,6 +848,25 @@ static const Value *nat_max(Machine *m, const Value *const *a, uint32_t n) {
   if (!nat_args(m, OP_NAT_MAX, a, n, &x, &y, &out))
     return out;
   return val_nat(m, x < y ? y : x);
+}
+
+/* natPow x y = x^y (M6 H). natPow x 0 = 1. It traps on overflow, as natMul.
+   For x >= 2 the loop overflows in at most 64 steps. */
+static const Value *nat_pow(Machine *m, const Value *const *a, uint32_t n) {
+  const Value *out;
+  uint64_t x = 0;
+  uint64_t y = 0;
+  uint64_t r = 1;
+  if (!nat_args(m, OP_NAT_POW, a, n, &x, &y, &out))
+    return out;
+  if (x < 2u)
+    return val_nat(m, y == 0 ? 1 : x);
+  for (; y > 0; y--) {
+    if (r > UINT64_MAX / x)
+      return overflow(m);
+    r *= x;
+  }
+  return val_nat(m, r);
 }
 
 static const Value *nat_test(Machine *m, Op op, const Value *const *a, uint32_t n) {
@@ -1698,6 +1717,8 @@ static const Value *reduce_op(Machine *m, Op op, uint32_t inst, uint32_t field, 
     return nat_div(m, op, a, n);
   case OP_NAT_MAX:
     return nat_max(m, a, n);
+  case OP_NAT_POW:
+    return nat_pow(m, a, n);
   case OP_FLAG_AND:
     return reduce_flag_and(m, a, n);
   case OP_FLAG_NOT:

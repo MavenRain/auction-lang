@@ -1,0 +1,2 @@
+-- M6 s7: a wrong argument to the kernel rule profExt gives RULE_PROF_EXT.
+theorem bad : True := profExt flagYes
