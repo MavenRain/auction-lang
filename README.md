@@ -84,13 +84,14 @@ The table gives partial coverage of the book.
 Milestone M5 adds proofs. A `theorem` is a proof term over the kernel
 rules of `kernel/rules.lang` (`SPEC.md` section 11), and `langc check`
 accepts it or refuses it with a code. The files `test/proof/ok/l1.lang`
-to `l10.lang` hold 430 theorem checks for the book, and `k1.lang` to
-`k3b.lang` hold 91 for the kernel rules: 521 in total. M6 session 2
+to `l11.lang` hold 444 theorem checks for the book, and `k1.lang` to
+`k3b.lang` hold 91 for the kernel rules: 535 in total. M6 session 2
 adds `l7.lang` (Ch. 5 and App. C), M6 session 3 adds `l8.lang` (the
 explicit 2-bidder allocation of ch. 6.4), M6 session 4 adds `l9.lang`
-(no pure symmetric equilibrium in 3.4 for all Rat bids), and M6
-session 5 adds `l10.lang` (the sequential game form of ch. 7). A
-file cannot import another file, so the files identify their copied
+(no pure symmetric equilibrium in 3.4 for all Rat bids), M6 session 5
+adds `l10.lang` (the sequential game form of ch. 7), and M6 session 6
+adds `l11.lang` (package auctions of ch. 7). A file cannot import
+another file, so the files identify their copied
 helpers, and a helper counts once per file. The column `Proved for all sizes (M5)` names the
 theorems that hold for every grid size, every value or every prior, with
 their file, subject to each theorem's hypotheses. A result at the M4
@@ -109,7 +110,7 @@ sizes by `decide` is marked as such.
 | Ch. 5 and App. C, affiliated signals | `affiliated.lang` | affiliation on chosen pair and triple priors; prices under second price and English strategy formulas transplanted to discrete signals. As found: the second price formula fails the equilibrium check for both priors with 3 bidders; its revenue exceeds the English price formula. This comparison is not an equilibrium revenue ranking; the English strategies are not checked for equilibrium | `l7.lang` (M6 session 2): the defs `IsAffiliated2` (affiliation of two signals on a finite grid, App. C) and `IsMonoFin`; `cor_prior_affiliated` and `anti_prior_not_affiliated` (the two priors of `affiliated.lang`, by `decide` through the bridge `l7AffiliatedOfFlag`); `independent_prior_affiliated` (every product prior, all sizes); `chebyshev_sum_inequality` (the Harris inequality on a chain: weights at least 0, two monotone functions); `affiliated_cond_expectation_increasing` (for an affiliated prior and a monotone a, E[a(X) given Y = y] is at most E[a(X) given Y = z] when y is at most z); `mlrp_implies_fosd` (the conditional upper tail P(X at least k given Y = y) increases in y). The last two are cross-multiplied, with no division |
 | Ch. 6, mechanism design | `mechanism.lang` | incentive compatibility on discrete types, the revelation principle, the payment band, discrete virtual values, the optimal auction (revenue 13/8 = the expected virtual surplus), VCG dominance. As found: revenue equivalence fails (53/64, 7/8 and 17/16 with the same allocation); second price with the optimal reserve 2 gets 25/16, less than 13/8 | `l3.lang`: `revelation_principle` (6.1), `ic_monotone`, `ic_payment_band` (6.2), `ic_ir_payment_upper`, `ic_payment_lower` (6.3), `ic_ir_revenue_le_virtual_surplus` (6.4, every IC and IR mechanism, every prior and type count), `revenue_equivalence`, `revenue_equivalence_via_allocation` (3.1.3, the Vickrey payment identity for all n and priors, and equality of envelope-defined payments for equal allocations); `l4.lang`: `virtual_value_auction_attains_bound` (6.4, every monotone nonnegative Q), `vcg_truthful_dominant` (6.5, assuming an efficient allocation), `vcg_individually_rational` (also assuming pivot payments and nonnegative own valuations); `l8.lang`: `two_bidder_allocation_feasible`, `two_bidder_tie_split` (6.4, the higher nonnegative virtual value wins and a tie splits 1/2), `two_bidder_interim_monotone` (a nondecreasing virtual value gives a nondecreasing interim allocation), `two_bidder_auction_attains_bound` (6.4, every type count and every nonnegative prior whose discrete virtual value is nondecreasing: IC, IR, and the revenue is the expected virtual surplus); `l8InstanceCheck` checks the 4-type instance of `mechanism.lang` by `decide` (revenue 13/8) |
 | Ch. 7, identical units | `multiunit.lang` | for 3 unit demand bidders and 2 units, uniform price truthful bids are dominant on the bid grid (revenue 9/8), and 2 pay as bid equilibria are checked; a separate bidder wanting 2 units gains by reducing demand, while multi unit Vickrey reports are dominant on the report grid. As found: pay as bid revenues are 63/64 and 293/256; the sequential sale has no monotone symmetric pure equilibrium on the chosen bid grid; the conditional-expectation bidding rule transplanted to discrete values fails the equilibrium check and gives E[p1] = 62/105 > E[p2] = 9/16 | `l4.lang`: `uniform_price_unit_demand_dominant` (3 bidders, 2 units, all Rat values and bids), `multi_unit_vickrey_dominant` (the VCG instance at Fin 3); at the M4 sizes by `decide`: `demand_reduction`. `l10.lang`: `sequential_round2_truthful_dominant` (2 rounds of second price and a round 1 winner leaves: a truthful round 2 bid is dominant for every history and all Rat values, round 1 prices and bids), `sequential_nonmonotone_not_equilibrium` (by `decide` on the bids k/4: a round 1 profile that is not monotone in the value is not an equilibrium) |
-| Ch. 7, two objects | `combinatorial.lang` | VCG truthful reports are dominant and individually rational; low revenue and an outcome that is not in the core; revenue that is not monotone in the bidders; expected revenue 25/32; the exposure problem of a synergy bidder in two separate second price auctions | `l4.lang`: `two_object_vcg_dominant` (the VCG instance at Fin 4, all values, assuming an efficient allocation), `two_object_vcg_ir` (also assuming pivot payments and nonnegative own valuations); at the M4 sizes by `decide`: `revenue_not_monotone`, `vcg_outcome_not_in_core`, `exposure_problem` |
+| Ch. 7, two objects | `combinatorial.lang` | VCG truthful reports are dominant and individually rational; low revenue and an outcome that is not in the core; revenue that is not monotone in the bidders; expected revenue 25/32; the exposure problem of a synergy bidder in two separate second price auctions | `l4.lang`: `two_object_vcg_dominant` (the VCG instance at Fin 4, all values, assuming an efficient allocation), `two_object_vcg_ir` (also assuming pivot payments and nonnegative own valuations); at the M4 sizes by `decide`: `revenue_not_monotone`, `vcg_outcome_not_in_core`, `exposure_problem`. `l11.lang`: `package_wd_maximizes_welfare` (package bids on A, B and AB, pay as bid: the winner determination maximizes the reported welfare for all Rat bids); by `decide` on the grid: `package_wd_agrees_vcg_allocation` (the allocation agrees with VCG), `package_truthful_not_equilibrium` (truthful package bids are not an equilibrium), `package_revenue_vs_vcg` (at truthful bids the revenue is at least the VCG revenue; expected 207/64 against 25/32) |
 
 Not covered after M5:
 
@@ -134,8 +135,7 @@ Not covered after M5:
   nondecreasing: `two_bidder_auction_attains_bound` in `l8.lang` takes
   regularity as a hypothesis), and the correlated and common value
   extensions (sections 6.4.2 and 6.4.4).
-- In ch. 7, package auctions other than VCG, and the optimal
-  multiple-object auction.
+- In ch. 7, the optimal multiple-object auction.
 - Mechanism matrices for every number of bidders: auction-cat has 2 and
   3 bidder mechanisms. Order statistics for N > 2.
 - The continuous results whose assumptions change in examples marked

@@ -1,0 +1,15 @@
+theorem l1FlagYesNeNo ok
+theorem l9Tri ok
+theorem l11LeOfNotLe ok
+theorem l11MaxL ok
+theorem l11MaxR ok
+theorem l11Lift ok
+theorem l11WinW ok
+theorem l11Up3 ok
+theorem l11Up2 ok
+theorem l11Up1 ok
+theorem package_wd_maximizes_welfare ok
+theorem package_wd_agrees_vcg_allocation ok
+theorem package_truthful_not_equilibrium ok
+theorem package_revenue_vs_vcg ok
+ok

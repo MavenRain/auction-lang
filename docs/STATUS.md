@@ -458,6 +458,37 @@ mutant run. The 16 proof files have 521 theorem checks. The gate has 1359
 checks in 14 main groups, 1389 checks with the C regressions, and 0
 failures.
 
+M6 session 6 is done (2026-10-13): the package auctions of ch. 7 with finite
+witnesses (slice G part 2). `test/proof/ok/l11.lang` has 14 theorem checks:
+2 copied theorems (`l1FlagYesNeNo` and `l9Tri` from `l9.lang`) and 12 new
+theorems. It also copies the defs `cbV`, `cbMax`, `cbLocal`, `cbPay1` to
+`cbPay3`, `cbRev` and `cbExpRev` from `examples/combinatorial.lang`. Bidder
+1 bids a on the object A, bidder 2 bids b on the object B, and bidder 3 bids
+s on the package AB. The feasible allocations are k : Fin 5 in the order 0 =
+A to bidder 1 and B to bidder 2, 1 = AB to bidder 3, 2 = A to bidder 1 only,
+3 = B to bidder 2 only, and 4 = nothing sold. `l11W` is the reported welfare
+(the bid sum). `l11M1` to `l11M4` are the running maximum: the next
+allocation in the order replaces the incumbent only when its bid sum is
+higher. `l11Win` is the argmax with the same comparisons, so a tie goes to
+the first allocation in the order. Each winner pays its bid (`l11Has1` to
+`l11Has3`; `l11Rev` is the sum). The book theorems are
+`package_wd_maximizes_welfare` (for all Rat a, b, s and every k : Fin 5,
+`l11W a b s k` is at most the welfare of `l11Win a b s`) and 3 `decide`
+checks on the grid `cbV`: `package_wd_agrees_vcg_allocation` (the allocation
+is 0 when `cbLocal` holds and 1 when it does not, the same as VCG, and
+`l11Rev` is `l11M4`), `package_truthful_not_equilibrium` (the values are
+i.i.d. on `cbV` with probability 1/4 each: truthful bids give each type the
+interim utility 0, the synergy type 3 gains 3/16 with the bid 2, and `l11Eq`
+is `flagNo`) and `package_revenue_vs_vcg` (at truthful bids, `cbRev` is at
+most `l11Rev` on all 64 cells, `cbRev 3 3 3` is 0 against `l11Rev` 6, and
+the expected revenue is 207/64 against `cbExpRev` = 25/32; truthful bids are
+not an equilibrium, so this compares the bid sums only). `l11WinW` gives the
+main proof step: the welfare of the chosen allocation is `l11M4`. `l11Up1`
+to `l11Up3` bound each running maximum by `l11M4`. There is no new kernel
+rule, and `src/front` does not change, so there is no mutant run. The 17
+proof files have 535 theorem checks. The gate has 1360 checks in 14 main
+groups, 1390 checks with the C regressions, and 0 failures.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

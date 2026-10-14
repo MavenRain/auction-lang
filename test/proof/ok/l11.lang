@@ -1,0 +1,88 @@
+-- M6 s6 (M5 slice G part 2): M&M ch. 7, package auctions, finite
+-- witnesses. Two objects A and B and the 3 bidders of
+-- examples/combinatorial.lang: bidder 1 bids a on A, bidder 2 bids b on B and
+-- bidder 3 bids s on the package AB. The winner determination takes the
+-- feasible allocation with the highest bid sum (a tie goes to the first in a
+-- fixed order), and each winner pays its bid. For all Rat bids, the winner
+-- determination maximizes the reported welfare. Decide checks on the grid
+-- cbV: the allocation agrees with VCG, truthful package bids are not an
+-- equilibrium, and the revenue at truthful bids against cbRev (VCG).
+-- Copies from test/proof/ok/l9.lang lines 9 and 31 and examples/combinatorial.lang lines 4, 5, 7, 10 to 12, 25 and 38 (a file cannot import another file).
+theorem l1FlagYesNeNo : Eq Flag flagYes flagNo -> False := fun e => natLtIrrefl 0 (transport (fun (f : Flag) => NatLt 0 (flagIf f 1 0)) e (decide (natLt 0 1)))
+theorem l9Tri : (a : Rat) -> (b : Rat) -> Or (RatLt a b) (RatLe b a) := fun a => fun b => flagCases (fun (d : Flag) => Eq Flag (ratLe b a) d -> Or (RatLt a b) (RatLe b a)) (fun e => orRight (RatLt a b) (RatLe b a) e) (fun e => orLeft (RatLt a b) (RatLe b a) (orElim (RatLe b a) (RatLe a b) (RatLt a b) (ratLeTotal b a) (fun h => absurd (l1FlagYesNeNo (trans (symm h) e)) (RatLt a b)) (fun h => ratLtOfLeNe a b h (fun eab => l1FlagYesNeNo (trans (symm (transport (fun (t : Rat) => RatLe t a) eab (ratLeRefl a))) e))))) (ratLe b a) refl
+def cbV : (t : Fin 4) -> Rat := fun (t : Fin 4) => ratOfNat (finVal t)
+def cbMax : (x y : Rat) -> Rat := fun (x y : Rat) => flagIf (ratLe x y) y x
+def cbLocal : (a b s : Rat) -> Flag := fun (a b s : Rat) => ratLe s (ratAdd a b)
+def cbPay1 : (a b s : Rat) -> Rat := fun (a b s : Rat) => flagIf (cbLocal a b s) (ratSub (cbMax b s) b) 0/1
+def cbPay2 : (a b s : Rat) -> Rat := fun (a b s : Rat) => flagIf (cbLocal a b s) (ratSub (cbMax a s) a) 0/1
+def cbPay3 : (a b s : Rat) -> Rat := fun (a b s : Rat) => flagIf (cbLocal a b s) 0/1 (ratAdd a b)
+def cbRev : (a b s : Fin 4) -> Rat := fun (a b s : Fin 4) => ratAdd (cbPay1 (cbV a) (cbV b) (cbV s)) (ratAdd (cbPay2 (cbV a) (cbV b) (cbV s)) (cbPay3 (cbV a) (cbV b) (cbV s)))
+def cbExpRev : Rat := sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => sumRat 4 (fun (s : Fin 4) => ratMul 1/64 (cbRev a b s))))
+-- The feasible allocations in the fixed order k : Fin 5: 0 = A to bidder 1
+-- and B to bidder 2, 1 = AB to bidder 3, 2 = A to bidder 1 only, 3 = B to
+-- bidder 2 only, 4 = nothing sold. l11W is the reported welfare (bid sum).
+def l11Loc : Fin 5 := 0
+def l11Syn : Fin 5 := 1
+def l11OnlyA : Fin 5 := 2
+def l11OnlyB : Fin 5 := 3
+def l11None : Fin 5 := 4
+def l11W : (a b s : Rat) -> (k : Fin 5) -> Rat := fun (a b s : Rat) (k : Fin 5) => flagIf (finEq k 0) (ratAdd a b) (flagIf (finEq k 1) s (flagIf (finEq k 2) a (flagIf (finEq k 3) b 0/1)))
+-- The running maximum: the next allocation in the order replaces the
+-- incumbent only when its bid sum is higher (cbMax w m keeps m when w <= m).
+def l11M1 : (a b s : Rat) -> Rat := fun (a b s : Rat) => cbMax s (ratAdd a b)
+def l11M2 : (a b s : Rat) -> Rat := fun (a b s : Rat) => cbMax a (l11M1 a b s)
+def l11M3 : (a b s : Rat) -> Rat := fun (a b s : Rat) => cbMax b (l11M2 a b s)
+def l11M4 : (a b s : Rat) -> Rat := fun (a b s : Rat) => cbMax 0/1 (l11M3 a b s)
+-- Winner determination: the argmax with the same comparisons.
+def l11Win : (a b s : Rat) -> Fin 5 := fun (a b s : Rat) => flagIf (ratLe 0/1 (l11M3 a b s)) (flagIf (ratLe b (l11M2 a b s)) (flagIf (ratLe a (l11M1 a b s)) (flagIf (ratLe s (ratAdd a b)) l11Loc l11Syn) l11OnlyA) l11OnlyB) l11None
+theorem l11LeOfNotLe : (w : Rat) -> (m : Rat) -> Eq Flag (ratLe w m) flagNo -> RatLe m w := fun w => fun m => fun e => orElim (RatLt m w) (RatLe w m) (RatLe m w) (l9Tri m w) (fun h => cert m w (RatLt m w) h) (fun h => absurd (l1FlagYesNeNo (trans (symm h) e)) (RatLe m w))
+-- cbMax w m is at least m and at least w.
+theorem l11MaxL : (w : Rat) -> (m : Rat) -> RatLe m (cbMax w m) := fun w => fun m => flagCases (fun (d : Flag) => Eq Flag (ratLe w m) d -> RatLe m (flagIf d m w)) (fun e => ratLeRefl m) (fun e => l11LeOfNotLe w m e) (ratLe w m) refl
+theorem l11MaxR : (w : Rat) -> (m : Rat) -> RatLe w (cbMax w m) := fun w => fun m => flagCases (fun (d : Flag) => Eq Flag (ratLe w m) d -> RatLe w (flagIf d m w)) (fun e => e) (fun e => ratLeRefl w) (ratLe w m) refl
+-- l11W through a flagIf on the allocation.
+theorem l11Lift : (a : Rat) -> (b : Rat) -> (s : Rat) -> (i : Fin 5) -> (k : Fin 5) -> (m : Rat) -> (w : Rat) -> Eq Rat (l11W a b s i) m -> Eq Rat (l11W a b s k) w -> (c : Flag) -> Eq Rat (l11W a b s (flagIf c i k)) (flagIf c m w) := fun a => fun b => fun s => fun i => fun k => fun m => fun w => fun ei => fun ek => fun c => flagCases (fun (d : Flag) => Eq Rat (l11W a b s (flagIf d i k)) (flagIf d m w)) ei ek c
+-- The reported welfare of the chosen allocation is the running maximum.
+theorem l11WinW : (a : Rat) -> (b : Rat) -> (s : Rat) -> Eq Rat (l11W a b s (l11Win a b s)) (l11M4 a b s) := fun a => fun b => fun s => l11Lift a b s (flagIf (ratLe b (l11M2 a b s)) (flagIf (ratLe a (l11M1 a b s)) (flagIf (ratLe s (ratAdd a b)) l11Loc l11Syn) l11OnlyA) l11OnlyB) l11None (l11M3 a b s) 0/1 (l11Lift a b s (flagIf (ratLe a (l11M1 a b s)) (flagIf (ratLe s (ratAdd a b)) l11Loc l11Syn) l11OnlyA) l11OnlyB (l11M2 a b s) b (l11Lift a b s (flagIf (ratLe s (ratAdd a b)) l11Loc l11Syn) l11OnlyA (l11M1 a b s) a (l11Lift a b s l11Loc l11Syn (ratAdd a b) s refl refl (ratLe s (ratAdd a b))) refl (ratLe a (l11M1 a b s))) refl (ratLe b (l11M2 a b s))) refl (ratLe 0/1 (l11M3 a b s))
+-- Each running maximum is at most the last one.
+theorem l11Up3 : (a : Rat) -> (b : Rat) -> (s : Rat) -> RatLe (l11M3 a b s) (l11M4 a b s) := fun a => fun b => fun s => l11MaxL 0/1 (l11M3 a b s)
+theorem l11Up2 : (a : Rat) -> (b : Rat) -> (s : Rat) -> RatLe (l11M2 a b s) (l11M4 a b s) := fun a => fun b => fun s => ratLeTrans (l11M2 a b s) (l11M3 a b s) (l11M4 a b s) (l11MaxL b (l11M2 a b s)) (l11Up3 a b s)
+theorem l11Up1 : (a : Rat) -> (b : Rat) -> (s : Rat) -> RatLe (l11M1 a b s) (l11M4 a b s) := fun a => fun b => fun s => ratLeTrans (l11M1 a b s) (l11M2 a b s) (l11M4 a b s) (l11MaxL a (l11M1 a b s)) (l11Up2 a b s)
+-- M&M ch. 7, package auctions: for all Rat bids a, b, s, the winner
+-- determination maximizes the reported welfare over the 5 feasible
+-- allocations (one finCases case per allocation).
+theorem package_wd_maximizes_welfare : (a : Rat) -> (b : Rat) -> (s : Rat) -> (k : Fin 5) -> RatLe (l11W a b s k) (l11W a b s (l11Win a b s)) := fun a => fun b => fun s => fun k => transport (fun (t : Rat) => RatLe (l11W a b s k) t) (symm (l11WinW a b s)) (finCases 4 (fun (j : Fin 5) => RatLe (l11W a b s j) (l11M4 a b s)) (ratLeTrans (ratAdd a b) (l11M1 a b s) (l11M4 a b s) (l11MaxL s (ratAdd a b)) (l11Up1 a b s)) (fun (i : Fin 4) => finCases 3 (fun (j : Fin 4) => RatLe (l11W a b s (finSucc 4 j)) (l11M4 a b s)) (ratLeTrans s (l11M1 a b s) (l11M4 a b s) (l11MaxR s (ratAdd a b)) (l11Up1 a b s)) (fun (i2 : Fin 3) => finCases 2 (fun (j : Fin 3) => RatLe (l11W a b s (finSucc 4 (finSucc 3 j))) (l11M4 a b s)) (ratLeTrans a (l11M2 a b s) (l11M4 a b s) (l11MaxR a (l11M1 a b s)) (l11Up2 a b s)) (fun (i3 : Fin 2) => finCases 1 (fun (j : Fin 2) => RatLe (l11W a b s (finSucc 4 (finSucc 3 (finSucc 2 j)))) (l11M4 a b s)) (ratLeTrans b (l11M3 a b s) (l11M4 a b s) (l11MaxR b (l11M2 a b s)) (l11Up3 a b s)) (fun (i4 : Fin 1) => finCases 0 (fun (j : Fin 1) => RatLe (l11W a b s (finSucc 4 (finSucc 3 (finSucc 2 (finSucc 1 j))))) (l11M4 a b s)) (l11MaxR 0/1 (l11M3 a b s)) (fun (i5 : Fin 0) => absurd (finEmpty i5) (RatLe (l11W a b s (finSucc 4 (finSucc 3 (finSucc 2 (finSucc 1 (finSucc 0 i5)))))) (l11M4 a b s))) i4) i3) i2) i) k)
+-- Pay as bid: bidder 1 wins A in 0 and 2, bidder 2 wins B in 0 and 3, and
+-- bidder 3 wins AB in 1. Each winner pays its bid; l11Rev is the sum.
+def l11Has1 : (k : Fin 5) -> Flag := fun (k : Fin 5) => flagIf (finEq k 0) flagYes (finEq k 2)
+def l11Has2 : (k : Fin 5) -> Flag := fun (k : Fin 5) => flagIf (finEq k 0) flagYes (finEq k 3)
+def l11Has3 : (k : Fin 5) -> Flag := fun (k : Fin 5) => finEq k 1
+def l11Rev : (a b s : Rat) -> Rat := fun (a b s : Rat) => ratAdd (flagIf (l11Has1 (l11Win a b s)) a 0/1) (ratAdd (flagIf (l11Has2 (l11Win a b s)) b 0/1) (flagIf (l11Has3 (l11Win a b s)) s 0/1))
+-- Utility of a bidder with the true value v and the bid x; the other bids
+-- follow.
+def l11U1 : (v x b s : Rat) -> Rat := fun (v x b s : Rat) => flagIf (l11Has1 (l11Win x b s)) (ratSub v x) 0/1
+def l11U2 : (v x a s : Rat) -> Rat := fun (v x a s : Rat) => flagIf (l11Has2 (l11Win a x s)) (ratSub v x) 0/1
+def l11U3 : (v x a b : Rat) -> Rat := fun (v x a b : Rat) => flagIf (l11Has3 (l11Win a b x)) (ratSub v x) 0/1
+-- Interim utility of the type t with the bid x when the other bidders bid
+-- their values; the values are i.i.d. on cbV with probability 1/4 each.
+def l11E1 : (t : Fin 4) -> (x : Rat) -> Rat := fun (t : Fin 4) (x : Rat) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul 1/16 (l11U1 (cbV t) x (cbV u) (cbV w))))
+def l11E2 : (t : Fin 4) -> (x : Rat) -> Rat := fun (t : Fin 4) (x : Rat) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul 1/16 (l11U2 (cbV t) x (cbV u) (cbV w))))
+def l11E3 : (t : Fin 4) -> (x : Rat) -> Rat := fun (t : Fin 4) (x : Rat) => sumRat 4 (fun (u : Fin 4) => sumRat 4 (fun (w : Fin 4) => ratMul 1/16 (l11U3 (cbV t) x (cbV u) (cbV w))))
+-- Truthful bids are an equilibrium when no type gains with a bid on cbV.
+def l11Eq : Flag := allFin 4 (fun (t : Fin 4) => allFin 4 (fun (x : Fin 4) => flagAnd (ratLe (l11E1 t (cbV x)) (l11E1 t (cbV t))) (flagAnd (ratLe (l11E2 t (cbV x)) (l11E2 t (cbV t))) (ratLe (l11E3 t (cbV x)) (l11E3 t (cbV t))))))
+-- Truthful bids give each type the interim utility 0. The synergy type 3
+-- gains 3/16 with the bid 2 (it wins when a + b < 2), so truthful bids are
+-- not an equilibrium.
+def l11NotEq : Flag := flagAnd (allFin 4 (fun (t : Fin 4) => flagAnd (ratEq (l11E1 t (cbV t)) 0/1) (flagAnd (ratEq (l11E2 t (cbV t)) 0/1) (ratEq (l11E3 t (cbV t)) 0/1)))) (flagAnd (ratEq (l11E3 3 2/1) 3/16) (flagNot l11Eq))
+-- On the grid (bids not negative) the winner determination picks the
+-- allocation 0 or 1, the same as the VCG rule cbLocal (a tie goes to bidders
+-- 1 and 2), and the revenue is the running maximum.
+def l11Agree : Flag := allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => allFin 4 (fun (s : Fin 4) => flagAnd (flagIf (cbLocal (cbV a) (cbV b) (cbV s)) (finEq (l11Win (cbV a) (cbV b) (cbV s)) 0) (finEq (l11Win (cbV a) (cbV b) (cbV s)) 1)) (ratEq (l11Rev (cbV a) (cbV b) (cbV s)) (l11M4 (cbV a) (cbV b) (cbV s))))))
+-- Revenue at truthful bids against VCG (cbRev): at least as high on all 64
+-- cells, 6 against 0 at (3, 3, 3), and the expected revenue 207/64 against
+-- cbExpRev = 25/32. Truthful bids are not an equilibrium, so this compares
+-- the bid sums only.
+def l11ExpRev : Rat := sumRat 4 (fun (a : Fin 4) => sumRat 4 (fun (b : Fin 4) => sumRat 4 (fun (s : Fin 4) => ratMul 1/64 (l11Rev (cbV a) (cbV b) (cbV s)))))
+def l11RevCheck : Flag := flagAnd (allFin 4 (fun (a : Fin 4) => allFin 4 (fun (b : Fin 4) => allFin 4 (fun (s : Fin 4) => ratLe (cbRev a b s) (l11Rev (cbV a) (cbV b) (cbV s)))))) (flagAnd (ratEq (cbRev 3 3 3) 0/1) (flagAnd (ratEq (l11Rev 3/1 3/1 3/1) 6/1) (flagAnd (ratEq l11ExpRev 207/64) (ratEq cbExpRev 25/32))))
+theorem package_wd_agrees_vcg_allocation : Holds l11Agree := decide l11Agree
+theorem package_truthful_not_equilibrium : Holds l11NotEq := decide l11NotEq
+theorem package_revenue_vs_vcg : Holds l11RevCheck := decide l11RevCheck

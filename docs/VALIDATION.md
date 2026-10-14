@@ -434,3 +434,19 @@ z x y` in `muSeqCellRef` (`RULE_DECIDE` in `l10AgreeCheck`). The gate has
 checks in total, and 0 failures. No kernel rule changes and `src/front` does
 not change, so there is no mutant run, and the kernel sweep stays at 99 of
 101.
+
+M6 session 6 (2026-10-13) adds the proof file `test/proof/ok/l11.lang` for
+ch. 7, the package auctions with finite witnesses. It has 14 theorem checks,
+so the 17 proof files have 535 theorem checks. `langc check` gives exit 0,
+`langc build` gives 11 instances (`cbExpRev` = 25/32, the 5 allocation names
+`l11Loc` to `l11None`, `l11ExpRev` = 207/64, and the flags `l11Eq`
+(`false`), `l11NotEq`, `l11Agree` and `l11RevCheck` (`true`)), and `langc
+verify` gives exit 0. The gate compares the check output with `l11.out` and
+the proof JSON with `l11.json`. Three negative probes on temporary copies
+are refused: the welfare b in place of a for the allocation 2 in `l11W`
+(`TYPE_REFL` in `l11WinW`), the tie rule `ratLt s (ratAdd a b)` in `l11Win`
+(`TYPE_MISMATCH` in `l11WinW`) and 1/4 in place of 3/16 in `l11NotEq`
+(`RULE_DECIDE` in `package_truthful_not_equilibrium`). The gate has 1360
+checks in the 14 main groups (proofs 17, proof refusals 98), 1390 checks in
+total, and 0 failures. No kernel rule changes and `src/front` does not
+change, so there is no mutant run, and the kernel sweep stays at 99 of 101.

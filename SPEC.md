@@ -749,7 +749,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4) and the sequential game form of Ch 7 (session 5); 16 proof files with 521 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5) and the package auctions of Ch 7 (session 6); 17 proof files with 535 theorem checks |
 
 M0 has these slices:
 
@@ -913,6 +913,25 @@ proof files hold 521 theorem checks. The gate has 1359 checks in 14 main
 groups, including 98 proof refusals, and 1389 checks in total, with 0
 failures. The continuous results of 7.2 are not built.
 
+M6 session 6 (2026-10-13) builds the package auctions of ch. 7 with finite
+witnesses: `test/proof/ok/l11.lang` has 14 theorem checks, with no new
+kernel rule. Two objects A and B are sold to the 3 bidders of
+`examples/combinatorial.lang`: bidder 1 bids on A, bidder 2 bids on B and
+bidder 3 bids on the package AB. The winner determination takes the feasible
+allocation with the highest bid sum (5 feasible allocations in a fixed
+order, and a tie goes to the first in the order), and each winner pays its
+bid. `package_wd_maximizes_welfare` proves that the chosen allocation
+maximizes the reported welfare for all Rat bids. `decide` checks on the Fin
+4 grid that the allocation agrees with the VCG rule `cbLocal`
+(`package_wd_agrees_vcg_allocation`), that truthful package bids are not an
+equilibrium when the values are i.i.d. with probability 1/4 (the synergy
+type 3 gains 3/16 with the bid 2, `package_truthful_not_equilibrium`), and
+that the revenue at truthful bids is at least `cbRev` (VCG) on all 64 cells,
+with the expected revenue 207/64 against 25/32 (`package_revenue_vs_vcg`).
+The 17 proof files hold 535 theorem checks. The gate has 1360 checks in 14
+main groups, including 98 proof refusals, and 1390 checks in total, with 0
+failures. The optimal multiple-object auction is not built.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -1034,7 +1053,7 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l10.lang` use the rules in this form. Two
+`test/proof/ok/l1.lang` to `l11.lang` use the rules in this form. Two
 usage facts: `ring` treats a term that `natInd` opens as an atom, and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).
