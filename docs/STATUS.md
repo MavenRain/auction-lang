@@ -525,6 +525,26 @@ are equivalent and survive, as before). The kernel sweep kills 122 of 124.
 The 19 proof files have 570 theorem checks. The gate has 1374 checks in 14
 main groups, 1404 checks with the C regressions, and 0 failures.
 
+M6 session 9 is done (2026-10-14): the mechanisms for every N and the
+order statistics for N > 2 (slice H part 2b, ruling H5 = a by default).
+There is no change in `src` or in `kernel/rules.lang`: the highest other
+bid is a guest def (`l12Hob`, a fold over the profile, and `l12IsHob`,
+the relation). `test/proof/ok/l12.lang` has 11 defs and 36 theorem
+checks: the tie-winning second price bound for every N
+(`l12SecondPriceDominant`, and `l12Vickrey3` for N = 3), truthful dominance
+for the Rat utility at fixed sizes (`l12SpDominant33` and
+`l12SpDominant24`), and five tie regressions for 2 and 3 bidders. The Rat
+utility follows the library rule that ties go to the lowest bidder index.
+Further checks cover the first price win probability and expected payoff for N iid bids
+(`l12FirstPriceWin` and `l12FirstPricePay`), and the CDF of the second
+highest bid (`l12SecondForm` and `l12OneAbove`). There are no new proof
+refusals and no new mutant rows. The 20 proof files have 606 theorem
+checks. The gate has 1375 checks in 14 main groups, 1405 checks with the
+C regressions, and 0 failures. Two items stay closed checks at fixed
+sizes: a general proof that `l12Hob` and `l12IsHob` agree needs an
+`allFin` intro rule, and the split of the second highest bid event for
+every N needs a count lemma over `Fin n`.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

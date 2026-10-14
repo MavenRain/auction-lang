@@ -760,7 +760,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8); 19 proof files with 570 theorem checks |
+| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks |
 
 M0 has these slices:
 
@@ -981,6 +981,42 @@ files hold 570 theorem checks. The gate has 1374 checks in 14 main groups,
 including 110 proof refusals, and 1404 checks in total, with 0 failures.
 The mechanisms for every N are not built.
 
+M6 session 9 adds the mechanisms for every N and the order statistics for
+N > 2 (ruling H5 = a by default: guest defs, no kernel change).
+`test/proof/ok/l12.lang` has 11 defs and 36 theorem checks (5 copies of
+`l1.lang` lemmas and 31 new checks). A profile `x : Fin (natPow k n)`
+holds the n bids. Second price: `l12Hob` is the highest other bid as a
+fold (a `sumRat` over the grid of an `allFin` over the profile), and
+`l12IsHob` is the relation. `l12SecondPriceDominant` states for each k,
+n, profile, bidder and m with `l12IsHob` that truthful bidding is
+dominant for the tie-winning Nat utility at m (`vickrey_truthful_dominant`
+at m). `l12Vickrey3` is the
+N = 3 case with m = `finMax` of the other two bids, through `allFinSpec`.
+First price with N iid bids (a tie loses): `l12FirstPriceWin` states
+P(win at b) = F(b)^(N - 1) (an instance of `sumProd`), and
+`l12FirstPricePay` gives the expected payoff (v - b) F(b)^(N - 1).
+Order statistics: `l12SecondForm` is the closed form
+F^N + N (1 - F) F^(N - 1) of the CDF of the second highest bid, and
+`l12OneAbove` (an instance of `sumProd`) gives the probability that only
+bid j is at or above t. Closed checks: the fold and the relation agree
+(k^N = 27, 16 and 64), truthful bidding is dominant for the Rat second
+price utility `l12Sp` (k^N = 27 and 16), where ties go to the lowest
+bidder index as in `domain/auction.lang`. Five regressions check the
+winning and losing utilities at tied 2-bidder and 3-bidder profiles.
+First price checks give the values at (k, N) = (4, 3) and (3, 4) and
+show that bid 2 is a best reply at v = 3 for (k, N) = (4, 3).
+The closed form agrees with the profile sum at 5 points (k, N, t), and
+the event of the second highest bid splits on each profile
+(k^N = 27 and 16). The 20 proof files hold 606 theorem checks. The gate
+has 1375 checks in 14 main groups, including 110 proof refusals, and 1405
+checks in total, with 0 failures. Limits: the proof of
+`l12SecondPriceDominant` does not use the `l12IsHob` hypothesis
+(dominance holds at each m), so the closed checks give the link of the
+relation to the profile. A general proof that the fold and the relation
+agree needs an `allFin` intro rule, and the kernel does not have one. The
+split for every N needs a count lemma over `Fin n`. Both stay closed
+checks at fixed sizes.
+
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
 The file `kernel/rules.lang` declares these rules:
@@ -1102,8 +1138,8 @@ This section is final (M5 Integrate, 2026-10-12). The M5 design gave the
 certificate as a list of nonnegative coefficients. The implemented
 certificate is the Prop `H`: each fact has the coefficient 1, and a
 scaled fact comes from `ratMulNonneg`. The proof files
-`test/proof/ok/l1.lang` to `l11.lang`, `k4.lang` and `k5.lang` use the rules in
-this form. Three usage facts: `ring` treats a term that `natInd` opens as
+`test/proof/ok/l1.lang` to `l11.lang`, `k4.lang`, `k5.lang` and `l12.lang` use
+the rules in this form. Three usage facts: `ring` treats a term that `natInd` opens as
 an atom, `ringNat` treats `natPow` as an atom (`k4PowOne`), and
 a nested `ratDiv` by the same divisor needs one `Ne` fact (in each Rat
 rule since M6 L).

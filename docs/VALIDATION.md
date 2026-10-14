@@ -491,3 +491,23 @@ with `sumRat` in place of `prodRat` on the right side. The k3 sweep kills
 40 of 40, and the k1 rerun kills 31 of 33, so the kernel sweep kills 122
 of 124. The gate has 1374 checks in the 14 main groups (proofs 19, proof
 refusals 110), 1404 checks in total, and 0 failures.
+
+M6 session 9 (2026-10-14) adds the proof file `test/proof/ok/l12.lang`
+for the mechanisms for every N and the order statistics for N > 2. It
+has 36 theorem checks, so the 20 proof files have 606 theorem checks.
+`langc check` gives exit 0, `langc build` gives no instances (the file
+has defs and theorems only), and `langc verify` gives exit 0. The gate
+compares the check output with `l12.out` and the proof JSON with
+`l12.json`. Ruling H5 = a adds no built-in and no kernel rule, so there
+are no new proof refusals (110 in total) and no new mutant rows (the
+kernel sweep stays at 122 of 124). The closed checks (`decide` and
+`refl`) test the general theorems at fixed sizes: the fold `l12Hob` and
+the relation `l12IsHob` agree on each profile, bidder and m (k^N = 27, 16
+and 64), truthful bidding is dominant for the Rat second price utility
+`l12Sp` (k^N = 27 and 16), the closed form of the CDF of the second
+highest bid agrees with the profile sum at 5 points (k, N, t), and the
+event of the second highest bid splits on each profile (k^N = 27 and 16).
+Five tie regressions check that `l12Sp` gives the winning utility only
+to the lowest bidder index on tied 2-bidder and 3-bidder profiles.
+The gate has 1375 checks in the 14 main groups (proofs 20, proof
+refusals 110), 1405 checks in total, and 0 failures.
