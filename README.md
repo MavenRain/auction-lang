@@ -95,6 +95,7 @@ adds `l11.lang` (package auctions of ch. 7). M6 session 7 adds `k4.lang`
 rules). M6 session 8 adds `k5.lang` (the App A product rule for N
 factors: `prodRat` and 3 kernel rules). M6 session 9 adds `l12.lang`
 (the mechanisms for every N and the order statistics for N > 2).
+M6 is done (2026-10-14).
 A file cannot import
 another file, so the files identify their copied
 helpers, and a helper counts once per file. The column `Proved for all sizes (M5)` names the
@@ -117,7 +118,7 @@ sizes by `decide` is marked as such.
 | Ch. 7, identical units | `multiunit.lang` | for 3 unit demand bidders and 2 units, uniform price truthful bids are dominant on the bid grid (revenue 9/8), and 2 pay as bid equilibria are checked; a separate bidder wanting 2 units gains by reducing demand, while multi unit Vickrey reports are dominant on the report grid. As found: pay as bid revenues are 63/64 and 293/256; the sequential sale has no monotone symmetric pure equilibrium on the chosen bid grid; the conditional-expectation bidding rule transplanted to discrete values fails the equilibrium check and gives E[p1] = 62/105 > E[p2] = 9/16 | `l4.lang`: `uniform_price_unit_demand_dominant` (3 bidders, 2 units, all Rat values and bids), `multi_unit_vickrey_dominant` (the VCG instance at Fin 3); at the M4 sizes by `decide`: `demand_reduction`. `l10.lang`: `sequential_round2_truthful_dominant` (2 rounds of second price and a round 1 winner leaves: a truthful round 2 bid is dominant for every history and all Rat values, round 1 prices and bids), `sequential_nonmonotone_not_equilibrium` (by `decide` on the bids k/4: a round 1 profile that is not monotone in the value is not an equilibrium) |
 | Ch. 7, two objects | `combinatorial.lang` | VCG truthful reports are dominant and individually rational; low revenue and an outcome that is not in the core; revenue that is not monotone in the bidders; expected revenue 25/32; the exposure problem of a synergy bidder in two separate second price auctions | `l4.lang`: `two_object_vcg_dominant` (the VCG instance at Fin 4, all values, assuming an efficient allocation), `two_object_vcg_ir` (also assuming pivot payments and nonnegative own valuations); at the M4 sizes by `decide`: `revenue_not_monotone`, `vcg_outcome_not_in_core`, `exposure_problem`. `l11.lang`: `package_wd_maximizes_welfare` (package bids on A, B and AB, pay as bid: the winner determination maximizes the reported welfare for all Rat bids); by `decide` on the grid: `package_wd_agrees_vcg_allocation` (the allocation agrees with VCG), `package_truthful_not_equilibrium` (truthful package bids are not an equilibrium), `package_revenue_vs_vcg` (at truthful bids the revenue is at least the VCG revenue; expected 207/64 against 25/32) |
 
-Not covered after M5:
+Not covered after M6:
 
 - Appendix B, the differential equations of the equilibrium bids. The
   examples check closed forms at sample points, or discrete analogues.
@@ -141,8 +142,10 @@ Not covered after M5:
   regularity as a hypothesis), and the correlated and common value
   extensions (sections 6.4.2 and 6.4.4).
 - In ch. 7, the optimal multiple-object auction.
-- Mechanism matrices for every number of bidders: auction-cat has 2 and
-  3 bidder mechanisms. Order statistics for N > 2.
+- For every number of bidders, a general proof that the fold `l12Hob`
+  and the relation `l12IsHob` agree (it needs an `allFin` intro rule),
+  and the split of the second highest bid event (it needs a count lemma
+  over `Fin n`). `l12.lang` checks both at fixed sizes.
 - The continuous results whose assumptions change in examples marked
   "as found".
 

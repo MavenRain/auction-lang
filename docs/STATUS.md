@@ -545,6 +545,17 @@ sizes: a general proof that `l12Hob` and `l12IsHob` agree needs an
 `allFin` intro rule, and the split of the second highest bid event for
 every N needs a count lemma over `Fin n`.
 
+M6 is done (2026-10-14, session 10, ruling C1 = a, no kernel change).
+The kernel has 81 rules, and the 20 proof files have 606 theorem checks
+(480 for the book and 126 for the kernel rules). The gate has 1375
+checks in 14 main groups, 1405 checks with the C regressions, and 0
+failures. The kernel mutant sweep kills 122 of 124 mutants (2 equivalent
+k1 mutants). The two closed-check items of session 9 stay as limits.
+Appendix B, the exercises, the results for a general continuous F, the
+continuous "as found" results and bignum `Nat` and `Rat` stay out of
+scope (rulings R1 = a and R3 = a). The close record is the M6 paragraph
+at the end of `SPEC.md` section 10.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

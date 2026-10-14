@@ -760,7 +760,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M3 | Hardening: speed, limits, a checked certificate for the output |
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
-| M6 | Proof coverage, in progress: the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks |
+| M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
 
 M0 has these slices:
 
@@ -1016,6 +1016,29 @@ relation to the profile. A general proof that the fold and the relation
 agree needs an `allFin` intro rule, and the kernel does not have one. The
 split for every N needs a count lemma over `Fin n`. Both stay closed
 checks at fixed sizes.
+
+M6 is done (2026-10-14, session 10). Ruling C1 = a: M6 closes with
+the two limits of session 9 recorded, and the kernel does not change.
+Sessions 1 to 9 add the kernel batch J, K, M(i) and L, Ch 5 and App C,
+the explicit 2-bidder allocation of ch. 6.4, and no pure symmetric
+equilibrium in 3.4 for all Rat bids. They also add the sequential game
+form and the package auctions of ch. 7, the N-ary profile layer, the
+App A product rule for N factors, and the mechanisms for every N with
+the order statistics for N > 2. The kernel has 81 rules. The 20 proof
+files hold 606 theorem checks: 480 for the book in `l1.lang` to
+`l12.lang` and 126 for the kernel rules in `k1.lang` to `k5.lang`. The
+gate has 1375 checks in 14 main groups, including 110 proof refusals,
+plus 21 C typed reader and 9 C certificate regressions: 1405 checks in
+total, with 0 failures. The kernel mutant sweep kills 122 of 124 mutants
+(the 2 equivalent k1 mutants stay as rows). The proof JSON is
+byte-equal to its goldens. Two limits stay closed checks at fixed
+sizes: a general proof that `l12Hob` and `l12IsHob` agree needs an
+`allFin` intro rule, and the split of the second highest bid event for
+every N needs a count lemma over `Fin n`. Not built in M6 (rulings
+R1 = a and R3 = a, and there is no file with the exercises): Appendix B,
+the exercises, the results for a general continuous F, the continuous
+results of the examples marked "as found", and bignum `Nat` and `Rat`.
+`README.md` `Not covered after M6` lists the remaining items.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
