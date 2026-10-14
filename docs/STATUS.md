@@ -423,7 +423,8 @@ term with a literal factor. `l9GridCheck` uses `decide` to check that
 `l9Pay` agrees with `dsGridPay` on the grid k/8 for v = 0 and v = 1, and
 that no grid pair is an equilibrium against grid deviations. There is no
 new kernel rule, and `src/front` does not change, so there is no mutant
-run. Not built: the form with more than 2 values. The 15 proof files have
+run. Not built: the form with more than 2 values (M7
+session 4 closes it in `l15.lang`). The 15 proof files have
 509 theorem checks. The gate has 1358 checks in 14 main groups, 1388
 checks with the C regressions, and 0 failures.
 
@@ -590,6 +591,14 @@ the grid `Fin m` by `Fin n` with the prior p i times q j, and
 Chebyshev sum inequality on each row and on the row sums. The 24 proof
 files have 714 theorem checks, and the gate has 1419 checks with 0
 failures. D2 is done. Session 4 is E2 (3.4 for k values).
+
+M7 session 4 is done (2026-10-14): no pure symmetric equilibrium in 3.4
+for k values in `test/proof/ok/l15.lang` (30 theorem checks, no kernel
+change, ruling E2a = a). `no_pure_symmetric_equilibrium_k` proves it for
+k = n + 2 values in strict order, a prior with positive masses that sum
+to 1, and all bid functions `Fin k -> Rat`. The proof uses a top bid
+(`l15ArgMax`, by `natInd`). The 25 proof files have 744 theorem checks,
+and the gate has 1420 checks with 0 failures. Session 5 is E2 part 2.
 
 ## Known limits
 

@@ -763,7 +763,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
-| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change) |
+| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change); session 4 adds `l15.lang`, no pure symmetric equilibrium in 3.4 for k values (E2 part 1, ruling E2a = a, no kernel change) |
 
 M0 has these slices:
 
@@ -911,6 +911,7 @@ with a literal factor (`l9Pos`), so no divisor is a term that is not a
 literal. The 15 proof files hold 509 theorem checks. The gate has 1358
 checks in 14 main groups, including 98 proof refusals, and 1388 checks in
 total, with 0 failures. The form with more than 2 values is not built.
+M7 session 4 closes it (`l15.lang`).
 
 M6 session 5 (2026-10-13) builds the sequential game form of ch. 7 with
 finite witnesses: `test/proof/ok/l10.lang` has 12 theorem checks, with no
@@ -1121,6 +1122,27 @@ names, because theorem names are per file. There is no new proof
 refusal and no new mutant row. The 24 proof files hold 714 theorem
 checks: 558 for the book and 156 for the kernel rules. The gate has 1389
 checks in 14 main groups, 1419 checks in total, with 0 failures.
+
+M7 session 4 (2026-10-14, E2 part 1) adds `test/proof/ok/l15.lang` with
+30 theorem checks and no kernel change. It closes the 3.4 limit for more
+than 2 values (ruling E2a = a). The model is the model of `l9.lang`: 2
+bidders, first price, and a tie splits 1/2 (`l9S`). There are k types
+with the values v in strict order and the prior p (each mass is
+positive, and the sum is 1). A pure symmetric strategy is a bid
+function `b : Fin k -> Rat`. `l15W k p b z` is the win share of the bid
+z, and `l15Eq k v p b` says that no type gains when it changes its bid.
+`no_pure_symmetric_equilibrium_k` proves `Not (l15Eq k v p b)` for
+k = n + 2 and each b. The proof: a top bid exists (`l15ArgMax`, by
+`natInd`). A type with the top bid bids its value, because otherwise it
+gains when it bids a little higher (`l15Up`) or when it bids its value
+(`l15Low`). Type 0 or type 1 then has a lower bid (`l15Other`), and the
+top type gains at a bid between the 2 bids (`l15Dev`). Each of these
+steps is one `certLt` on an `And` of facts. The file copies 6 sum facts
+of `l7.lang`, and 9 facts and the def `l9S` of `l9.lang`, with the same
+names. There is no new proof refusal and no new mutant row. The 25
+proof files hold 744 theorem checks: 588 for the book and 156 for the
+kernel rules. The gate has 1390 checks in 14 main groups, 1420 checks
+in total, with 0 failures.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
