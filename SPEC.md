@@ -763,7 +763,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M4 | Partial book coverage: finite models and sampled continuous payoff formulas for selected results of Menezes and Monteiro, chapters 3 to 7 |
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
-| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change); session 4 adds `l15.lang`, no pure symmetric equilibrium in 3.4 for k values (E2 part 1, ruling E2a = a, no kernel change) |
+| M7 | Proof coverage after M6, in progress: session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change); session 4 adds `l15.lang`, no pure symmetric equilibrium in 3.4 for k values (E2 part 1, ruling E2a = a, no kernel change); session 6 adds `l16.lang`, ironing in 6.4 with the ironed virtual value as a hypothesis (F2 part 1, ruling F2a = a, no kernel change) |
 
 M0 has these slices:
 
@@ -1143,6 +1143,38 @@ names. There is no new proof refusal and no new mutant row. The 25
 proof files hold 744 theorem checks: 588 for the book and 156 for the
 kernel rules. The gate has 1390 checks in 14 main groups, 1420 checks
 in total, with 0 failures.
+
+M7 session 6 (2026-10-14, F2 part 1) adds `test/proof/ok/l16.lang` with
+64 theorem checks and no kernel change. It is ironing in 6.4 for a prior
+whose discrete virtual value is not nondecreasing (ruling F2a = a). The
+ironed virtual value `phibar` is a hypothesis, as regularity is in
+`l8.lang`. The convex hull is not built. There are N = n + 1 types.
+`l16Dlt N f phibar j` is the term of `l3VS` in the product form (no
+division) minus `f j` times `phibar j`, and D m is the sum of the first
+m terms. `l16Iron N f phibar Q` is the expected ironed surplus.
+`ironing_bound` proves `l3VS N f Q <= l16Iron N f phibar Q` for each
+nondecreasing Q when D (k + 1) >= 0 and D N = 0. `ironing_tight` proves
+the equality when D N = 0 and, for each k, D (k + 1) = 0 or
+Q k = Q (k + 1). `ironed_auction_attains_bound` proves that the 2-bidder
+auction `l8Q N f phibar` is IC and IR with `l3Env`, and that its revenue
+is `l16Iron N f phibar` of its allocation. Its hypotheses are f >= 0,
+phibar nondecreasing, D N = 0, and D (k + 1) = 0 or
+phibar k = phibar (k + 1). `ironing_revenue_bound` proves
+`l3Rev N f P <= l16Iron N f phibar Q` for each IC and IR mechanism
+(Q, P) when D (k + 1) >= 0 and D N = 0. The proofs use Abel summation
+by `natInd` as an inequality (`l16AbelLe`) and as an equality
+(`l16AbelEq`), and the split `l16Split`. `l16InstanceCheck` checks a
+4-type prior f = (1/8, 1/2, 1/8, 1/4) by `decide`: its virtual value
+(-7, 1/4, 0, 3) is not nondecreasing, phibar = (-7, 1/5, 1/5, 3), and
+the ironed auction has the revenue 91/128 for each bidder. The file
+copies the theorems and defs of `l8.lang` lines 1 to 90, of `l9.lang`
+line 26 and 7 facts of `l3.lang` with the same names. Not built
+(session 7): the optimality of the ironed auction among all 2-bidder
+feasible rules (the pointwise step), and the general theorem applied to
+the witness. There is no new proof refusal and no new mutant row. The
+26 proof files hold 808 theorem checks: 652 for the book and 156 for
+the kernel rules. The gate has 1391 checks in 14 main groups, 1421
+checks in total, with 0 failures.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 

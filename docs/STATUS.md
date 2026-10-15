@@ -394,7 +394,8 @@ no division and no `Ne` fact. There is no new kernel rule, and
 `src/front` does not change, so there is no mutant run. Not built: a Prop
 instance of the main theorem at 4 types (there is no Fin-from-Nat
 constructor, so the regularity Prop for an open type needs a Nat case
-split; the `decide` check pins the instance), and ironing. The 14 proof
+split; the `decide` check pins the instance), and ironing (M7
+session 6 builds part of it in `l16.lang`). The 14 proof
 files have 487 theorem checks. The gate has 1357 checks in 14 main
 groups, 1387 checks with the C regressions, and 0 failures.
 
@@ -599,6 +600,18 @@ k = n + 2 values in strict order, a prior with positive masses that sum
 to 1, and all bid functions `Fin k -> Rat`. The proof uses a top bid
 (`l15ArgMax`, by `natInd`). The 25 proof files have 744 theorem checks,
 and the gate has 1420 checks with 0 failures. Session 5 is E2 part 2.
+
+M7 session 6 is done (2026-10-14): ironing in 6.4 in
+`test/proof/ok/l16.lang` (64 theorem checks, no kernel change, ruling
+F2a = a). The ironed virtual value is a hypothesis. `ironing_bound`,
+`ironing_tight`, `ironed_auction_attains_bound` and
+`ironing_revenue_bound` hold for every type count N = n + 1, and
+`l16InstanceCheck` checks a 4-type prior that is not regular by
+`decide` (revenue 91/128 for each bidder). Session 5 closed E2 at
+session 4 (ruling E2b = b) with no change in the repo. The 26 proof
+files have 808 theorem checks, and the gate has 1421 checks with 0
+failures. Session 7 is F2 part 2: the optimality among all 2-bidder
+feasible rules and the general theorem on the witness.
 
 ## Known limits
 

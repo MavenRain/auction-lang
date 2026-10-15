@@ -569,3 +569,14 @@ because theorem names are per file. There are no new proof refusals and
 no new mutant rows: the session adds no rule, so the kernel sweep stays
 at 131 / 133. The gate has 1390 checks in the 14 main groups (proofs 25,
 proof refusals 120), 1420 checks in total, and 0 failures.
+
+M7 session 6 (2026-10-14) adds the proof file `test/proof/ok/l16.lang`
+with 64 theorem checks and no kernel change, so the 26 proof files have
+808 theorem checks. `langc check` gives exit 0, `langc build` gives 1
+instance (`l16Inst : Flag = 1`), and `langc verify` gives exit 0. The
+file copies facts and defs of `l3.lang`, `l8.lang` and `l9.lang` with
+the same names, because theorem names are per file. There are no new
+proof refusals and no new mutant rows: the session adds no rule, so the
+kernel sweep stays at 131 / 133. The gate has 1391 checks in the 14 main
+groups (proofs 26, proof refusals 120), 1421 checks in total, and 0
+failures.
