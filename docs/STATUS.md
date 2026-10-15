@@ -673,6 +673,23 @@ book and 156 for the kernel rules). The gate has 1392 checks in 14 main
 groups, 1422 checks with the C regressions, and 0 failures. F4 is done.
 Session 6 is V: the 85 M4 mutants and the kernel sweep.
 
+M8 is done (2026-10-15, session 7, scope (a): F3, F4 and V, no
+kernel change in M8). F3 adds `ironed_auction_optimal_asym` to
+`l16.lang`: the optimality of the ironed auction for asymmetric 2-bidder
+allocations. F4 adds `l17.lang`: `ironing_exists` builds the ironed
+virtual value when f k > 0 below N, so `ironed_auction_optimal_built`
+and `ironed_auction_optimal_asym_built` need no phibar hypothesis. V
+(session 6): 85 of 85 M4 mutants are killed, and the kernel mutant
+sweep kills 131 of 133 mutants (2 equivalent k1 mutants). The kernel has
+83 rules, and the 27 proof files have 939 theorem checks (783 for the
+book and 156 for the kernel rules). The gate has 1392 checks in 14 main
+groups, 1422 checks with the C regressions, and 0 failures. Limits that
+stay: the built theorems need f k > 0 below N (ruling F4c = a).
+Appendix B, the exercises, the results for a general continuous F, the
+continuous "as found" results and bignum `Nat` and `Rat` stay out of
+scope (rulings R1 = a and R3 = a). The close record is the M8 paragraph
+at the end of `SPEC.md` section 10.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

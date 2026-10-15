@@ -625,3 +625,16 @@ no new proof refusals and no new mutant rows: the session adds no rule,
 so the kernel sweep stays at 131 / 133. The 14 main groups have 1392
 checks (proofs 27, proof refusals 120), 1422 checks in total, and 0
 failures.
+
+M8 is done (2026-10-15, session 7). All 85 M4 mutants run again on
+the M8 kernel (session 6, HEAD 10a3aae, no change to a file), and each
+is killed: affiliated 6, combinatorial 7, commonvalue 11, correlated 9,
+discrete 8, entryfee 7, mechanism 15, multiunit 13 and riskaverse 9.
+The kernel mutant sweep runs again with `make -B` for each mutant: k1
+31 of 33 (the equivalent mutants 24 and 25 stay as rows), k2 27 of 27,
+k3 49 of 49, k3b 21 of 21 and l1b 3 of 3, so it kills 131 of 133, with
+0 build failures. The tree is clean after each run. M8 adds no kernel
+rule, no proof refusal and no mutant row. The 27 proof files have 939
+theorem checks (783 for the book and 156 for the kernel rules). The 14
+main groups have 1392 checks (proofs 27, proof refusals 120), 1422
+checks in total, and 0 failures.
