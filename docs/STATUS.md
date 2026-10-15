@@ -627,6 +627,20 @@ conditions as Prop facts for each k (a Nat case split), and
 theorem. The 26 proof files have 828 theorem checks, and the gate has
 1421 checks with 0 failures. Session 8 is the M7 close.
 
+M7 is done (2026-10-14, session 8, scope (a): H3, D2, E2 and F2, no
+kernel change in the close). The kernel has 83 rules, and the 26 proof
+files have 828 theorem checks (672 for the book and 156 for the kernel
+rules). The gate has 1391 checks in 14 main groups, 1421 checks with
+the C regressions, and 0 failures. The kernel mutant sweep kills 131 of
+133 mutants (2 equivalent k1 mutants). The two C1 limits of M6 are
+closed. Limits that stay: the ironed virtual value is a hypothesis (no
+convex hull), and the optimality of the ironed auction is proved only
+for a symmetric 2-bidder allocation with independent types from the
+same prior. Appendix B, the exercises, the results for a general
+continuous F, the continuous "as found" results and bignum `Nat` and
+`Rat` stay out of scope (rulings R1 = a and R3 = a). The close record
+is the M7 paragraph at the end of `SPEC.md` section 10.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on
