@@ -591,3 +591,14 @@ symmetric 2-bidder allocation and independent types from the same prior.
 new mutant rows: the session adds no rule, so the kernel sweep stays at
 131 / 133. The gate has 1391 checks in the 14 main groups (proofs 26,
 proof refusals 120), 1421 checks in total, and 0 failures.
+
+M8 session 1 (2026-10-14) adds 4 theorem checks to
+`test/proof/ok/l16.lang` (88 in the file) and no kernel change, so the
+26 proof files have 832 theorem checks. The asymmetric optimality
+theorem takes two allocations x1 and x2 with x1 k j + x2 j k <= 1 and
+one prior for both bidders. `langc check` gives exit 0, `langc build`
+gives 1 instance (`l16Inst : Flag = 1`, the JSON does not change), and
+`langc verify` gives exit 0. There are no new proof refusals and no new
+mutant rows: the session adds no rule, so the kernel sweep stays at
+131 / 133. The gate has 1391 checks in the 14 main groups (proofs 26,
+proof refusals 120), 1421 checks in total, and 0 failures.

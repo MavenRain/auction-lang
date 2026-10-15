@@ -641,6 +641,16 @@ continuous F, the continuous "as found" results and bignum `Nat` and
 `Rat` stay out of scope (rulings R1 = a and R3 = a). The close record
 is the M7 paragraph at the end of `SPEC.md` section 10.
 
+M8 session 1 is done (2026-10-14): F3, the optimality of the ironed
+auction for asymmetric 2-bidder allocations (rulings F3a = a and
+F3b = a, no kernel change). `l16.lang` gains 4 theorem checks
+(`l16SymPair`, `l16Pair`, `ironed_auction_optimal_asym` and
+`l16WitnessOptimalAsym`), so the 26 proof files have 832 theorem checks
+(676 for the book and 156 for the kernel rules). The two allocations x1
+and x2 use one prior f for both bidders. The gate has 1391 checks in 14
+main groups, 1421 checks with the C regressions, and 0 failures. The
+ironed virtual value stays a hypothesis until F4 (sessions 2 to 4).
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

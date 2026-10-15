@@ -764,6 +764,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
 | M7 | Proof coverage after M6, done (session 8): session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change); session 4 adds `l15.lang`, no pure symmetric equilibrium in 3.4 for k values (E2 part 1, ruling E2a = a, no kernel change); session 6 adds `l16.lang`, ironing in 6.4 with the ironed virtual value as a hypothesis (F2 part 1, ruling F2a = a, no kernel change); session 7 adds to `l16.lang` the optimality of the ironed auction among the symmetric 2-bidder feasible rules and the general theorem on the witness (F2 part 2, ruling F2b = a, no kernel change); 26 proof files with 828 theorem checks and 83 kernel rules |
+| M8 | Proof coverage after M7, in progress: session 1 adds to `l16.lang` the optimality of the ironed auction for asymmetric 2-bidder allocations x1 and x2 from one prior (F3, rulings F3a = a and F3b = a, no kernel change); 26 proof files with 832 theorem checks and 83 kernel rules |
 
 M0 has these slices:
 
@@ -1227,6 +1228,28 @@ no file with the exercises): Appendix B, the exercises, the results for
 a general continuous F, the continuous results of the examples marked
 "as found", and bignum `Nat` and `Rat`. `README.md` `Not covered after
 M7` lists the remaining items.
+
+M8 session 1 (2026-10-14, F3, rulings F3a = a and F3b = a) adds 4
+theorem checks to `test/proof/ok/l16.lang` (88 in the file) and no
+kernel change. Two bidders have independent types from one prior f.
+Bidder 1 with the type k against the type j wins with the probability
+x1 k j, and bidder 2 with the type j against the type k wins with the
+probability x2 j k. The pair is feasible when x1 k j >= 0, x2 k j >= 0
+and x1 k j + x2 j k <= 1 for k, j < N. `l16SymPair` adds two double
+sums with the second one transposed. `l16Pair` proves that the sum of
+the expected ironed surpluses of `l16Int N f x1` and `l16Int N f x2` is
+at most 2 times that of `l8Q N f phibar` (f >= 0, every N), with
+`l16Pt` for each pair of types. `ironed_auction_optimal_asym` proves
+`l3Rev N f P1 + l3Rev N f P2 <= R + R` with
+R = `l3Rev N f (l3Env (l8Q N f phibar))` for each pair of IC and IR
+mechanisms (`l16Int N f x1`, P1) and (`l16Int N f x2`, P2) with a
+feasible pair, under the hypotheses of `ironed_auction_optimal`.
+`l16WitnessOptimalAsym` gives the bound 91/64 at the witness of M7
+session 6. The ironed virtual value stays a hypothesis (F4 builds it).
+There is no new proof refusal and no new mutant row. The 26 proof files
+hold 832 theorem checks: 676 for the book and 156 for the kernel rules.
+The gate has 1391 checks in 14 main groups, 1421 checks in total, and 0
+failures.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 

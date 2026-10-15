@@ -82,4 +82,8 @@ theorem l16BarOr ok
 theorem l16BarZero ok
 theorem l16WitnessAttains ok
 theorem l16WitnessOptimal ok
+theorem l16SymPair ok
+theorem l16Pair ok
+theorem ironed_auction_optimal_asym ok
+theorem l16WitnessOptimalAsym ok
 ok
