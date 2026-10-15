@@ -663,6 +663,16 @@ checks (724 for the book and 156 for the kernel rules). The gate has
 failures. F4 ends with session 5: the optimality theorems with the
 built phibar, so phibar is not a hypothesis.
 
+M8 session 5 is done (2026-10-15): F4 part 4, the optimality theorems
+with the built phibar. `ironed_auction_optimal_built` and
+`ironed_auction_optimal_asym_built` take hf and hpos (f k > 0 below N)
+and no phibar; `ironing_exists` gives phibar. The witness rows apply them
+at the 4-type prior of M7 session 6. `l17.lang` has 107 theorem checks
+(29 new in M8). The 27 proof files have 939 theorem checks (783 for the
+book and 156 for the kernel rules). The gate has 1392 checks in 14 main
+groups, 1422 checks with the C regressions, and 0 failures. F4 is done.
+Session 6 is V: the 85 M4 mutants and the kernel sweep.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

@@ -613,3 +613,15 @@ and the prior f = (0, 1), no phibar satisfies the hull hypotheses, so
 and no new mutant rows: the sessions add no rule, so the kernel sweep
 stays at 131 / 133. The gate has 1392 checks in the 14 main groups
 (proofs 27, proof refusals 120), 1422 checks in total, and 0 failures.
+
+M8 session 5 (2026-10-15) adds 59 theorem checks to
+`test/proof/ok/l17.lang` (53 copies and 6 new) and no kernel change, so
+the file has 107 theorem checks and the 27 proof files have 939.
+`langc check` gives exit 0, `langc build` gives 0 instances (the JSON
+does not change), and `langc verify` gives exit 0. The witness prior of
+M7 session 6 has f k > 0 for each k < 4 (1/8, 1/2, 1/8 and 1/4), so
+`l17FPos` holds and the witness rows apply the built theorems. There are
+no new proof refusals and no new mutant rows: the session adds no rule,
+so the kernel sweep stays at 131 / 133. The 14 main groups have 1392
+checks (proofs 27, proof refusals 120), 1422 checks in total, and 0
+failures.
