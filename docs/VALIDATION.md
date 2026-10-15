@@ -602,3 +602,14 @@ gives 1 instance (`l16Inst : Flag = 1`, the JSON does not change), and
 mutant rows: the session adds no rule, so the kernel sweep stays at
 131 / 133. The gate has 1391 checks in the 14 main groups (proofs 26,
 proof refusals 120), 1421 checks in total, and 0 failures.
+
+M8 sessions 2 to 4 (2026-10-14) add `test/proof/ok/l17.lang` with 48
+theorem checks (25 copies and 23 new) and no kernel change, so the 27
+proof files have 880 theorem checks. `langc check` gives exit 0, `langc
+build` gives 0 instances (the file has no instance), and `langc verify`
+gives exit 0. `l17NoHull` is a negative result in the file: for N = 2
+and the prior f = (0, 1), no phibar satisfies the hull hypotheses, so
+`ironing_exists` needs f k > 0 below N. There are no new proof refusals
+and no new mutant rows: the sessions add no rule, so the kernel sweep
+stays at 131 / 133. The gate has 1392 checks in the 14 main groups
+(proofs 27, proof refusals 120), 1422 checks in total, and 0 failures.

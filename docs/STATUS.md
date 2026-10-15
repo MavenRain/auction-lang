@@ -651,6 +651,18 @@ and x2 use one prior f for both bidders. The gate has 1391 checks in 14
 main groups, 1421 checks with the C regressions, and 0 failures. The
 ironed virtual value stays a hypothesis until F4 (sessions 2 to 4).
 
+M8 sessions 2 to 4 are done (2026-10-14): F4 parts 1 to 3, the convex
+hull that gives the ironed virtual value (rulings F4a = a with 7
+sessions, and F4c = a; no kernel change). The new file `l17.lang` has 48
+theorem checks (23 new). `ironing_exists` proves that a phibar with the
+hypotheses H1, H2a, H2c and H2b of `ironed_auction_optimal` exists for
+each prior f with f k >= 0 and f k > 0 below N. `l17NoHull` shows that
+f k >= 0 alone is not sufficient. The 27 proof files have 880 theorem
+checks (724 for the book and 156 for the kernel rules). The gate has
+1392 checks in 14 main groups, 1422 checks with the C regressions, and 0
+failures. F4 ends with session 5: the optimality theorems with the
+built phibar, so phibar is not a hypothesis.
+
 ## Known limits
 
 - `Nat` is an unsigned 64-bit value. `natAdd` and `natMul` trap on

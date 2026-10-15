@@ -764,7 +764,7 @@ form: `JSON_VALUE` (`test/emit/function.lang`).
 | M5 | Proofs: the Prop sort, the theorem form, 72 kernel rules in kernel/rules.lang and src/front/nf.c, 12 proof files with 413 theorem checks for the kernel rules and the book |
 | M6 | Proof coverage, done (session 10, ruling C1 = a): the kernel batch J, K, M(i) and L (sessions 1, 1b and 1c), Ch 5 and App C (session 2), the explicit 2-bidder allocation of Ch 6.4 (session 3), the no pure symmetric equilibrium result of 3.4 for all Rat bids (session 4), the sequential game form of Ch 7 (session 5), the package auctions of Ch 7 (session 6) and the N-ary profile layer `natPow`, `finProj` and `finUpd` with 6 kernel rules (session 7) and the App A product rule for N factors, `prodRat` with 3 kernel rules (session 8) and the mechanisms for every N with the order statistics for N > 2 (session 9); 20 proof files with 606 theorem checks and 81 kernel rules |
 | M7 | Proof coverage after M6, done (session 8): session 1 adds the kernel rule `allFinIntro` (H3 part 1, ruling H3a = a) and `k6.lang`; session 2b adds the kernel rule `natEqSpec` (ruling H3c = a) and `k7.lang`; session 2c adds `l13.lang`, the general proofs of the two C1 limits (H3 part 2, no kernel change); session 3 adds `l14.lang`, the Harris inequality for 2 variables (D2, ruling D2a = a, no kernel change); session 4 adds `l15.lang`, no pure symmetric equilibrium in 3.4 for k values (E2 part 1, ruling E2a = a, no kernel change); session 6 adds `l16.lang`, ironing in 6.4 with the ironed virtual value as a hypothesis (F2 part 1, ruling F2a = a, no kernel change); session 7 adds to `l16.lang` the optimality of the ironed auction among the symmetric 2-bidder feasible rules and the general theorem on the witness (F2 part 2, ruling F2b = a, no kernel change); 26 proof files with 828 theorem checks and 83 kernel rules |
-| M8 | Proof coverage after M7, in progress: session 1 adds to `l16.lang` the optimality of the ironed auction for asymmetric 2-bidder allocations x1 and x2 from one prior (F3, rulings F3a = a and F3b = a, no kernel change); 26 proof files with 832 theorem checks and 83 kernel rules |
+| M8 | Proof coverage after M7, in progress: session 1 adds to `l16.lang` the optimality of the ironed auction for asymmetric 2-bidder allocations x1 and x2 from one prior (F3, rulings F3a = a and F3b = a, no kernel change); sessions 2 to 4 add `l17.lang` with `ironing_exists`, the ironed virtual value exists for each prior with f k > 0 below N (F4, rulings F4a = a and F4c = a, no kernel change); 27 proof files with 880 theorem checks and 83 kernel rules |
 
 M0 has these slices:
 
@@ -1250,6 +1250,27 @@ There is no new proof refusal and no new mutant row. The 26 proof files
 hold 832 theorem checks: 676 for the book and 156 for the kernel rules.
 The gate has 1391 checks in 14 main groups, 1421 checks in total, and 0
 failures.
+
+M8 sessions 2 to 4 (2026-10-14, F4, rulings F4a = a and F4c = a) add
+`test/proof/ok/l17.lang` with 48 theorem checks (25 copies from
+`l16.lang` and `l13.lang`, 23 new) and no kernel change.
+`ironing_exists` proves that for each n and each prior f with f k >= 0
+for each k and f k > 0 for k < N (N = n + 1), there is a phibar that
+satisfies the hypotheses H1, H2a, H2c and H2b of
+`ironed_auction_optimal` at N (`l17Hull N f N phibar`). The proof is an
+induction over the prefix length p with N fixed (`l17HullAll`). Each
+step is one step of a convex hull scan: `l17ArgMax` finds the point m
+with the largest slope to t = q + 1. The new phibar keeps the old values
+below m and takes that slope s from m up (`l17ExtA` to `l17ExtE` and
+`l17Extend`). `l17Last` records the start of the last segment, and
+`l17Junction` uses it to show that the old value at m - 1 is at most s,
+so phibar stays nondecreasing. `l17NoHull` shows that f k >= 0 alone is
+not sufficient: for N = 2 and f = (0, 1), no phibar satisfies the four
+hypotheses. `ironed_auction_optimal` still takes phibar as a hypothesis;
+M8 session 5 applies `ironing_exists` to it. There is no new proof
+refusal and no new mutant row. The 27 proof files hold 880 theorem
+checks: 724 for the book and 156 for the kernel rules. The gate has 1392
+checks in 14 main groups, 1422 checks in total, and 0 failures.
 
 ## 11. Checked rules: ring, field and cert (M5 K3b)
 
