@@ -580,3 +580,14 @@ proof refusals and no new mutant rows: the session adds no rule, so the
 kernel sweep stays at 131 / 133. The gate has 1391 checks in the 14 main
 groups (proofs 26, proof refusals 120), 1421 checks in total, and 0
 failures.
+
+M7 session 7 (2026-10-14) adds 20 theorem checks to
+`test/proof/ok/l16.lang` (84 in the file) and no kernel change, so the
+26 proof files have 828 theorem checks. The optimality theorem assumes a
+symmetric 2-bidder allocation and independent types from the same prior.
+`langc check` gives exit 0,
+`langc build` gives 1 instance (`l16Inst : Flag = 1`), and
+`langc verify` gives exit 0. There are no new proof refusals and no
+new mutant rows: the session adds no rule, so the kernel sweep stays at
+131 / 133. The gate has 1391 checks in the 14 main groups (proofs 26,
+proof refusals 120), 1421 checks in total, and 0 failures.

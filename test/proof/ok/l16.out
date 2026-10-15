@@ -62,4 +62,24 @@ theorem ironing_tight ok
 theorem ironed_auction_attains_bound ok
 theorem ironing_revenue_bound ok
 theorem l16InstanceCheck ok
+theorem l16IfNonneg ok
+theorem l16WMulNonneg ok
+theorem l16MaxNonneg ok
+theorem l16WOne ok
+theorem l16WZero ok
+theorem l16MaxTie ok
+theorem l16MaxLeft ok
+theorem l16Pt ok
+theorem l16IronInt ok
+theorem l16Sym ok
+theorem two_bidder_ironed_surplus_bound ok
+theorem ironed_auction_optimal ok
+theorem l16Cases3 ok
+theorem l16FNonneg ok
+theorem l16BarMono ok
+theorem l16BarCum ok
+theorem l16BarOr ok
+theorem l16BarZero ok
+theorem l16WitnessAttains ok
+theorem l16WitnessOptimal ok
 ok

@@ -395,7 +395,8 @@ no division and no `Ne` fact. There is no new kernel rule, and
 instance of the main theorem at 4 types (there is no Fin-from-Nat
 constructor, so the regularity Prop for an open type needs a Nat case
 split; the `decide` check pins the instance), and ironing (M7
-session 6 builds part of it in `l16.lang`). The 14 proof
+sessions 6 and 7 build it in `l16.lang`, with the ironed virtual value
+as a hypothesis). The 14 proof
 files have 487 theorem checks. The gate has 1357 checks in 14 main
 groups, 1387 checks with the C regressions, and 0 failures.
 
@@ -610,8 +611,21 @@ F2a = a). The ironed virtual value is a hypothesis. `ironing_bound`,
 `decide` (revenue 91/128 for each bidder). Session 5 closed E2 at
 session 4 (ruling E2b = b) with no change in the repo. The 26 proof
 files have 808 theorem checks, and the gate has 1421 checks with 0
-failures. Session 7 is F2 part 2: the optimality among all 2-bidder
+failures. Session 7 is F2 part 2: the optimality among symmetric 2-bidder
 feasible rules and the general theorem on the witness.
+
+M7 session 7 is done (2026-10-14): F2 part 2 in
+`test/proof/ok/l16.lang` (20 new theorem checks, 84 in the file, no
+kernel change, ruling F2b = a). `two_bidder_ironed_surplus_bound` and
+`ironed_auction_optimal` prove that the ironed auction is optimal among
+the IC and IR mechanisms with a symmetric 2-bidder ex-post feasible
+allocation and independent types from the same prior, for every type
+count N = n + 1. Optimality for asymmetric allocations is not proved.
+The 4-type witness now has its
+conditions as Prop facts for each k (a Nat case split), and
+`l16WitnessOptimal` gives the revenue bound 91/128 from the general
+theorem. The 26 proof files have 828 theorem checks, and the gate has
+1421 checks with 0 failures. Session 8 is the M7 close.
 
 ## Known limits
 
